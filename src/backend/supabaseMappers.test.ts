@@ -26,6 +26,7 @@ const entryRow: EntryRow = {
   piece_ref: null,
   invoice_code: 'HelloAsso',
   observation: null,
+  reconciled: false,
   event_id: null,
   components: { adulte_plein: 647 },
   created_at: '2025-09-10T08:00:00.000Z',

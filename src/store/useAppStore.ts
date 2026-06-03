@@ -93,6 +93,7 @@ interface AppState {
   addEntry: (input: EntryInput) => string | null;
   importEntries: (drafts: EntryInput[]) => number;
   updateEntry: (id: string, patch: Partial<EntryInput>) => void;
+  setReconciled: (id: string, reconciled: boolean) => void;
   softDeleteEntry: (id: string, reason?: string) => void;
   restoreEntry: (id: string) => void;
   addAttachment: (entryId: string, attachment: Attachment) => void;
@@ -492,6 +493,36 @@ export const useAppStore = create<AppState>((set, get) => {
               'entry',
               `Modification de l'écriture « ${after.label} » (v${after.version}).`,
               { targetId: id, before, after }
+            )
+          ),
+        };
+      }),
+
+    setReconciled: (id, reconciled) =>
+      set(s => {
+        const before = s.data.entries.find(e => e.id === id);
+        if (!before || isLocked(s.data, before.seasonId)) return s;
+        const after: JournalEntry = {
+          ...before,
+          reconciled,
+          reconciledAt: reconciled ? Date.now() : undefined,
+          updatedAt: Date.now(),
+          updatedBy: currentActor,
+          version: before.version + 1,
+        };
+        remote({ kind: 'entry.upsert', entry: after });
+        return {
+          data: persist(
+            audit(
+              {
+                ...s.data,
+                entries: s.data.entries.map(e => (e.id === id ? after : e)),
+              },
+              'entry.reconcile',
+              'metier',
+              'entry',
+              `Écriture « ${before.label} » ${reconciled ? 'pointée' : 'dépointée'} (rapprochement).`,
+              { targetId: id }
             )
           ),
         };

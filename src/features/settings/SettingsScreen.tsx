@@ -22,6 +22,7 @@ import {
   exportJournalCsv,
   exportJsonBackup,
 } from '../export/exporters.ts';
+import { exportWorkbookXlsx } from '../export/xlsxExport.ts';
 import { ImportSheet } from '../import/ImportSheet.tsx';
 import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '../../shared/components/Button.tsx';
@@ -166,6 +167,14 @@ export function SettingsScreen() {
           </Button>
           <Button variant="secondary" onClick={() => window.print()}>
             <Printer size={16} aria-hidden="true" /> Bilan PDF
+          </Button>
+          <Button
+            variant="secondary"
+            className="col-span-2"
+            onClick={() => void exportWorkbookXlsx(data, season)}
+          >
+            <FileSpreadsheet size={16} aria-hidden="true" /> Classeur Excel
+            multi-feuilles (.xlsx)
           </Button>
         </div>
       </Card>

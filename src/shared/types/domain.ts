@@ -111,6 +111,9 @@ export interface JournalEntry {
   /** Code facture / référence externe. */
   invoiceCode?: string;
   observation?: string;
+  /** Pointage : écriture rapprochée avec le relevé bancaire. */
+  reconciled?: boolean;
+  reconciledAt?: number;
   /** Rattachement à un événement pour le calcul du résultat net (règle 10). */
   eventId?: string;
   /** Détail par composante tarifaire (règle 8). Somme = `amount`. */

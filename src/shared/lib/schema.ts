@@ -36,6 +36,8 @@ const entrySchema = z.object({
   pieceRef: z.string().optional(),
   invoiceCode: z.string().optional(),
   observation: z.string().optional(),
+  reconciled: z.boolean().optional(),
+  reconciledAt: z.number().optional(),
   eventId: z.string().optional(),
   components: z.record(z.string(), z.number()).optional(),
   attachments: z.array(attachmentSchema).catch([]),

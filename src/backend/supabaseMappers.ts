@@ -31,6 +31,7 @@ export interface EntryRow {
   piece_ref: string | null;
   invoice_code: string | null;
   observation: string | null;
+  reconciled: boolean | null;
   event_id: string | null;
   components: Record<string, number> | null;
   created_at: string;
@@ -85,6 +86,7 @@ export function rowToEntry(row: EntryRow): JournalEntry {
     pieceRef: orUndef(row.piece_ref),
     invoiceCode: orUndef(row.invoice_code),
     observation: orUndef(row.observation),
+    reconciled: row.reconciled ?? undefined,
     eventId: orUndef(row.event_id),
     components: orUndef(row.components),
     attachments: [], // chargées séparément (table attachments)
@@ -113,6 +115,7 @@ export function entryToRow(
     piece_ref: e.pieceRef ?? null,
     invoice_code: e.invoiceCode ?? null,
     observation: e.observation ?? null,
+    reconciled: e.reconciled ?? false,
     event_id: e.eventId ?? null,
     components: e.components ?? null,
     deleted_at: epochToIso(e.deletedAt),
