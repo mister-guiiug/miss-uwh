@@ -251,12 +251,32 @@ Mobile-first, bottom-nav 5 onglets, utilisable aussi sur desktop (max-width 2xl)
 > Les briques Supabase (sync, MFA, admin) sont **correctes par construction** et
 > typées, mais **à éprouver sur un projet Supabase réel** (cf. `supabase/README.md`).
 
-- [ ] Rapprochement bancaire (import CSV de relevé, pointage).
-- [ ] Détail des inscriptions par adhérent + tableau effectifs.
-- [ ] Export Excel multi-feuilles (réplique du classeur d'origine) via SheetJS.
-- [ ] Comparateur multi-saisons (graphes `Evolution`).
-- [ ] Budget prévisionnel vs réalisé ; alertes « catégorie à compléter ».
-- [ ] Tests e2e Playwright ; signatures/horodatage des clôtures.
+**Améliorations (juin 2026)**
+
+- [x] **Export Excel multi-feuilles** (Bilan + Compte + une feuille par catégorie + Evolution) via SheetJS ; préparation pure et testée.
+- [x] **Rapprochement bancaire** : import CSV de relevé + appariement montant/date
+      (testé) + pointage auto ; **pointage manuel** par écriture.
+- [x] **Filtres journal avancés** (dates, catégorie, mode, événement, pointage).
+- [x] **Écritures récurrentes** (modèles + génération) ; **budget prév./réalisé**
+      par catégorie avec écart.
+- [x] **Catégories personnalisées** (registre mutable, codes C1…) ; **registre des
+      adhérents** (effectifs, cotisations, payé/impayé).
+- [x] **Durcissement serveur (0005)** : RPC clôture/réouverture (solde calculé
+      serveur), OCC `update_entry_checked`, audit sécurité **chaîné par hash**,
+      cohérence sens↔catégorie, **Realtime** (réconciliation en direct).
+- [x] **Dette technique** : ESLint 0 warning, tables a11y sous les graphiques,
+      dédup de la file de sync, script `supabase:types`.
+- [x] **Tests** : store, composants, robustesse monétaire ; **planchers de
+      couverture** sur le cœur pur (65 tests).
+- [—] **Montants en centimes entiers** : _évalué, non retenu_ — `numeric(12,2)` +
+  `round2` est testé et exact à l'échelle d'un club (cf. `money.test.ts`) ;
+  refactor transverse = risque > bénéfice. Option documentée si l'échelle change.
+
+**Restant**
+
+- [ ] Tests e2e Playwright (le workflow CI famille saute l'e2e).
+- [ ] Adoption client de l'OCC + adaptateur Supabase pour récurrences/adhérents.
+- [ ] OCR des justificatifs ; rappels d'échéances (licences/assurances).
 
 ---
 
