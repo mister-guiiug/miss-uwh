@@ -6,12 +6,37 @@
  */
 import { z } from 'zod';
 import {
+  ADHERENT_CATEGORIES,
   AUDIT_CATEGORIES,
+  CATEGORY_KINDS,
   ENTRY_SENS,
   EVENT_KINDS,
   PAYMENT_METHODS,
   SEASON_STATUS,
+  SENS,
 } from '../types/domain.ts';
+
+const categorySchema = z.object({
+  code: z.string(),
+  label: z.string(),
+  sens: z.enum(SENS),
+  kind: z.enum(CATEGORY_KINDS).catch('exploitation'),
+  group: z.string().optional(),
+  components: z.array(z.string()).optional(),
+  eventCapable: z.boolean().optional(),
+});
+
+const adherentSchema = z.object({
+  id: z.string(),
+  seasonId: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  category: z.enum(ADHERENT_CATEGORIES).catch('adulte'),
+  licenceNumber: z.string().optional(),
+  amount: z.number().nonnegative().catch(0),
+  paid: z.boolean().catch(false),
+  notes: z.string().optional(),
+});
 
 const attachmentSchema = z.object({
   id: z.string(),
@@ -117,6 +142,8 @@ export const appDataSchema = z.object({
   entries: z.array(entrySchema).catch([]),
   events: z.array(eventSchema).catch([]),
   recurrings: z.array(recurringSchema).catch([]),
+  customCategories: z.array(categorySchema).catch([]),
+  adherents: z.array(adherentSchema).catch([]),
   audit: z.array(auditSchema).catch([]),
   settings: settingsSchema,
   onboarded: z.boolean(),

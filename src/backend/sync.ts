@@ -83,7 +83,9 @@ export async function pullAll(): Promise<void> {
       activeSeasonId,
       entries,
       events,
-      recurrings: prev.recurrings, // modèles récurrents : locaux pour l'instant
+      recurrings: prev.recurrings, // local pour l'instant
+      customCategories: prev.customCategories,
+      adherents: prev.adherents,
       audit,
       settings: prev.settings,
       onboarded: true,

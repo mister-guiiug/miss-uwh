@@ -233,15 +233,26 @@ export const CATEGORIES: Category[] = [
   },
 ];
 
-const BY_CODE = new Map(CATEGORIES.map(c => [c.code, c]));
+// Registre mutable : taxonomie fixe + catégories personnalisées. Synchronisé
+// depuis le store (setCustomCategories) → categoryByCode/allCategories résolvent
+// les catégories perso PARTOUT sans modifier les appelants.
+let customList: Category[] = [];
+let byCode = new Map(CATEGORIES.map(c => [c.code, c]));
+
+export function setCustomCategories(custom: Category[]): void {
+  customList = custom;
+  byCode = new Map([...CATEGORIES, ...custom].map(c => [c.code, c]));
+}
+
+/** Taxonomie complète (fixe + personnalisée). */
+export function allCategories(): Category[] {
+  return customList.length ? [...CATEGORIES, ...customList] : CATEGORIES;
+}
 
 export function categoryByCode(code: string): Category | undefined {
-  return BY_CODE.get(code);
+  return byCode.get(code);
 }
 
 export function categoryLabel(code: string): string {
-  return BY_CODE.get(code)?.label ?? code;
+  return byCode.get(code)?.label ?? code;
 }
-
-export const RECETTE_CATEGORIES = CATEGORIES.filter(c => c.sens === 'recette');
-export const DEPENSE_CATEGORIES = CATEGORIES.filter(c => c.sens === 'depense');

@@ -176,6 +176,28 @@ export interface Season {
   budget?: Record<string, number>;
 }
 
+export const ADHERENT_CATEGORIES = [
+  'adulte',
+  'adulte_reduit',
+  'jeune',
+  'enfant',
+] as const;
+export type AdherentCategory = (typeof ADHERENT_CATEGORIES)[number];
+
+/** Adhérent du club (registre des inscriptions — règle 8, suivi par personne). */
+export interface Adherent {
+  id: string;
+  seasonId: string;
+  firstName: string;
+  lastName: string;
+  category: AdherentCategory;
+  licenceNumber?: string;
+  /** Cotisation due/réglée. */
+  amount: number;
+  paid: boolean;
+  notes?: string;
+}
+
 export const AUDIT_CATEGORIES = ['metier', 'securite'] as const;
 export type AuditCategory = (typeof AUDIT_CATEGORIES)[number];
 
@@ -215,6 +237,10 @@ export interface AppData {
   entries: JournalEntry[];
   events: EventLedger[];
   recurrings: RecurringTemplate[];
+  /** Catégories personnalisées (en plus de la taxonomie R1–D13). */
+  customCategories: Category[];
+  /** Registre des adhérents (toutes saisons). */
+  adherents: Adherent[];
   audit: AuditEvent[];
   settings: Settings;
   onboarded: boolean;

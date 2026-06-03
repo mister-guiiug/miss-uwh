@@ -12,20 +12,26 @@
  */
 import { create } from 'zustand';
 import type {
+  Adherent,
   AppData,
   Attachment,
   AuditCategory,
   AuditEvent,
+  Category,
   Club,
   EventKind,
   EventLedger,
   JournalEntry,
   RecurringTemplate,
   Season,
+  Sens,
   Settings,
 } from '../shared/types/domain.ts';
 import { createId, createUuid } from '../shared/lib/id.ts';
-import { categoryByCode } from '../shared/lib/categories.ts';
+import {
+  categoryByCode,
+  setCustomCategories,
+} from '../shared/lib/categories.ts';
 import { computeBilan } from '../shared/lib/engine.ts';
 import { createEmptyData } from '../shared/lib/seed.ts';
 import { loadData, saveData } from '../shared/lib/storage.ts';
@@ -97,6 +103,19 @@ interface AppState {
   generateFromRecurring: (id: string, date: string) => string | null;
   setBudget: (seasonId: string, code: string, amount: number) => void;
 
+  // Catégories personnalisées
+  addCustomCategory: (input: {
+    label: string;
+    sens: Sens;
+    kind?: Category['kind'];
+  }) => string;
+  removeCustomCategory: (code: string) => void;
+
+  // Adhérents (registre)
+  addAdherent: (a: Omit<Adherent, 'id'>) => string;
+  updateAdherent: (id: string, patch: Partial<Omit<Adherent, 'id'>>) => void;
+  deleteAdherent: (id: string) => void;
+
   // Écritures
   addEntry: (input: EntryInput) => string | null;
   importEntries: (drafts: EntryInput[]) => number;
@@ -117,6 +136,8 @@ interface AppState {
 
 function persist(data: AppData): AppData {
   saveData(data);
+  // Garde le registre de catégories (taxonomie + perso) synchronisé partout.
+  setCustomCategories(data.customCategories);
   return data;
 }
 
@@ -149,6 +170,9 @@ export const useAppStore = create<AppState>((set, get) => {
   function seasonOf(data: AppData, seasonId: string): Season | undefined {
     return data.seasons.find(s => s.id === seasonId);
   }
+  // Synchronise le registre de catégories dès l'init (avant tout commit).
+  setCustomCategories(loadData().customCategories);
+
   function isLocked(data: AppData, seasonId: string): boolean {
     return seasonOf(data, seasonId)?.status === 'cloturee';
   }
@@ -462,6 +486,80 @@ export const useAppStore = create<AppState>((set, get) => {
                 }
               : x
           ),
+        }),
+      })),
+
+    addCustomCategory: input => {
+      const existing = new Set([
+        ...get().data.customCategories.map(c => c.code),
+        // codes réservés type C1, C2…
+      ]);
+      let n = get().data.customCategories.length + 1;
+      let code = `C${n}`;
+      while (existing.has(code)) code = `C${++n}`;
+      const cat: Category = {
+        code,
+        label: input.label,
+        sens: input.sens,
+        kind: input.kind ?? 'exploitation',
+      };
+      set(s => ({
+        data: persist(
+          audit(
+            { ...s.data, customCategories: [...s.data.customCategories, cat] },
+            'category.create',
+            'metier',
+            'category',
+            `Catégorie personnalisée « ${input.label} » (${code}).`,
+            { targetId: code }
+          )
+        ),
+      }));
+      return code;
+    },
+
+    removeCustomCategory: code =>
+      set(s => ({
+        data: persist({
+          ...s.data,
+          customCategories: s.data.customCategories.filter(
+            c => c.code !== code
+          ),
+        }),
+      })),
+
+    addAdherent: a => {
+      const adherent: Adherent = { ...a, id: createId('adh') };
+      set(s => ({
+        data: persist(
+          audit(
+            { ...s.data, adherents: [...s.data.adherents, adherent] },
+            'adherent.create',
+            'metier',
+            'adherent',
+            `Adhérent « ${a.firstName} ${a.lastName} » ajouté.`,
+            { targetId: adherent.id }
+          )
+        ),
+      }));
+      return adherent.id;
+    },
+
+    updateAdherent: (id, patch) =>
+      set(s => ({
+        data: persist({
+          ...s.data,
+          adherents: s.data.adherents.map(x =>
+            x.id === id ? { ...x, ...patch } : x
+          ),
+        }),
+      })),
+
+    deleteAdherent: id =>
+      set(s => ({
+        data: persist({
+          ...s.data,
+          adherents: s.data.adherents.filter(x => x.id !== id),
         }),
       })),
 

@@ -41,11 +41,14 @@ interface Props {
   onClose: () => void;
 }
 
-const RECETTES = CATEGORIES.filter(c => c.sens === 'recette');
-const DEPENSES = CATEGORIES.filter(c => c.sens === 'depense');
-
 export function EntrySheet({ open, entry, onClose }: Props) {
   const season = useAppStore(selectActiveSeason);
+  // Catégories perso incluses ; le `custom` en dépendance force le recalcul
+  // lorsqu'on en ajoute/retire une (allCategories() lit un registre mutable).
+  const custom = useAppStore(s => s.data.customCategories);
+  const cats = useMemo(() => [...CATEGORIES, ...custom], [custom]);
+  const RECETTES = cats.filter(c => c.sens === 'recette');
+  const DEPENSES = cats.filter(c => c.sens === 'depense');
   // Sélecteur stable + filtrage dans le corps (cf. note EventsSheet).
   const allEvents = useAppStore(s => s.data.events);
   const events = allEvents.filter(e => e.seasonId === season.id);

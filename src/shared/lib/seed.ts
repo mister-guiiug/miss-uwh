@@ -371,6 +371,27 @@ export function createInitialData(): AppData {
         method: 'prelevement',
       },
     ],
+    customCategories: [],
+    adherents: [
+      {
+        id: createId('adh'),
+        seasonId: sid,
+        firstName: 'Adulte',
+        lastName: 'Démo',
+        category: 'adulte',
+        amount: 160,
+        paid: true,
+      },
+      {
+        id: createId('adh'),
+        seasonId: sid,
+        firstName: 'Enfant',
+        lastName: 'Démo',
+        category: 'enfant',
+        amount: 94,
+        paid: false,
+      },
+    ],
     audit: [
       {
         id: createId('aud'),
@@ -409,6 +430,8 @@ export function createEmptyData(
     entries: [],
     events: [],
     recurrings: [],
+    customCategories: [],
+    adherents: [],
     audit: [],
     settings: DEFAULT_SETTINGS,
     onboarded: true,

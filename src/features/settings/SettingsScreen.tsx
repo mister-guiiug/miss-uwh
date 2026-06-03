@@ -26,6 +26,7 @@ import {
 import { exportWorkbookXlsx } from '../export/xlsxExport.ts';
 import { ImportSheet } from '../import/ImportSheet.tsx';
 import { RecurringSheet } from '../recurring/RecurringSheet.tsx';
+import { AdherentsSheet } from '../adherents/AdherentsSheet.tsx';
 import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { TextField } from '../../shared/components/Field.tsx';
@@ -49,6 +50,7 @@ export function SettingsScreen() {
   const [restoreError, setRestoreError] = useState<string>();
   const [members, setMembers] = useState(false);
   const [recurring, setRecurring] = useState(false);
+  const [adherents, setAdherents] = useState(false);
 
   async function onRestore(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -193,6 +195,9 @@ export function SettingsScreen() {
           <Button variant="secondary" onClick={() => setRecurring(true)}>
             <Repeat size={16} aria-hidden="true" /> Modèles récurrents
           </Button>
+          <Button variant="secondary" onClick={() => setAdherents(true)}>
+            <Users size={16} aria-hidden="true" /> Registre des adhérents
+          </Button>
           <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] px-5 py-2.5 text-[15px] font-semibold">
             <Upload size={16} aria-hidden="true" /> Restaurer une sauvegarde
             JSON
@@ -227,6 +232,7 @@ export function SettingsScreen() {
 
       <ImportSheet open={importing} onClose={() => setImporting(false)} />
       <RecurringSheet open={recurring} onClose={() => setRecurring(false)} />
+      <AdherentsSheet open={adherents} onClose={() => setAdherents(false)} />
       <MembersSheet open={members} onClose={() => setMembers(false)} />
       <ConfirmDialog
         open={confirmReset}

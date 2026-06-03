@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Repeat, Trash2, Zap } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
-import { CATEGORIES, categoryLabel } from '../../shared/lib/categories.ts';
+import { allCategories, categoryLabel } from '../../shared/lib/categories.ts';
 import {
   PAYMENT_METHODS,
   PAYMENT_METHOD_LABELS,
@@ -122,7 +122,7 @@ export function RecurringSheet({ open, onClose }: Props) {
               value={categoryCode}
               onChange={e => setCategoryCode(e.target.value)}
             >
-              {CATEGORIES.map(c => (
+              {allCategories().map(c => (
                 <option key={c.code} value={c.code}>
                   {c.code} — {c.label}
                 </option>

@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Target } from 'lucide-react';
+import { Plus, Target, Trash2 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { CATEGORIES } from '../../shared/lib/categories.ts';
 import { categoryNet, isActive } from '../../shared/lib/engine.ts';
-import type { Category } from '../../shared/types/domain.ts';
+import type { Category, Sens } from '../../shared/types/domain.ts';
+import { Sheet } from '../../shared/components/Sheet.tsx';
+import { Button } from '../../shared/components/Button.tsx';
+import { SelectField, TextField } from '../../shared/components/Field.tsx';
 import { formatDateShort } from '../../shared/lib/format.ts';
 import { Card } from '../../shared/components/Card.tsx';
-import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 
 interface RowProps {
@@ -18,6 +20,7 @@ interface RowProps {
   editable: boolean;
   onBudget: (amount: number) => void;
   onOpen: () => void;
+  onDelete?: () => void;
 }
 
 function CategoryRow({
@@ -29,6 +32,7 @@ function CategoryRow({
   editable,
   onBudget,
   onOpen,
+  onDelete,
 }: RowProps) {
   const ecart =
     budget != null ? Math.round((total - budget) * 100) / 100 : null;
@@ -68,6 +72,15 @@ function CategoryRow({
           </div>
         </button>
         <Money value={total} className="shrink-0" />
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            aria-label={`Supprimer la catégorie ${cat.code}`}
+            className="shrink-0 text-[var(--uwh-debit)]"
+          >
+            <Trash2 size={15} aria-hidden="true" />
+          </button>
+        )}
       </div>
 
       {showBudget && (
@@ -99,9 +112,15 @@ function CategoryRow({
 export function CategoriesScreen() {
   const season = useAppStore(selectActiveSeason);
   const entries = useAppStore(s => s.data.entries);
+  const custom = useAppStore(s => s.data.customCategories);
   const setBudget = useAppStore(s => s.setBudget);
+  const addCustomCategory = useAppStore(s => s.addCustomCategory);
+  const removeCustomCategory = useAppStore(s => s.removeCustomCategory);
   const [openCat, setOpenCat] = useState<Category | null>(null);
   const [showBudget, setShowBudget] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const [newSens, setNewSens] = useState<Sens>('depense');
 
   const seasonEntries = useMemo(
     () => entries.filter(e => e.seasonId === season.id && isActive(e)),
@@ -115,8 +134,9 @@ export function CategoriesScreen() {
     count: seasonEntries.filter(e => e.categoryCode === code).length,
   });
 
-  const recettes = CATEGORIES.filter(c => c.sens === 'recette');
-  const depenses = CATEGORIES.filter(c => c.sens === 'depense');
+  const cats = useMemo(() => [...CATEGORIES, ...custom], [custom]);
+  const recettes = cats.filter(c => c.sens === 'recette');
+  const depenses = cats.filter(c => c.sens === 'depense');
   const detail = openCat
     ? seasonEntries
         .filter(e => e.categoryCode === openCat.code)
@@ -140,6 +160,11 @@ export function CategoriesScreen() {
               editable={editable}
               onBudget={amount => setBudget(season.id, c.code, amount)}
               onOpen={() => setOpenCat(c)}
+              onDelete={
+                c.code.startsWith('C')
+                  ? () => removeCustomCategory(c.code)
+                  : undefined
+              }
             />
           );
         })}
@@ -149,7 +174,13 @@ export function CategoriesScreen() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <button
+          onClick={() => setAddOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--uwh-surface-2)] px-3 py-1.5 text-sm font-semibold text-[var(--uwh-text-soft)]"
+        >
+          <Plus size={15} aria-hidden="true" /> Catégorie perso
+        </button>
         <button
           onClick={() => setShowBudget(v => !v)}
           aria-pressed={showBudget}
@@ -162,6 +193,40 @@ export function CategoriesScreen() {
           <Target size={15} aria-hidden="true" /> Budget prév./réalisé
         </button>
       </div>
+
+      <Sheet
+        open={addOpen}
+        title="Nouvelle catégorie personnalisée"
+        onClose={() => setAddOpen(false)}
+      >
+        <div className="flex flex-col gap-4">
+          <TextField
+            label="Libellé"
+            value={newLabel}
+            onChange={e => setNewLabel(e.target.value)}
+            placeholder="Ex. Sponsoring"
+          />
+          <SelectField
+            label="Sens"
+            value={newSens}
+            onChange={e => setNewSens(e.target.value as Sens)}
+          >
+            <option value="recette">Recette</option>
+            <option value="depense">Dépense</option>
+          </SelectField>
+          <Button
+            block
+            disabled={!newLabel.trim()}
+            onClick={() => {
+              addCustomCategory({ label: newLabel.trim(), sens: newSens });
+              setNewLabel('');
+              setAddOpen(false);
+            }}
+          >
+            Ajouter
+          </Button>
+        </div>
+      </Sheet>
 
       {renderCard('Recettes', recettes, 'text-[var(--uwh-credit)]')}
       {renderCard('Dépenses', depenses, 'text-[var(--uwh-debit)]')}

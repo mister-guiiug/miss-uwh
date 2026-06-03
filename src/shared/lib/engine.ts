@@ -18,7 +18,7 @@ import type {
   Sens,
   Season,
 } from '../types/domain.ts';
-import { CATEGORIES, categoryByCode } from './categories.ts';
+import { allCategories, categoryByCode } from './categories.ts';
 
 /** Arrondi monétaire à 2 décimales, robuste aux flottants. */
 export function round2(n: number): number {
@@ -77,7 +77,7 @@ export function treasury(entries: JournalEntry[], opening: number): number {
 export function categoryNet(
   code: string,
   entries: JournalEntry[],
-  categories: Category[] = CATEGORIES
+  categories: Category[] = allCategories()
 ): number {
   const cat = categories.find(c => c.code === code) ?? categoryByCode(code);
   const signed = entries
@@ -134,7 +134,7 @@ const EXPLOITATION = new Set<Category['kind']>(['exploitation']);
 export function computeBilan(
   season: Season,
   allEntries: JournalEntry[],
-  categories: Category[] = CATEGORIES
+  categories: Category[] = allCategories()
 ): Bilan {
   const entries = allEntries.filter(
     e => e.seasonId === season.id && isActive(e)

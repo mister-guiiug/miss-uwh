@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { runningBalances } from '../../shared/lib/engine.ts';
-import { CATEGORIES, categoryByCode } from '../../shared/lib/categories.ts';
+import { allCategories, categoryByCode } from '../../shared/lib/categories.ts';
 import {
   PAYMENT_METHODS,
   PAYMENT_METHOD_LABELS,
@@ -175,7 +175,7 @@ export function JournalScreen() {
             onChange={e => setCategory(e.target.value)}
           >
             <option value="">Toutes catégories</option>
-            {CATEGORIES.map(c => (
+            {allCategories().map(c => (
               <option key={c.code} value={c.code}>
                 {c.code} — {c.label}
               </option>
