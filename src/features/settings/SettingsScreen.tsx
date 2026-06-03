@@ -7,6 +7,7 @@ import {
   LogOut,
   Printer,
   Repeat,
+  RotateCw,
   ShieldCheck,
   Trash2,
   Upload,
@@ -27,6 +28,7 @@ import { exportWorkbookXlsx } from '../export/xlsxExport.ts';
 import { ImportSheet } from '../import/ImportSheet.tsx';
 import { RecurringSheet } from '../recurring/RecurringSheet.tsx';
 import { AdherentsSheet } from '../adherents/AdherentsSheet.tsx';
+import { forceUpdate } from '../../pwa/forceUpdate.ts';
 import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { TextField } from '../../shared/components/Field.tsx';
@@ -226,9 +228,24 @@ export function SettingsScreen() {
         </Button>
       </Card>
 
-      <p className="text-center text-xs text-[var(--uwh-text-soft)]">
-        Miss UWH v{__APP_VERSION__}
-      </p>
+      {/* Application */}
+      <Card>
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h3 className="font-display font-bold">Application</h3>
+            <p className="text-xs text-[var(--uwh-text-soft)]">
+              Miss UWH v{__APP_VERSION__}
+            </p>
+          </div>
+          <Button variant="secondary" onClick={() => void forceUpdate()}>
+            <RotateCw size={16} aria-hidden="true" /> Forcer la mise à jour
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-[var(--uwh-text-soft)]">
+          Récupère la dernière version (vide les caches et recharge). Vos
+          données locales ne sont pas effacées.
+        </p>
+      </Card>
 
       <ImportSheet open={importing} onClose={() => setImporting(false)} />
       <RecurringSheet open={recurring} onClose={() => setRecurring(false)} />
