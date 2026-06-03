@@ -1,22 +1,23 @@
 /**
- * Couche de synchronisation (mode Supabase, offline-first).
+ * Couche de synchronisation (mode Supabase, offline-first) avec file d'attente
+ * PERSISTANTE.
  *
- * Lecture : `pullAll()` hydrate le store local depuis le serveur à la connexion
- * (le serveur fait foi). Écriture : `startSync()` branche un handler qui pousse
- * chaque mutation locale vers Supabase, EN SÉRIE (ordre préservé) ; les triggers
- * serveur gèrent version/audit/verrou. Toute erreur est remontée dans le statut
- * de synchronisation (jamais propagée dans l'UI) — l'app reste utilisable hors
- * ligne sur le cache local.
+ * Lecture : `pullAll()` hydrate le store depuis le serveur (le serveur fait foi).
+ * Écriture : chaque mutation locale est ENFILÉE (persistée) puis drainée vers
+ * Supabase. Hors ligne / panne réseau → l'opération reste en file et sera rejouée
+ * à la reconnexion (`online`). Échec PERMANENT (rejet serveur, ex. RLS) → lettre
+ * morte, sans bloquer la file.
  *
- * Limites assumées (V2) : dernier-écrivain-gagne, pas encore de file d'attente
- * persistante hors ligne ni d'upload des justificatifs. À éprouver sur un projet
- * Supabase réel.
+ * Conflits : upsert idempotent (UUID client) → dernier-écrivain-gagne ; après un
+ * drain complet à la reconnexion, on re-`pullAll()` pour réconcilier les
+ * changements d'autres utilisateurs. Le store local reste utilisable hors ligne.
  */
 import type { AppData } from '../shared/types/domain.ts';
 import { useAppStore } from '../store/useAppStore.ts';
 import { SCHEMA_VERSION, createEmptyData } from '../shared/lib/seed.ts';
 import { setCurrentClubId } from './clubContext.ts';
 import { setRemoteHandler, type RemoteOp } from './syncBus.ts';
+import * as q from './syncQueue.ts';
 import * as repo from './supabaseRepository.ts';
 
 function setStatus(
@@ -24,6 +25,17 @@ function setStatus(
   error?: string
 ) {
   useAppStore.getState().setSyncStatus({ state, error });
+}
+
+function isOffline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+/** Une erreur transitoire (réseau) est réessayable ; sinon c'est un rejet serveur. */
+function isTransient(message: string): boolean {
+  return /fetch|network|timeout|offline|connexion|connection|econn|enotfound/i.test(
+    message
+  );
 }
 
 /** Pull complet → hydrate le store. Le serveur est la source de vérité. */
@@ -57,7 +69,7 @@ export async function pullAll(): Promise<void> {
       entries,
       events,
       audit,
-      settings: prev.settings, // réglages d'affichage restent locaux
+      settings: prev.settings,
       onboarded: true,
     };
 
@@ -71,45 +83,91 @@ export async function pullAll(): Promise<void> {
   }
 }
 
-// File d'écriture sérielle : préserve l'ordre des mutations.
-let chain: Promise<void> = Promise.resolve();
-
-async function apply(op: RemoteOp): Promise<void> {
-  setStatus('syncing');
-  try {
-    switch (op.kind) {
-      case 'entry.upsert':
-        await repo.upsertEntry(op.entry);
-        break;
-      case 'entry.bulkUpsert':
-        await repo.upsertEntries(op.entries);
-        break;
-      case 'season.upsert':
-        await repo.upsertSeason(op.season);
-        break;
-      case 'event.upsert':
-        await repo.upsertEvent(op.event);
-        break;
-      case 'event.delete':
-        await repo.deleteEvent(op.id);
-        break;
-    }
-    setStatus('ready');
-  } catch (e) {
-    setStatus(
-      'error',
-      e instanceof Error ? e.message : 'Échec de synchronisation'
-    );
+async function applyOp(op: RemoteOp): Promise<void> {
+  switch (op.kind) {
+    case 'entry.upsert':
+      return repo.upsertEntry(op.entry);
+    case 'entry.bulkUpsert':
+      return repo.upsertEntries(op.entries);
+    case 'season.upsert':
+      return repo.upsertSeason(op.season);
+    case 'event.upsert':
+      return repo.upsertEvent(op.event);
+    case 'event.delete':
+      return repo.deleteEvent(op.id);
   }
 }
 
-/** Branche le push des mutations locales vers Supabase. */
+function reportQueueStatus(): void {
+  const dead = q.deadCount();
+  const pending = q.pendingCount();
+  if (dead > 0) setStatus('error', `${dead} opération(s) en échec`);
+  else if (pending > 0)
+    setStatus('error', `Hors ligne — ${pending} en attente`);
+  else setStatus('ready');
+}
+
+let draining = false;
+
+/** Vide la file vers Supabase (en série, ordre préservé). */
+export async function drain(): Promise<void> {
+  if (draining) return;
+  draining = true;
+  try {
+    if (q.pendingCount() > 0) setStatus('syncing');
+    let item = q.peek();
+    while (item) {
+      if (isOffline()) break;
+      try {
+        await applyOp(item.op);
+        q.ack(item.id);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'erreur';
+        if (isTransient(msg)) {
+          q.bumpAttempt(item.id, msg); // réseau : on garde, on réessaiera
+          break;
+        }
+        q.deadLetter(item.id, msg); // rejet serveur : lettre morte, on continue
+      }
+      item = q.peek();
+    }
+    reportQueueStatus();
+  } finally {
+    draining = false;
+  }
+}
+
+async function onOnline(): Promise<void> {
+  await drain();
+  if (q.pendingCount() === 0 && q.deadCount() === 0) await pullAll();
+}
+
+/** Branche le push (enfilage + drain) et l'écoute des reconnexions. */
 export function startSync(): void {
   setRemoteHandler(op => {
-    chain = chain.then(() => apply(op));
+    q.enqueue(op);
+    void drain();
   });
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', onOnline);
+  }
 }
 
 export function stopSync(): void {
   setRemoteHandler(null);
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('online', onOnline);
+  }
+}
+
+/** Démarrage : on pousse d'abord les écritures en attente, puis on réconcilie. */
+export async function initialSync(): Promise<void> {
+  await drain();
+  await pullAll();
+}
+
+/** Bouton « Réessayer » : rejoue la file puis réconcilie si vide. */
+export async function retrySync(): Promise<void> {
+  await drain();
+  if (q.pendingCount() === 0) await pullAll();
 }

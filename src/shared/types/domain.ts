@@ -154,6 +154,12 @@ export interface Season {
   lockedBy?: string;
   reopenedAt?: number;
   reopenReason?: string;
+  /**
+   * Totaux historiques (saisons antérieures sans journal détaillé importé) —
+   * alimentent la synthèse d'évolution multi-saisons. Reliquat inclus dans
+   * `totalRecettes` (présentation « bilan »).
+   */
+  summary?: { totalRecettes: number; totalDepenses: number };
 }
 
 export const AUDIT_CATEGORIES = ['metier', 'securite'] as const;

@@ -238,11 +238,18 @@ Mobile-first, bottom-nav 5 onglets, utilisable aussi sur desktop (max-width 2xl)
 - [x] Gestion des événements (créer / renommer / supprimer).
 - [x] Adaptateur de données Supabase **offline-first** : pull à la connexion
       (`pullAll` → hydrate le store) + push idempotent de chaque mutation
-      (`syncBus` → `sync.ts` → upserts UUID), bandeau de statut. _À éprouver sur
-      un projet Supabase réel ; voir `supabase/README.md` §Synchronisation._
-- [ ] Connexion + MFA in-app, gestion des membres et des rôles (UI admin).
+      (`syncBus` → `sync.ts` → upserts UUID), bandeau de statut.
+- [x] **Synthèse visuelle** : donuts recettes/dépenses par catégorie + évolution
+      multi-saisons (barres recettes/dépenses + ligne solde), SVG pur.
+- [x] **File d'attente hors ligne persistante** (`syncQueue`, testée) + rejeu à la
+      reconnexion + lettre morte (échec serveur) ; réconciliation par re-pull.
+- [x] **MFA in-app (TOTP)** : enrôlement (QR) dans les réglages + élévation AAL2
+      à la connexion ; **admin membres/rôles** (gardé admin, RLS serveur).
 - [ ] Upload des justificatifs vers le bucket privé + visionneuse.
-- [ ] File d'attente hors ligne persistante + résolution de conflits.
+
+> Les briques Supabase (sync, MFA, admin) sont **correctes par construction** et
+> typées, mais **à éprouver sur un projet Supabase réel** (cf. `supabase/README.md`).
+
 - [ ] Rapprochement bancaire (import CSV de relevé, pointage).
 - [ ] Détail des inscriptions par adhérent + tableau effectifs.
 - [ ] Export Excel multi-feuilles (réplique du classeur d'origine) via SheetJS.

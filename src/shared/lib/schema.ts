@@ -68,6 +68,9 @@ const seasonSchema = z.object({
   lockedBy: z.string().optional(),
   reopenedAt: z.number().optional(),
   reopenReason: z.string().optional(),
+  summary: z
+    .object({ totalRecettes: z.number(), totalDepenses: z.number() })
+    .optional(),
 });
 
 const auditSchema = z.object({

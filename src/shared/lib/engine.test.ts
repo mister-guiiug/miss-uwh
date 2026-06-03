@@ -6,6 +6,7 @@ import {
   eventResults,
   round2,
   runningBalances,
+  seasonTotals,
   signedAmount,
   treasury,
 } from './engine.ts';
@@ -151,6 +152,30 @@ describe('eventResults', () => {
     expect(tda!.depenses).toBe(4064.75);
     expect(tda!.net).toBe(round2(4350 - 4064.75)); // 285.25
     expect(tda!.count).toBe(2);
+  });
+});
+
+describe('seasonTotals', () => {
+  it('utilise season.summary quand présent (saison historique)', () => {
+    const histo: Season = {
+      ...season,
+      summary: { totalRecettes: 49536.46, totalDepenses: 44152.64 },
+    };
+    const t = seasonTotals(histo, []);
+    expect(t.recettes).toBe(49536.46);
+    expect(t.depenses).toBe(44152.64);
+    expect(t.solde).toBe(round2(49536.46 - 44152.64)); // 5383.82
+  });
+
+  it('agrège depuis les écritures à défaut de summary', () => {
+    const entries = [
+      entry({ categoryCode: 'R1', sens: 'credit', amount: 1000 }),
+      entry({ categoryCode: 'D4', sens: 'debit', amount: 400 }),
+    ];
+    const t = seasonTotals(season, entries);
+    expect(t.recettes).toBe(round2(2364.85 + 1000));
+    expect(t.depenses).toBe(400);
+    expect(t.solde).toBe(round2(2364.85 + 1000 - 400));
   });
 });
 

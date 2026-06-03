@@ -212,6 +212,35 @@ export function eventResults(
   });
 }
 
+export interface SeasonTotals {
+  recettes: number;
+  depenses: number;
+  solde: number;
+}
+
+/**
+ * Totaux d'une saison pour la synthèse d'évolution : utilise `season.summary`
+ * (saisons historiques sans journal détaillé) sinon agrège depuis les écritures.
+ * `recettes` inclut le reliquat (présentation « bilan ») ; `solde = recettes −
+ * dépenses`.
+ */
+export function seasonTotals(
+  season: Season,
+  allEntries: JournalEntry[]
+): SeasonTotals {
+  if (season.summary) {
+    const recettes = round2(season.summary.totalRecettes);
+    const depenses = round2(season.summary.totalDepenses);
+    return { recettes, depenses, solde: round2(recettes - depenses) };
+  }
+  const b = computeBilan(season, allEntries);
+  return {
+    recettes: b.totalRecettes,
+    depenses: b.totalDepenses,
+    solde: b.soldeCrediteur,
+  };
+}
+
 /** Valide la cohérence des composantes : somme = montant (tolérance 1 cent). */
 export function componentsMatchAmount(entry: JournalEntry): boolean {
   if (!entry.components) return true;

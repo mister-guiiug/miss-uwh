@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { IS_SUPABASE } from '../backend/config.ts';
 import { useAuth } from './AuthContext.tsx';
 import { LoginPage } from './LoginPage.tsx';
+import { MfaChallenge } from './MfaChallenge.tsx';
 
 /**
  * Garde d'accès. En mode `local`, laisse passer (mono-poste). En mode
@@ -9,7 +10,7 @@ import { LoginPage } from './LoginPage.tsx';
  * la sécurité réelle restant appliquée côté serveur par les politiques RLS.
  */
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, needsMfa } = useAuth();
 
   if (!IS_SUPABASE) return <>{children}</>;
   if (loading)
@@ -19,5 +20,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
       </p>
     );
   if (!session) return <LoginPage />;
+  if (needsMfa) return <MfaChallenge />;
   return <>{children}</>;
 }

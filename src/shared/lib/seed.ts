@@ -58,27 +58,30 @@ export function createInitialData(): AppData {
     openingBalance: 2364.85, // reliquat exercice 2024-2025
   };
 
-  // Saisons antérieures (clôturées) — pour l'historique multi-saisons.
-  const prev2: Season = {
-    id: createId('sea'),
-    label: '2023-2024',
-    startDate: '2023-05-15',
-    endDate: '2024-05-15',
-    status: 'cloturee',
-    openingBalance: 3380.53,
-    closingBalance: 4464.23,
-    lockedAt: order,
-  };
-  const prev1: Season = {
-    id: createId('sea'),
-    label: '2024-2025',
-    startDate: '2024-05-15',
-    endDate: '2025-05-15',
-    status: 'cloturee',
-    openingBalance: 4464.23,
-    closingBalance: 5383.82,
-    lockedAt: order,
-  };
+  // Saisons antérieures (clôturées) — historique multi-saisons réel (onglet
+  // « Evolution » du classeur), pour la synthèse d'évolution.
+  const history: Season[] = (
+    [
+      ['2020-2021', 2910.09, 22876.79, 18173.76, 4703.03],
+      ['2021-2022', 4703.03, 23723.1, 22458.83, 1264.27],
+      ['2022-2023', 1264.27, 31084.37, 27703.84, 3380.53],
+      ['2023-2024', 3380.53, 44836.32, 40372.09, 4464.23],
+      ['2024-2025', 4464.23, 49536.46, 44152.64, 5383.82],
+    ] as const
+  ).map(([label, opening, totalRecettes, totalDepenses, closing]) => {
+    const year = Number(label.slice(0, 4));
+    return {
+      id: createId('sea'),
+      label,
+      startDate: `${year}-05-15`,
+      endDate: `${year + 1}-05-15`,
+      status: 'cloturee' as const,
+      openingBalance: opening,
+      closingBalance: closing,
+      summary: { totalRecettes, totalDepenses },
+      lockedAt: order,
+    };
+  });
 
   const tda: EventLedger = {
     id: createId('ev'),
@@ -348,7 +351,7 @@ export function createInitialData(): AppData {
       ffessmAffiliation: 'FFESSM + AURA + OMS',
       treasurer: 'Trésorier du club',
     },
-    seasons: [prev2, prev1, season],
+    seasons: [...history, season],
     activeSeasonId: season.id,
     entries,
     events: [tda, buvette],

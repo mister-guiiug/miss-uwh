@@ -3,7 +3,7 @@ import { CloudOff, RefreshCw, TriangleAlert } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore.ts';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { IS_SUPABASE } from './config.ts';
-import { pullAll, startSync, stopSync } from './sync.ts';
+import { initialSync, retrySync, startSync, stopSync } from './sync.ts';
 
 /**
  * Pilote la synchronisation Supabase et affiche un bandeau de statut discret.
@@ -16,7 +16,7 @@ export function SupabaseSync() {
   useEffect(() => {
     if (!IS_SUPABASE || !session) return;
     startSync();
-    void pullAll();
+    void initialSync();
     return () => stopSync();
   }, [session]);
 
@@ -40,7 +40,7 @@ export function SupabaseSync() {
             Synchronisation interrompue{sync.error ? ` : ${sync.error}` : ''}
           </span>
           <button
-            onClick={() => void pullAll()}
+            onClick={() => void retrySync()}
             className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5"
           >
             <RefreshCw size={12} aria-hidden="true" /> Réessayer

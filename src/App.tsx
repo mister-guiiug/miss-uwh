@@ -32,6 +32,11 @@ const SeasonsScreen = lazy(() =>
     default: m.SeasonsScreen,
   }))
 );
+const SyntheseScreen = lazy(() =>
+  import('./features/synthese/SyntheseScreen.tsx').then(m => ({
+    default: m.SyntheseScreen,
+  }))
+);
 const AuditScreen = lazy(() =>
   import('./features/audit/AuditScreen.tsx').then(m => ({
     default: m.AuditScreen,
@@ -47,6 +52,7 @@ const TITLES: Record<string, string> = {
   '/': 'Bilan',
   '/journal': 'Journal comptable',
   '/categories': 'Catégories',
+  '/synthese': 'Synthèse',
   '/seasons': 'Saisons',
   '/audit': 'Journal d’audit',
   '/settings': 'Réglages',
@@ -88,6 +94,7 @@ function Inner() {
           <Route index element={<BilanScreen />} />
           <Route path="journal" element={<JournalScreen />} />
           <Route path="categories" element={<CategoriesScreen />} />
+          <Route path="synthese" element={<SyntheseScreen />} />
           <Route path="seasons" element={<SeasonsScreen />} />
           <Route path="audit" element={<AuditScreen />} />
           <Route path="settings" element={<SettingsScreen />} />

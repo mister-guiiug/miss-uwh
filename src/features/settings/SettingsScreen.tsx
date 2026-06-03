@@ -4,13 +4,18 @@ import {
   Database,
   Download,
   FileSpreadsheet,
+  LogOut,
   Printer,
   ShieldCheck,
   Trash2,
   Upload,
+  Users,
 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
-import { BACKEND } from '../../backend/config.ts';
+import { BACKEND, IS_SUPABASE } from '../../backend/config.ts';
+import { useAuth } from '../../auth/AuthContext.tsx';
+import { MfaCard } from '../../auth/MfaCard.tsx';
+import { MembersSheet } from '../admin/MembersSheet.tsx';
 import { importData } from '../../shared/lib/storage.ts';
 import {
   exportBilanCsv,
@@ -34,9 +39,12 @@ export function SettingsScreen() {
   const replaceData = useAppStore(s => s.replaceData);
   const resetAll = useAppStore(s => s.resetAll);
 
+  const { roles, signOut } = useAuth();
+  const isAdmin = roles.includes('admin_technique');
   const [importing, setImporting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [restoreError, setRestoreError] = useState<string>();
+  const [members, setMembers] = useState(false);
 
   async function onRestore(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -117,6 +125,26 @@ export function SettingsScreen() {
         </Link>
       </Card>
 
+      {/* Compte & sécurité (mode Supabase) */}
+      {IS_SUPABASE && (
+        <>
+          <MfaCard />
+          <Card>
+            <h3 className="mb-3 font-display font-bold">Compte</h3>
+            <div className="flex flex-wrap gap-2">
+              {isAdmin && (
+                <Button variant="secondary" onClick={() => setMembers(true)}>
+                  <Users size={16} aria-hidden="true" /> Membres & rôles
+                </Button>
+              )}
+              <Button variant="ghost" onClick={() => void signOut()}>
+                <LogOut size={16} aria-hidden="true" /> Se déconnecter
+              </Button>
+            </div>
+          </Card>
+        </>
+      )}
+
       {/* Exports */}
       <Card>
         <h3 className="mb-3 font-display font-bold">Export</h3>
@@ -183,6 +211,7 @@ export function SettingsScreen() {
       </p>
 
       <ImportSheet open={importing} onClose={() => setImporting(false)} />
+      <MembersSheet open={members} onClose={() => setMembers(false)} />
       <ConfirmDialog
         open={confirmReset}
         title="Tout réinitialiser ?"

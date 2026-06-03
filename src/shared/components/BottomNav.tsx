@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   BookOpenText,
+  ChartPie,
   LayoutGrid,
   ScrollText,
   Settings,
@@ -20,6 +21,7 @@ const tabs: Tab[] = [
   { to: '/', label: 'Bilan', Icon: LayoutGrid, end: true },
   { to: '/journal', label: 'Journal', Icon: ScrollText, end: false },
   { to: '/categories', label: 'Catégories', Icon: BookOpenText, end: false },
+  { to: '/synthese', label: 'Synthèse', Icon: ChartPie, end: false },
   { to: '/seasons', label: 'Saisons', Icon: CalendarRange, end: false },
   { to: '/settings', label: 'Réglages', Icon: Settings, end: false },
 ];
