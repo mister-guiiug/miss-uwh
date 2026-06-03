@@ -17,6 +17,8 @@ export type RemoteOp =
   | { kind: 'entry.upsert'; entry: JournalEntry }
   | { kind: 'entry.bulkUpsert'; entries: JournalEntry[] }
   | { kind: 'season.upsert'; season: Season }
+  | { kind: 'season.close'; id: string }
+  | { kind: 'season.reopen'; id: string; reason: string }
   | { kind: 'event.upsert'; event: EventLedger }
   | { kind: 'event.delete'; id: string };
 

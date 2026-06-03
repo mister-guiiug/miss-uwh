@@ -50,7 +50,9 @@ export function entityKey(op: RemoteOp): string | null {
     case 'event.delete':
       return `event:${op.id}`;
     case 'entry.bulkUpsert':
-      return null; // import en lot : ne pas fusionner
+    case 'season.close':
+    case 'season.reopen':
+      return null; // lot / changements d'état : ne pas fusionner
   }
 }
 

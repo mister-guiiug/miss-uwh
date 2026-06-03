@@ -13,8 +13,10 @@
  * changements d'autres utilisateurs. Le store local reste utilisable hors ligne.
  */
 import type { AppData } from '../shared/types/domain.ts';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { useAppStore } from '../store/useAppStore.ts';
 import { SCHEMA_VERSION, createEmptyData } from '../shared/lib/seed.ts';
+import { getSupabase } from '../lib/supabase.ts';
 import { setCurrentClubId } from './clubContext.ts';
 import { setRemoteHandler, type RemoteOp } from './syncBus.ts';
 import * as q from './syncQueue.ts';
@@ -105,6 +107,10 @@ async function applyOp(op: RemoteOp): Promise<void> {
       return repo.upsertEntries(op.entries);
     case 'season.upsert':
       return repo.upsertSeason(op.season);
+    case 'season.close':
+      return repo.closeSeasonRpc(op.id);
+    case 'season.reopen':
+      return repo.reopenSeasonRpc(op.id, op.reason);
     case 'event.upsert':
       return repo.upsertEvent(op.event);
     case 'event.delete':
@@ -156,7 +162,53 @@ async function onOnline(): Promise<void> {
   if (q.pendingCount() === 0 && q.deadCount() === 0) await pullAll();
 }
 
-/** Branche le push (enfilage + drain) et l'écoute des reconnexions. */
+// ── Realtime : réconciliation en direct (plusieurs trésoriers) ────────
+let channel: RealtimeChannel | null = null;
+let pullTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleReconcilePull(): void {
+  if (pullTimer) clearTimeout(pullTimer);
+  pullTimer = setTimeout(() => {
+    // On ne re-pull que si rien n'est en attente : éviter d'écraser des
+    // écritures locales non encore poussées.
+    if (q.pendingCount() === 0 && !draining) void pullAll();
+  }, 1200);
+}
+
+function subscribeRealtime(): void {
+  const sb = getSupabase();
+  channel = sb
+    .channel('miss-uwh-sync')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'entries' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'seasons' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'events' },
+      scheduleReconcilePull
+    )
+    .subscribe();
+}
+
+function unsubscribeRealtime(): void {
+  if (channel) {
+    void getSupabase().removeChannel(channel);
+    channel = null;
+  }
+  if (pullTimer) {
+    clearTimeout(pullTimer);
+    pullTimer = null;
+  }
+}
+
+/** Branche le push (enfilage + drain), l'écoute des reconnexions et le Realtime. */
 export function startSync(): void {
   setRemoteHandler(op => {
     q.enqueue(op);
@@ -165,6 +217,7 @@ export function startSync(): void {
   if (typeof window !== 'undefined') {
     window.addEventListener('online', onOnline);
   }
+  subscribeRealtime();
 }
 
 export function stopSync(): void {
@@ -172,6 +225,7 @@ export function stopSync(): void {
   if (typeof window !== 'undefined') {
     window.removeEventListener('online', onOnline);
   }
+  unsubscribeRealtime();
 }
 
 /** Démarrage : on pousse d'abord les écritures en attente, puis on réconcilie. */

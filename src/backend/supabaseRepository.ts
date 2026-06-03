@@ -141,3 +141,20 @@ export async function upsertEvent(event: EventLedger): Promise<void> {
 export async function deleteEvent(id: string): Promise<void> {
   unwrap(await getSupabase().from('events').delete().eq('id', id));
 }
+
+/** Clôture via RPC : le serveur calcule le solde et vérifie le rôle (0005). */
+export async function closeSeasonRpc(id: string): Promise<void> {
+  const { error } = await getSupabase().rpc('close_season', { p_season: id });
+  if (error) throw new Error(error.message);
+}
+
+export async function reopenSeasonRpc(
+  id: string,
+  reason: string
+): Promise<void> {
+  const { error } = await getSupabase().rpc('reopen_season', {
+    p_season: id,
+    p_reason: reason,
+  });
+  if (error) throw new Error(error.message);
+}

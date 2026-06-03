@@ -2,4 +2,7 @@
 // react-refresh). On ignore `dist/` et `supabase/` (SQL, hors lint JS/TS).
 import base from '@mister-guiiug/dev-wpa-config/eslint-react';
 
-export default [...base, { ignores: ['dist/**', 'supabase/**'] }];
+export default [
+  ...base,
+  { ignores: ['dist/**', 'coverage/**', 'supabase/**'] },
+];

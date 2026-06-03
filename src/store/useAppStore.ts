@@ -256,7 +256,9 @@ export const useAppStore = create<AppState>((set, get) => {
           lockedAt: Date.now(),
           lockedBy: currentActor,
         };
-        remote({ kind: 'season.upsert', season: closed });
+        // Serveur : RPC qui recalcule le solde et vérifie le rôle (le local
+        // calcule aussi pour l'affichage immédiat ; ils coïncident).
+        remote({ kind: 'season.close', id });
         return {
           data: persist(
             audit(
@@ -284,7 +286,7 @@ export const useAppStore = create<AppState>((set, get) => {
           reopenedAt: Date.now(),
           reopenReason: reason,
         };
-        remote({ kind: 'season.upsert', season: reopened });
+        remote({ kind: 'season.reopen', id, reason });
         return {
           data: persist(
             audit(
