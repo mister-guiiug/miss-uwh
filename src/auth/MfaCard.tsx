@@ -4,7 +4,7 @@ import { Card } from '../shared/components/Card.tsx';
 import { Button } from '../shared/components/Button.tsx';
 import { TextField } from '../shared/components/Field.tsx';
 import { Badge } from '../shared/components/badges.tsx';
-import { useAuth, type TotpEnrollment } from './AuthContext.tsx';
+import { useAuth, type TotpEnrollment } from './useAuth.ts';
 
 /** Carte d'enrôlement TOTP (Réglages, mode Supabase). */
 export function MfaCard() {

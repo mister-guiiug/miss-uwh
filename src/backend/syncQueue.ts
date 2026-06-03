@@ -38,8 +38,31 @@ function write(key: string, items: QueueItem[]): void {
 
 let counter = 0;
 
+/** Clé d'entité d'une opération (pour la déduplication). `null` = non déduplicable. */
+export function entityKey(op: RemoteOp): string | null {
+  switch (op.kind) {
+    case 'entry.upsert':
+      return `entry:${op.entry.id}`;
+    case 'season.upsert':
+      return `season:${op.season.id}`;
+    case 'event.upsert':
+      return `event:${op.event.id}`;
+    case 'event.delete':
+      return `event:${op.id}`;
+    case 'entry.bulkUpsert':
+      return null; // import en lot : ne pas fusionner
+  }
+}
+
+/**
+ * Enfile une opération. Les ops mono-entité en attente sur la MÊME entité sont
+ * fusionnées : seule la dernière (état le plus récent) est conservée → moins
+ * d'appels serveur au drain, sans changer le résultat final (upsert idempotent).
+ */
 export function enqueue(op: RemoteOp): QueueItem {
-  const items = read(KEY);
+  const key = entityKey(op);
+  let items = read(KEY);
+  if (key) items = items.filter(i => entityKey(i.op) !== key);
   counter += 1;
   const item: QueueItem = { id: `q_${Date.now()}_${counter}`, op, attempts: 0 };
   items.push(item);

@@ -3,7 +3,7 @@ import { Waves } from 'lucide-react';
 import { Card } from '../shared/components/Card.tsx';
 import { Button } from '../shared/components/Button.tsx';
 import { TextField } from '../shared/components/Field.tsx';
-import { useAuth } from './AuthContext.tsx';
+import { useAuth } from './useAuth.ts';
 
 /** Écran de connexion (mode Supabase). MFA gérée par Supabase Auth. */
 export function LoginPage() {

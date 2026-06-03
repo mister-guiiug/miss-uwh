@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { CloudOff, RefreshCw, TriangleAlert } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore.ts';
-import { useAuth } from '../auth/AuthContext.tsx';
+import { useAuth } from '../auth/useAuth.ts';
 import { IS_SUPABASE } from './config.ts';
 import { initialSync, retrySync, startSync, stopSync } from './sync.ts';
 

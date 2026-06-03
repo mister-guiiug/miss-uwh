@@ -55,4 +55,17 @@ describe('syncQueue', () => {
     // simulate reload: la lecture repart de localStorage
     expect(pendingCount()).toBe(1);
   });
+
+  it('fusionne les ops mono-entité sur la même entité (dédup)', () => {
+    const ev = (name: string): RemoteOp => ({
+      kind: 'event.upsert',
+      event: { id: 'x', seasonId: 's', name, kind: 'tournoi' },
+    });
+    enqueue(ev('v1'));
+    enqueue(ev('v2'));
+    enqueue(op('y')); // autre entité
+    expect(pendingCount()).toBe(2);
+    const evItem = queued().find(i => i.op.kind === 'event.upsert');
+    expect((evItem!.op as { event: { name: string } }).event.name).toBe('v2');
+  });
 });

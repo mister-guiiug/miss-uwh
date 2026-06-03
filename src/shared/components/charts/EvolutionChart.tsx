@@ -156,6 +156,29 @@ export function EvolutionChart({ data }: { data: EvolutionPoint[] }) {
           </li>
         ))}
       </ul>
+
+      {/* Données accessibles (lecteur d'écran) */}
+      <table className="sr-only">
+        <caption>Évolution par saison</caption>
+        <thead>
+          <tr>
+            <th>Saison</th>
+            <th>Recettes</th>
+            <th>Dépenses</th>
+            <th>Solde créditeur</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map(d => (
+            <tr key={d.label}>
+              <td>{d.label}</td>
+              <td>{formatEuro(d.recettes)}</td>
+              <td>{formatEuro(d.depenses)}</td>
+              <td>{formatEuro(d.solde)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

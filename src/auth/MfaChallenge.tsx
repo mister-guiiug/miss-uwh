@@ -3,7 +3,7 @@ import { ShieldCheck } from 'lucide-react';
 import { Card } from '../shared/components/Card.tsx';
 import { Button } from '../shared/components/Button.tsx';
 import { TextField } from '../shared/components/Field.tsx';
-import { useAuth } from './AuthContext.tsx';
+import { useAuth } from './useAuth.ts';
 
 /** Étape MFA à la connexion (élévation AAL2) pour les rôles sensibles. */
 export function MfaChallenge() {

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { BACKEND, IS_SUPABASE } from '../../backend/config.ts';
-import { useAuth } from '../../auth/AuthContext.tsx';
+import { useAuth } from '../../auth/useAuth.ts';
 import { MfaCard } from '../../auth/MfaCard.tsx';
 import { MembersSheet } from '../admin/MembersSheet.tsx';
 import { importData } from '../../shared/lib/storage.ts';

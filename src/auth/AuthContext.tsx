@@ -1,52 +1,9 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { IS_SUPABASE } from '../backend/config.ts';
 import { getSupabase } from '../lib/supabase.ts';
 import { setCurrentActor, useAppStore } from '../store/useAppStore.ts';
-
-export type Role =
-  | 'admin_technique'
-  | 'tresorier'
-  | 'tresorier_adjoint'
-  | 'president'
-  | 'resp_evenement'
-  | 'resp_materiel'
-  | 'controleur'
-  | 'membre';
-
-export interface TotpEnrollment {
-  factorId: string;
-  qrCode: string; // SVG data URL
-  secret: string;
-  uri: string;
-}
-
-interface AuthValue {
-  session: Session | null;
-  roles: Role[];
-  loading: boolean;
-  /** Session ouverte mais MFA (AAL2) requise pour ce compte. */
-  needsMfa: boolean;
-  signIn: (email: string, password: string) => Promise<{ error?: string }>;
-  signOut: () => Promise<void>;
-  /** Démarre l'enrôlement TOTP (renvoie le QR à scanner). */
-  enrollTotp: () => Promise<TotpEnrollment | { error: string }>;
-  /** Vérifie un code TOTP (finalise l'enrôlement OU élève la session en AAL2). */
-  verifyTotp: (factorId: string, code: string) => Promise<{ error?: string }>;
-  /** Élévation à la connexion : trouve le facteur vérifié et valide le code. */
-  challengeTotp: (code: string) => Promise<{ error?: string }>;
-  hasTotp: boolean;
-  unenrollTotp: (factorId?: string) => Promise<{ error?: string }>;
-}
-
-const AuthContext = createContext<AuthValue | null>(null);
+import { AuthContext, type Role, type TotpEnrollment } from './useAuth.ts';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -180,10 +137,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth(): AuthValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth doit être utilisé dans AuthProvider');
-  return ctx;
 }

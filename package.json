@@ -20,6 +20,7 @@
     "icons": "node scripts/generate-pwa-icons.mjs",
     "supabase:push": "supabase db push",
     "supabase:link": "supabase link",
+    "supabase:types": "supabase gen types typescript --linked > src/backend/database.types.ts",
     "prepare": "husky || true"
   },
   "devDependencies": {

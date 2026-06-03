@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getSupabase } from '../../lib/supabase.ts';
-import type { Role } from '../../auth/AuthContext.tsx';
+import type { Role } from '../../auth/useAuth.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 
@@ -40,17 +40,22 @@ export function MembersSheet({
 
   useEffect(() => {
     if (!open) return;
-    setLoading(true);
-    setError(undefined);
-    getSupabase()
-      .from('members')
-      .select('id,email,display_name,roles,active')
-      .order('email')
-      .then(({ data, error }) => {
-        if (error) setError(error.message);
-        else setMembers((data as MemberRow[]) ?? []);
-        setLoading(false);
-      });
+    let cancelled = false;
+    void (async () => {
+      setLoading(true);
+      setError(undefined);
+      const { data, error } = await getSupabase()
+        .from('members')
+        .select('id,email,display_name,roles,active')
+        .order('email');
+      if (cancelled) return;
+      if (error) setError(error.message);
+      else setMembers((data as MemberRow[]) ?? []);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   async function toggleRole(m: MemberRow, role: Role) {
