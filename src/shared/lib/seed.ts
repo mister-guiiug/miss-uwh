@@ -355,6 +355,22 @@ export function createInitialData(): AppData {
     activeSeasonId: season.id,
     entries,
     events: [tda, buvette],
+    recurrings: [
+      {
+        id: createId('rec'),
+        label: 'Soutien asso (prélèvement mensuel)',
+        categoryCode: 'R8',
+        amount: 14.67,
+        method: 'prelevement',
+      },
+      {
+        id: createId('rec'),
+        label: 'Frais bancaires SG',
+        categoryCode: 'D12',
+        amount: 14.67,
+        method: 'prelevement',
+      },
+    ],
     audit: [
       {
         id: createId('aud'),
@@ -392,6 +408,7 @@ export function createEmptyData(
     activeSeasonId: season.id,
     entries: [],
     events: [],
+    recurrings: [],
     audit: [],
     settings: DEFAULT_SETTINGS,
     onboarded: true,

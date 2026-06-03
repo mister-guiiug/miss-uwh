@@ -140,6 +140,15 @@ export interface EventLedger {
   kind: EventKind;
 }
 
+/** Modèle d'écriture récurrente (génération rapide : frais bancaires, soutiens…). */
+export interface RecurringTemplate {
+  id: string;
+  label: string;
+  categoryCode: string;
+  amount: number;
+  method: PaymentMethod;
+}
+
 export interface Season {
   id: string;
   /** Club propriétaire (mode Supabase uniquement ; ignoré en local). */
@@ -163,6 +172,8 @@ export interface Season {
    * `totalRecettes` (présentation « bilan »).
    */
   summary?: { totalRecettes: number; totalDepenses: number };
+  /** Budget prévisionnel par catégorie (code → montant prévu, orienté sens). */
+  budget?: Record<string, number>;
 }
 
 export const AUDIT_CATEGORIES = ['metier', 'securite'] as const;
@@ -203,6 +214,7 @@ export interface AppData {
   activeSeasonId: string;
   entries: JournalEntry[];
   events: EventLedger[];
+  recurrings: RecurringTemplate[];
   audit: AuditEvent[];
   settings: Settings;
   onboarded: boolean;

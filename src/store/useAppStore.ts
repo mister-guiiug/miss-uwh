@@ -20,10 +20,12 @@ import type {
   EventKind,
   EventLedger,
   JournalEntry,
+  RecurringTemplate,
   Season,
   Settings,
 } from '../shared/types/domain.ts';
 import { createId, createUuid } from '../shared/lib/id.ts';
+import { categoryByCode } from '../shared/lib/categories.ts';
 import { computeBilan } from '../shared/lib/engine.ts';
 import { createEmptyData } from '../shared/lib/seed.ts';
 import { loadData, saveData } from '../shared/lib/storage.ts';
@@ -88,6 +90,12 @@ interface AppState {
   addEvent: (name: string, kind: EventKind) => string;
   updateEvent: (id: string, patch: { name?: string; kind?: EventKind }) => void;
   deleteEvent: (id: string) => void;
+
+  // Récurrences & budget
+  addRecurring: (t: Omit<RecurringTemplate, 'id'>) => string;
+  deleteRecurring: (id: string) => void;
+  generateFromRecurring: (id: string, date: string) => string | null;
+  setBudget: (seasonId: string, code: string, amount: number) => void;
 
   // Écritures
   addEntry: (input: EntryInput) => string | null;
@@ -406,6 +414,54 @@ export const useAppStore = create<AppState>((set, get) => {
           ),
         };
       }),
+
+    addRecurring: t => {
+      const tpl: RecurringTemplate = { ...t, id: createId('rec') };
+      set(s => ({
+        data: persist({ ...s.data, recurrings: [...s.data.recurrings, tpl] }),
+      }));
+      return tpl.id;
+    },
+
+    deleteRecurring: id =>
+      set(s => ({
+        data: persist({
+          ...s.data,
+          recurrings: s.data.recurrings.filter(r => r.id !== id),
+        }),
+      })),
+
+    generateFromRecurring: (id, date) => {
+      const { data } = get();
+      const tpl = data.recurrings.find(r => r.id === id);
+      if (!tpl) return null;
+      const cat = categoryByCode(tpl.categoryCode);
+      const sens = cat?.sens === 'depense' ? 'debit' : 'credit';
+      return get().addEntry({
+        seasonId: data.activeSeasonId,
+        categoryCode: tpl.categoryCode,
+        date,
+        label: tpl.label,
+        sens,
+        amount: tpl.amount,
+        method: tpl.method,
+      });
+    },
+
+    setBudget: (seasonId, code, amount) =>
+      set(s => ({
+        data: persist({
+          ...s.data,
+          seasons: s.data.seasons.map(x =>
+            x.id === seasonId
+              ? {
+                  ...x,
+                  budget: { ...(x.budget ?? {}), [code]: amount },
+                }
+              : x
+          ),
+        }),
+      })),
 
     addEntry: input => {
       const data = get().data;

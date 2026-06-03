@@ -73,6 +73,15 @@ const seasonSchema = z.object({
   summary: z
     .object({ totalRecettes: z.number(), totalDepenses: z.number() })
     .optional(),
+  budget: z.record(z.string(), z.number()).optional(),
+});
+
+const recurringSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  categoryCode: z.string(),
+  amount: z.number().positive(),
+  method: z.enum(PAYMENT_METHODS).catch('autre'),
 });
 
 const auditSchema = z.object({
@@ -107,6 +116,7 @@ export const appDataSchema = z.object({
   activeSeasonId: z.string(),
   entries: z.array(entrySchema).catch([]),
   events: z.array(eventSchema).catch([]),
+  recurrings: z.array(recurringSchema).catch([]),
   audit: z.array(auditSchema).catch([]),
   settings: settingsSchema,
   onboarded: z.boolean(),

@@ -6,6 +6,7 @@ import {
   FileSpreadsheet,
   LogOut,
   Printer,
+  Repeat,
   ShieldCheck,
   Trash2,
   Upload,
@@ -24,6 +25,7 @@ import {
 } from '../export/exporters.ts';
 import { exportWorkbookXlsx } from '../export/xlsxExport.ts';
 import { ImportSheet } from '../import/ImportSheet.tsx';
+import { RecurringSheet } from '../recurring/RecurringSheet.tsx';
 import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { TextField } from '../../shared/components/Field.tsx';
@@ -46,6 +48,7 @@ export function SettingsScreen() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [restoreError, setRestoreError] = useState<string>();
   const [members, setMembers] = useState(false);
+  const [recurring, setRecurring] = useState(false);
 
   async function onRestore(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -187,6 +190,9 @@ export function SettingsScreen() {
             <FileSpreadsheet size={16} aria-hidden="true" /> Importer un Excel
             (.xlsx)
           </Button>
+          <Button variant="secondary" onClick={() => setRecurring(true)}>
+            <Repeat size={16} aria-hidden="true" /> Modèles récurrents
+          </Button>
           <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] px-5 py-2.5 text-[15px] font-semibold">
             <Upload size={16} aria-hidden="true" /> Restaurer une sauvegarde
             JSON
@@ -220,6 +226,7 @@ export function SettingsScreen() {
       </p>
 
       <ImportSheet open={importing} onClose={() => setImporting(false)} />
+      <RecurringSheet open={recurring} onClose={() => setRecurring(false)} />
       <MembersSheet open={members} onClose={() => setMembers(false)} />
       <ConfirmDialog
         open={confirmReset}
