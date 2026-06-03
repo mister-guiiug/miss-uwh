@@ -78,9 +78,13 @@ offline-first :
 > `controleur` est en lecture seule, une saison clôturée est verrouillée côté
 > serveur), et les interactions avec les triggers `version`/audit.
 >
-> **Limites V2 restantes** : pas encore de file d'attente hors ligne persistante,
-> ni d'upload des justificatifs vers le bucket, ni de résolution de conflits
-> multi-utilisateurs (dernier-écrivain-gagne).
+> **Implémenté depuis** : file d'attente hors ligne persistante (`syncQueue.ts`),
+> MFA TOTP in-app, admin membres/rôles, et **upload des justificatifs** (bucket
+> privé `justificatifs` + table `attachments`, consultation par URL signée — cf.
+> `src/backend/attachments.ts`).
+>
+> **Limite restante** : résolution de conflits multi-utilisateurs avancée
+> (aujourd'hui dernier-écrivain-gagne via upsert UUID).
 
 ### Activer le mode Supabase au build (déploiement GitHub Pages)
 
