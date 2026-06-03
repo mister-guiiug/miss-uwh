@@ -245,7 +245,8 @@ Mobile-first, bottom-nav 5 onglets, utilisable aussi sur desktop (max-width 2xl)
       reconnexion + lettre morte (échec serveur) ; réconciliation par re-pull.
 - [x] **MFA in-app (TOTP)** : enrôlement (QR) dans les réglages + élévation AAL2
       à la connexion ; **admin membres/rôles** (gardé admin, RLS serveur).
-- [ ] Upload des justificatifs vers le bucket privé + visionneuse.
+- [x] **Justificatifs** : upload vers le bucket privé `justificatifs` + table
+      `attachments` (RLS) ; **visionneuse par URL signée** ; mode local = data URL.
 
 > Les briques Supabase (sync, MFA, admin) sont **correctes par construction** et
 > typées, mais **à éprouver sur un projet Supabase réel** (cf. `supabase/README.md`).

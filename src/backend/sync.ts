@@ -42,15 +42,28 @@ function isTransient(message: string): boolean {
 export async function pullAll(): Promise<void> {
   setStatus('syncing');
   try {
-    const [club, seasons, events, entries, audit] = await Promise.all([
-      repo.fetchClub(),
-      repo.fetchSeasons(),
-      repo.fetchEvents(),
-      repo.fetchEntries(),
-      repo.fetchAudit(),
-    ]);
+    const [club, seasons, events, entries, audit, attachments] =
+      await Promise.all([
+        repo.fetchClub(),
+        repo.fetchSeasons(),
+        repo.fetchEvents(),
+        repo.fetchEntries(),
+        repo.fetchAudit(),
+        repo.fetchAttachments(),
+      ]);
 
     if (club) setCurrentClubId(club.id);
+
+    // Rattache les justificatifs (table séparée) à leurs écritures.
+    const byEntry = new Map<string, typeof attachments>();
+    for (const a of attachments) {
+      const list = byEntry.get(a.entryId) ?? [];
+      list.push(a);
+      byEntry.set(a.entryId, list);
+    }
+    for (const e of entries) {
+      e.attachments = (byEntry.get(e.id) ?? []).map(a => a.att);
+    }
 
     const prev = useAppStore.getState().data;
     const fallback = createEmptyData(club?.name ?? 'Mon club');

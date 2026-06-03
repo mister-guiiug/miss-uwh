@@ -11,6 +11,7 @@
  * (`VITE_BACKEND=supabase`). Le mode local n'appelle jamais ce module.
  */
 import type {
+  Attachment,
   AuditEvent,
   Club,
   EventLedger,
@@ -21,12 +22,14 @@ import { getSupabase } from '../lib/supabase.ts';
 import {
   entryToUpsertRow,
   eventToRow,
+  rowToAttachment,
   rowToAudit,
   rowToClub,
   rowToEntry,
   rowToEvent,
   rowToSeason,
   seasonToUpsertRow,
+  type AttachmentRow,
   type AuditRow,
   type ClubRow,
   type EntryRow,
@@ -90,6 +93,15 @@ export async function fetchAudit(): Promise<AuditEvent[]> {
     rowToAudit(r, 'securite')
   );
   return [...m, ...s].sort((a, b) => b.ts - a.ts);
+}
+
+export async function fetchAttachments(): Promise<
+  Array<{ entryId: string; att: Attachment }>
+> {
+  const rows = unwrap(
+    await getSupabase().from('attachments').select('*')
+  ) as AttachmentRow[];
+  return rows.map(r => ({ entryId: r.entry_id, att: rowToAttachment(r) }));
 }
 
 // ── Push (idempotent) ────────────────────────────────────────────────

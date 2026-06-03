@@ -5,6 +5,7 @@
  * et tester ce mappage évite les erreurs silencieuses de schéma au runtime.
  */
 import type {
+  Attachment,
   AuditCategory,
   AuditEvent,
   Club,
@@ -204,6 +205,49 @@ export interface AuditRow {
   summary: string;
   before?: unknown;
   after?: unknown;
+}
+
+// ── Pièces justificatives ────────────────────────────────────────────
+export interface AttachmentRow {
+  id: string;
+  entry_id: string;
+  name: string;
+  mime: string | null;
+  size: number | null;
+  storage_path: string;
+  uploaded_at: string;
+  uploaded_by: string | null;
+}
+
+export function rowToAttachment(row: AttachmentRow): Attachment {
+  return {
+    id: row.id,
+    name: row.name,
+    mime: row.mime ?? '',
+    size: row.size ?? 0,
+    storagePath: row.storage_path,
+    uploadedAt: isoToEpoch(row.uploaded_at) ?? 0,
+    uploadedBy: orUndef(row.uploaded_by),
+  };
+}
+
+/** Nom de fichier assaini (évite les caractères problématiques dans le chemin). */
+export function safeFileName(name: string): string {
+  const cleaned = name
+    .normalize('NFKD')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/_+/g, '_')
+    .slice(0, 80);
+  return cleaned || 'fichier';
+}
+
+/** Chemin de stockage d'une pièce : `<entryId>/<attId>-<nom>`. */
+export function attachmentPath(
+  entryId: string,
+  attId: string,
+  fileName: string
+): string {
+  return `${entryId}/${attId}-${safeFileName(fileName)}`;
 }
 
 export function rowToAudit(row: AuditRow, category: AuditCategory): AuditEvent {

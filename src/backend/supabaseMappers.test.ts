@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  attachmentPath,
   entryToRow,
   entryToUpsertRow,
+  rowToAttachment,
   rowToSeason,
   rowToEntry,
+  safeFileName,
   seasonToRow,
   seasonToUpsertRow,
+  type AttachmentRow,
   type EntryRow,
   type SeasonRow,
 } from './supabaseMappers.ts';
@@ -114,5 +118,35 @@ describe('entryToUpsertRow', () => {
     const up = entryToUpsertRow(rowToEntry(entryRow));
     expect(up.id).toBe('e1');
     expect(up.category_code).toBe('R1');
+  });
+});
+
+describe('pièces justificatives', () => {
+  it('safeFileName assainit le nom', () => {
+    expect(safeFileName('Facture FFESSM 2025 (1).pdf')).toBe(
+      'Facture_FFESSM_2025_1_.pdf'
+    );
+    expect(safeFileName('')).toBe('fichier');
+  });
+
+  it('attachmentPath construit <entryId>/<attId>-<nom>', () => {
+    expect(attachmentPath('e1', 'a1', 'photo 1.jpg')).toBe('e1/a1-photo_1.jpg');
+  });
+
+  it('rowToAttachment mappe vers le domaine', () => {
+    const row: AttachmentRow = {
+      id: 'a1',
+      entry_id: 'e1',
+      name: 'facture.pdf',
+      mime: 'application/pdf',
+      size: 1024,
+      storage_path: 'e1/a1-facture.pdf',
+      uploaded_at: '2026-01-01T00:00:00.000Z',
+      uploaded_by: null,
+    };
+    const a = rowToAttachment(row);
+    expect(a.storagePath).toBe('e1/a1-facture.pdf');
+    expect(a.size).toBe(1024);
+    expect(a.uploadedBy).toBeUndefined();
   });
 });

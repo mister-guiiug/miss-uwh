@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Paperclip, Trash2 } from 'lucide-react';
+import { Eye, Paperclip, Trash2 } from 'lucide-react';
 import {
   useAppStore,
   selectActiveSeason,
@@ -13,9 +13,17 @@ import {
 import {
   PAYMENT_METHODS,
   PAYMENT_METHOD_LABELS,
+  type Attachment,
   type JournalEntry,
   type PaymentMethod,
 } from '../../shared/types/domain.ts';
+import { IS_SUPABASE } from '../../backend/config.ts';
+import {
+  removeAttachmentRemote,
+  signedUrl,
+  uploadAttachment,
+} from '../../backend/attachments.ts';
+import { createUuid } from '../../shared/lib/id.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import {
@@ -45,6 +53,14 @@ export function EntrySheet({ open, entry, onClose }: Props) {
   const updateEntry = useAppStore(s => s.updateEntry);
   const softDeleteEntry = useAppStore(s => s.softDeleteEntry);
   const addAttachment = useAppStore(s => s.addAttachment);
+  const removeAttachment = useAppStore(s => s.removeAttachment);
+  // Écriture VIVE du store (le prop `entry` est un instantané) : la liste des
+  // pièces se rafraîchit après ajout/suppression. Sélecteur stable (renvoie la
+  // référence existante).
+  const liveEntry = useAppStore(s =>
+    entry ? s.data.entries.find(e => e.id === entry.id) : undefined
+  );
+  const attachments = liveEntry?.attachments ?? entry?.attachments ?? [];
 
   const [date, setDate] = useState(entry?.date ?? season.startDate);
   const [categoryCode, setCategoryCode] = useState(entry?.categoryCode ?? 'R1');
@@ -65,6 +81,8 @@ export function EntrySheet({ open, entry, onClose }: Props) {
   });
   const [submitted, setSubmitted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [attBusy, setAttBusy] = useState(false);
+  const [attError, setAttError] = useState<string>();
 
   const cat = categoryByCode(categoryCode);
   const sens = cat?.sens === 'depense' ? 'debit' : 'credit';
@@ -115,20 +133,60 @@ export function EntrySheet({ open, entry, onClose }: Props) {
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !entry) return;
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-    addAttachment(entry.id, {
-      name: file.name,
-      mime: file.type,
-      size: file.size,
-      dataUrl,
-      uploadedAt: Date.now(),
-    });
-    e.target.value = '';
+    setAttBusy(true);
+    setAttError(undefined);
+    try {
+      if (IS_SUPABASE) {
+        // Téléversement dans le bucket privé + métadonnées (RLS serveur).
+        const att = await uploadAttachment(entry.id, file);
+        addAttachment(entry.id, att);
+      } else {
+        // Mode local : inline en data URL.
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+        addAttachment(entry.id, {
+          id: createUuid(),
+          name: file.name,
+          mime: file.type,
+          size: file.size,
+          dataUrl,
+          uploadedAt: Date.now(),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setAttError('Téléversement impossible (vérifiez votre connexion).');
+    } finally {
+      setAttBusy(false);
+      e.target.value = '';
+    }
+  }
+
+  async function openAttachment(att: Attachment) {
+    setAttError(undefined);
+    try {
+      const url =
+        att.dataUrl ??
+        (att.storagePath ? await signedUrl(att.storagePath) : '');
+      if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    } catch {
+      setAttError('Ouverture impossible.');
+    }
+  }
+
+  async function deleteAttachment(att: Attachment) {
+    if (!entry) return;
+    setAttError(undefined);
+    try {
+      if (IS_SUPABASE && att.storagePath) await removeAttachmentRemote(att);
+      removeAttachment(entry.id, att.id);
+    } catch {
+      setAttError('Suppression impossible.');
+    }
   }
 
   const err = (k: keyof typeof errors) => (submitted ? errors[k] : undefined);
@@ -282,23 +340,57 @@ export function EntrySheet({ open, entry, onClose }: Props) {
                 <Paperclip size={15} aria-hidden="true" /> Pièces justificatives
               </span>
               <label className="cursor-pointer text-xs font-semibold text-primary">
-                Ajouter
-                <input type="file" className="hidden" onChange={onFile} />
+                {attBusy ? 'Envoi…' : 'Ajouter'}
+                <input
+                  type="file"
+                  className="hidden"
+                  disabled={attBusy}
+                  onChange={onFile}
+                />
               </label>
             </div>
-            {entry.attachments.length === 0 ? (
+            {attachments.length === 0 ? (
               <p className="text-xs text-[var(--uwh-text-soft)]">
                 Aucune pièce. En mode Supabase, les fichiers vont dans un bucket
-                privé chiffré.
+                privé (URL signée à la consultation).
               </p>
             ) : (
-              <ul className="flex flex-col gap-1 text-xs">
-                {entry.attachments.map(a => (
-                  <li key={a.id} className="truncate">
-                    📎 {a.name} ({Math.round(a.size / 1024)} Ko)
+              <ul className="flex flex-col gap-1">
+                {attachments.map(a => (
+                  <li
+                    key={a.id}
+                    className="flex items-center gap-2 rounded-lg bg-[var(--uwh-surface-2)] px-2 py-1.5 text-xs"
+                  >
+                    <span className="min-w-0 flex-1 truncate">
+                      {a.name}{' '}
+                      <span className="text-[var(--uwh-text-soft)]">
+                        ({Math.max(1, Math.round(a.size / 1024))} Ko)
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={`Voir ${a.name}`}
+                      className="text-primary"
+                      onClick={() => void openAttachment(a)}
+                    >
+                      <Eye size={15} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Supprimer ${a.name}`}
+                      className="text-[var(--uwh-debit)]"
+                      onClick={() => void deleteAttachment(a)}
+                    >
+                      <Trash2 size={15} aria-hidden="true" />
+                    </button>
                   </li>
                 ))}
               </ul>
+            )}
+            {attError && (
+              <p role="alert" className="mt-2 text-xs text-[var(--uwh-debit)]">
+                {attError}
+              </p>
             )}
           </div>
         )}

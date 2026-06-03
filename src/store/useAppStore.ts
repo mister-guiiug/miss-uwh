@@ -95,7 +95,8 @@ interface AppState {
   updateEntry: (id: string, patch: Partial<EntryInput>) => void;
   softDeleteEntry: (id: string, reason?: string) => void;
   restoreEntry: (id: string) => void;
-  addAttachment: (entryId: string, att: Omit<Attachment, 'id'>) => void;
+  addAttachment: (entryId: string, attachment: Attachment) => void;
+  removeAttachment: (entryId: string, attId: string) => void;
 
   // Sécurité / audit
   logSecurity: (action: string, summary: string) => void;
@@ -558,16 +559,17 @@ export const useAppStore = create<AppState>((set, get) => {
         };
       }),
 
-    addAttachment: (entryId, att) =>
+    // Les justificatifs vivent dans une table à part (Supabase Storage en mode
+    // serveur) ; ces actions ne mettent à jour que l'état local + l'audit (pas
+    // d'emit `entry.upsert` : la colonne attachments n'existe pas côté entries).
+    addAttachment: (entryId, attachment) =>
       set(s => {
         const before = s.data.entries.find(e => e.id === entryId);
         if (!before || isLocked(s.data, before.seasonId)) return s;
-        const attachment: Attachment = { ...att, id: createId('att') };
         const after = {
           ...before,
           attachments: [...before.attachments, attachment],
           updatedAt: Date.now(),
-          version: before.version + 1,
         };
         return {
           data: persist(
@@ -581,7 +583,36 @@ export const useAppStore = create<AppState>((set, get) => {
               'entry.attach',
               'metier',
               'entry',
-              `Pièce jointe « ${att.name} » ajoutée à « ${before.label} ».`,
+              `Pièce jointe « ${attachment.name} » ajoutée à « ${before.label} ».`,
+              { targetId: entryId }
+            )
+          ),
+        };
+      }),
+
+    removeAttachment: (entryId, attId) =>
+      set(s => {
+        const before = s.data.entries.find(e => e.id === entryId);
+        if (!before || isLocked(s.data, before.seasonId)) return s;
+        const att = before.attachments.find(a => a.id === attId);
+        const after = {
+          ...before,
+          attachments: before.attachments.filter(a => a.id !== attId),
+          updatedAt: Date.now(),
+        };
+        return {
+          data: persist(
+            audit(
+              {
+                ...s.data,
+                entries: s.data.entries.map(e =>
+                  e.id === entryId ? after : e
+                ),
+              },
+              'entry.detach',
+              'metier',
+              'entry',
+              `Pièce jointe${att ? ` « ${att.name} »` : ''} retirée de « ${before.label} ».`,
               { targetId: entryId }
             )
           ),
