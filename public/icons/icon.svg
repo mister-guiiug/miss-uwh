@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Miss UWH">
+  <defs>
+    <linearGradient id="aqua" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0ea5a4" />
+      <stop offset="1" stop-color="#0f766e" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#aqua)" />
+  <!-- vagues -->
+  <g fill="none" stroke="#7fd9d4" stroke-width="14" stroke-linecap="round" opacity="0.55">
+    <path d="M64 150 q40 -34 80 0 t80 0 t80 0 t80 0" />
+    <path d="M64 392 q40 -34 80 0 t80 0 t80 0 t80 0" />
+  </g>
+  <!-- crosse de hockey sub -->
+  <path d="M196 132 l40 0 l0 150 q0 70 70 70 l24 0"
+        fill="none" stroke="#ffffff" stroke-width="34"
+        stroke-linecap="round" stroke-linejoin="round" />
+  <!-- palet -->
+  <ellipse cx="350" cy="356" rx="58" ry="30" fill="#fb923c" />
+  <ellipse cx="350" cy="346" rx="58" ry="30" fill="#fdba74" />
+</svg>

@@ -1,0 +1,130 @@
+@import 'tailwindcss';
+
+/*
+ * Univers visuel « Miss UWH » : aquatique, sobre et lisible (app de gestion).
+ * Teal profond + accents corail (palet) ; vert = crédit/recette, rose = débit/
+ * dépense. Coins arrondis, ombres douces. Déclinable via --color-primary.
+ *
+ * Tailwind v4 : tokens exposés via @theme -> classes utilitaires (bg-primary…).
+ */
+@theme {
+  --color-primary: #0f766e;
+  --color-primary-soft: #ccfbf1;
+  --color-accent: #fb7185;
+  --color-credit: #0d9488;
+  --color-debit: #e11d48;
+  --color-amber: #f59e0b;
+  --color-sky: #0ea5e9;
+  --color-puck: #f97316;
+
+  --font-display: 'Fredoka', system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --radius-card: 1.1rem;
+}
+
+:root {
+  --uwh-bg: #f0fbfa;
+  --uwh-surface: #ffffff;
+  --uwh-surface-2: #f4fbfa;
+  --uwh-text: #0f2a28;
+  --uwh-text-soft: #5b7a77;
+  --uwh-border: #d6eeeb;
+  --uwh-ring: #0f766e;
+  --uwh-credit: #0d9488;
+  --uwh-debit: #e11d48;
+  --uwh-warn: #f59e0b;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --uwh-bg: #07201e;
+  --uwh-surface: #0e2e2b;
+  --uwh-surface-2: #123633;
+  --uwh-text: #ecfdfb;
+  --uwh-text-soft: #8fb4b0;
+  --uwh-border: #1c4742;
+  --uwh-ring: #5eead4;
+  --uwh-credit: #2dd4bf;
+  --uwh-debit: #fb7185;
+  --uwh-warn: #fbbf24;
+  color-scheme: dark;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--uwh-bg);
+  color: var(--uwh-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Anneau de focus visible et homogène (accessibilité clavier). */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--uwh-ring);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* Tableaux de chiffres : chiffres tabulaires alignés. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@keyframes uwh-rise {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.uwh-rise {
+  animation: uwh-rise 0.26s ease-out both;
+}
+
+/* Impression : on masque la navigation et on met le bilan en pleine page. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .print-block {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
