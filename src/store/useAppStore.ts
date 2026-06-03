@@ -23,15 +23,29 @@ import type {
   Season,
   Settings,
 } from '../shared/types/domain.ts';
-import { createId } from '../shared/lib/id.ts';
+import { createId, createUuid } from '../shared/lib/id.ts';
 import { computeBilan } from '../shared/lib/engine.ts';
 import { createEmptyData } from '../shared/lib/seed.ts';
 import { loadData, saveData } from '../shared/lib/storage.ts';
+import { IS_SUPABASE } from '../backend/config.ts';
+import { emitRemote, type RemoteOp } from '../backend/syncBus.ts';
+import { getCurrentClubId } from '../backend/clubContext.ts';
 
 /** Acteur courant (mode local). En mode Supabase, l'email de session le remplace. */
 let currentActor = 'local';
 export function setCurrentActor(actor: string): void {
   currentActor = actor;
+}
+
+/** Statut de synchronisation (mode Supabase). Non persisté. */
+export interface SyncStatus {
+  state: 'idle' | 'syncing' | 'ready' | 'error';
+  error?: string;
+}
+
+/** Émet une intention de synchronisation (no-op en mode local). */
+function remote(op: RemoteOp): void {
+  if (IS_SUPABASE) emitRemote(op);
 }
 
 export type EntryInput = Omit<
@@ -49,6 +63,11 @@ export type EntryInput = Omit<
 
 interface AppState {
   data: AppData;
+  /** Statut de synchronisation Supabase (mode supabase uniquement). */
+  syncStatus: SyncStatus;
+  setSyncStatus: (status: SyncStatus) => void;
+  /** Remplace l'état depuis un pull serveur (sans trace d'audit locale). */
+  hydrate: (data: AppData) => void;
 
   // Méta
   completeOnboarding: () => void;
@@ -126,6 +145,11 @@ export const useAppStore = create<AppState>((set, get) => {
 
   return {
     data: loadData(),
+    syncStatus: { state: 'idle' },
+
+    setSyncStatus: status => set({ syncStatus: status }),
+
+    hydrate: data => set({ data: persist(data) }),
 
     completeOnboarding: () =>
       set(s => ({ data: persist({ ...s.data, onboarded: true }) })),
@@ -182,7 +206,8 @@ export const useAppStore = create<AppState>((set, get) => {
     addSeason: (label, opening) => {
       const year = Number(label.slice(0, 4)) || new Date().getFullYear();
       const season: Season = {
-        id: createId('sea'),
+        id: createUuid(),
+        clubId: getCurrentClubId(),
         label,
         startDate: `${year}-09-01`,
         endDate: `${year + 1}-08-31`,
@@ -205,6 +230,7 @@ export const useAppStore = create<AppState>((set, get) => {
           )
         ),
       }));
+      remote({ kind: 'season.upsert', season });
       return season.id;
     },
 
@@ -220,6 +246,7 @@ export const useAppStore = create<AppState>((set, get) => {
           lockedAt: Date.now(),
           lockedBy: currentActor,
         };
+        remote({ kind: 'season.upsert', season: closed });
         return {
           data: persist(
             audit(
@@ -247,6 +274,7 @@ export const useAppStore = create<AppState>((set, get) => {
           reopenedAt: Date.now(),
           reopenReason: reason,
         };
+        remote({ kind: 'season.upsert', season: reopened });
         return {
           data: persist(
             audit(
@@ -268,14 +296,14 @@ export const useAppStore = create<AppState>((set, get) => {
       set(s => {
         const season = seasonOf(s.data, id);
         if (!season || season.status === 'cloturee') return s;
+        const updated: Season = { ...season, openingBalance: opening };
+        remote({ kind: 'season.upsert', season: updated });
         return {
           data: persist(
             audit(
               {
                 ...s.data,
-                seasons: s.data.seasons.map(x =>
-                  x.id === id ? { ...x, openingBalance: opening } : x
-                ),
+                seasons: s.data.seasons.map(x => (x.id === id ? updated : x)),
               },
               'season.opening',
               'metier',
@@ -293,14 +321,14 @@ export const useAppStore = create<AppState>((set, get) => {
         const to = seasonOf(s.data, toId);
         if (!from || !to || to.status === 'cloturee') return s;
         const opening = from.closingBalance ?? from.openingBalance;
+        const updated: Season = { ...to, openingBalance: opening };
+        remote({ kind: 'season.upsert', season: updated });
         return {
           data: persist(
             audit(
               {
                 ...s.data,
-                seasons: s.data.seasons.map(x =>
-                  x.id === toId ? { ...x, openingBalance: opening } : x
-                ),
+                seasons: s.data.seasons.map(x => (x.id === toId ? updated : x)),
               },
               'season.carryover',
               'metier',
@@ -314,7 +342,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
     addEvent: (name, kind) => {
       const ev: EventLedger = {
-        id: createId('ev'),
+        id: createUuid(),
         seasonId: get().data.activeSeasonId,
         name,
         kind,
@@ -331,27 +359,34 @@ export const useAppStore = create<AppState>((set, get) => {
           )
         ),
       }));
+      remote({ kind: 'event.upsert', event: ev });
       return ev.id;
     },
 
     updateEvent: (id, patch) =>
-      set(s => ({
-        data: persist({
-          ...s.data,
-          events: s.data.events.map(e =>
-            e.id === id ? { ...e, ...patch } : e
-          ),
-        }),
-      })),
+      set(s => {
+        const ev = s.data.events.find(e => e.id === id);
+        if (!ev) return s;
+        const updated: EventLedger = { ...ev, ...patch };
+        remote({ kind: 'event.upsert', event: updated });
+        return {
+          data: persist({
+            ...s.data,
+            events: s.data.events.map(e => (e.id === id ? updated : e)),
+          }),
+        };
+      }),
 
     deleteEvent: id =>
       set(s => {
         const ev = s.data.events.find(e => e.id === id);
         if (!ev) return s;
-        // Détache les écritures rattachées (sans les supprimer) puis retire l'événement.
+        // Détache les écritures rattachées (sans les supprimer) puis retire
+        // l'événement. Côté serveur, la FK `on delete set null` détache aussi.
         const entries = s.data.entries.map(e =>
           e.eventId === id ? { ...e, eventId: undefined } : e
         );
+        remote({ kind: 'event.delete', id });
         return {
           data: persist(
             audit(
@@ -379,7 +414,7 @@ export const useAppStore = create<AppState>((set, get) => {
       const now = Date.now();
       const entry: JournalEntry = {
         ...input,
-        id: createId('ec'),
+        id: createUuid(),
         attachments: [],
         createdAt: now,
         createdBy: currentActor,
@@ -399,6 +434,7 @@ export const useAppStore = create<AppState>((set, get) => {
           )
         ),
       }));
+      remote({ kind: 'entry.upsert', entry });
       return entry.id;
     },
 
@@ -408,7 +444,7 @@ export const useAppStore = create<AppState>((set, get) => {
       const accepted = drafts.filter(d => !isLocked(data, d.seasonId));
       const created: JournalEntry[] = accepted.map((d, i) => ({
         ...d,
-        id: createId('ec'),
+        id: createUuid(),
         attachments: [],
         createdAt: now + i,
         createdBy: currentActor,
@@ -427,6 +463,7 @@ export const useAppStore = create<AppState>((set, get) => {
           )
         ),
       }));
+      remote({ kind: 'entry.bulkUpsert', entries: created });
       return created.length;
     },
 
@@ -441,6 +478,7 @@ export const useAppStore = create<AppState>((set, get) => {
           updatedBy: currentActor,
           version: before.version + 1,
         };
+        remote({ kind: 'entry.upsert', entry: after });
         return {
           data: persist(
             audit(
@@ -472,6 +510,7 @@ export const useAppStore = create<AppState>((set, get) => {
             : before.observation,
           version: before.version + 1,
         };
+        remote({ kind: 'entry.upsert', entry: after });
         return {
           data: persist(
             audit(
@@ -501,6 +540,7 @@ export const useAppStore = create<AppState>((set, get) => {
           updatedAt: Date.now(),
           updatedBy: currentActor,
         };
+        remote({ kind: 'entry.upsert', entry: after });
         return {
           data: persist(
             audit(

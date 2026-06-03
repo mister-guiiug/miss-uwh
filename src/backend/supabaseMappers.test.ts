@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   entryToRow,
-  rowToEntry,
+  entryToUpsertRow,
   rowToSeason,
+  rowToEntry,
   seasonToRow,
+  seasonToUpsertRow,
   type EntryRow,
   type SeasonRow,
 } from './supabaseMappers.ts';
@@ -69,6 +71,7 @@ describe('entryToRow', () => {
 
 const seasonRow: SeasonRow = {
   id: 's1',
+  club_id: 'club-1',
   label: '2025-2026',
   start_date: '2025-05-15',
   end_date: '2026-05-15',
@@ -95,5 +98,21 @@ describe('saisons (round-trip)', () => {
     expect(row.closing_balance).toBe(9390.46);
     expect(row.start_date).toBe('2025-05-15');
     expect(row.reopen_reason).toBeNull();
+  });
+
+  it('rowToSeason conserve le clubId, seasonToUpsertRow réinjecte id + club_id', () => {
+    const s = rowToSeason(seasonRow);
+    expect(s.clubId).toBe('club-1');
+    const up = seasonToUpsertRow(s);
+    expect(up.id).toBe('s1');
+    expect(up.club_id).toBe('club-1');
+  });
+});
+
+describe('entryToUpsertRow', () => {
+  it('inclut l’id pour le on conflict', () => {
+    const up = entryToUpsertRow(rowToEntry(entryRow));
+    expect(up.id).toBe('e1');
+    expect(up.category_code).toBe('R1');
   });
 });

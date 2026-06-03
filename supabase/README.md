@@ -55,10 +55,36 @@ Deux tables append‑only, alimentées par des triggers `SECURITY DEFINER` :
 `audit_securite` (connexions, suppressions, clôtures/réouvertures, exports). Seuls
 `admin_technique` et `controleur` lisent `audit_securite`.
 
-## Étape suivante (adaptateur de données)
+## Synchronisation (offline-first)
 
-Les migrations ci‑dessus fournissent le **schéma et la sécurité**. Le branchement
-complet lecture/écriture de l'app sur Supabase (remplacement de la couche
-`storage.ts` locale par un repository Supabase) est la première tâche de la V2 —
-le contrat `loadData/saveData/importEntries` a été conçu pour cela (cf. README
-racine, backlog).
+L'app est **branchée** sur Supabase en mode `supabase`, selon un modèle
+offline-first :
+
+- **Pull** à la connexion : `src/backend/sync.ts` `pullAll()` lit clubs / seasons /
+  events / entries / audit (arbitrés par RLS) et **hydrate** le store local. Le
+  serveur fait foi.
+- **Push** des mutations : chaque commit local émet une intention sur `syncBus`
+  (`src/backend/syncBus.ts`) ; `sync.ts` la pousse vers Supabase **en série** via
+  `supabaseRepository.ts` (upsert idempotent — les ids sont des **UUID** générés
+  côté client, donc `on conflict (id)` fait insert OU update). Les triggers
+  serveur gèrent version, audit et verrou de clôture.
+- **Statut** : un bandeau (`SupabaseSync.tsx`) signale « synchronisation… » /
+  erreur (avec bouton _Réessayer_). Hors ligne, l'app reste utilisable sur le
+  cache local ; la dernière écriture l'emporte.
+
+> ⚠️ Ce chemin est **correct par construction** (mappers purs testés, types
+> alignés sur le schéma) mais **n'a pas encore été éprouvé contre un projet
+> Supabase réel**. À valider : RLS (un `membre` ne peut pas écrire, un
+> `controleur` est en lecture seule, une saison clôturée est verrouillée côté
+> serveur), et les interactions avec les triggers `version`/audit.
+>
+> **Limites V2 restantes** : pas encore de file d'attente hors ligne persistante,
+> ni d'upload des justificatifs vers le bucket, ni de résolution de conflits
+> multi-utilisateurs (dernier-écrivain-gagne).
+
+### Activer le mode Supabase au build (déploiement GitHub Pages)
+
+Vite lit les variables **au build**. Pour un site Pages en mode Supabase :
+copier `.env.production.example` → `.env.production` et y mettre
+`VITE_BACKEND=supabase` + l'URL + la clé anon (publiques). Sans ces variables, le
+site déployé reste en mode `local` (défaut). En local de dev, utiliser un `.env`.

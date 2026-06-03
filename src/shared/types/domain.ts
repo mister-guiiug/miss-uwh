@@ -139,6 +139,8 @@ export interface EventLedger {
 
 export interface Season {
   id: string;
+  /** Club propriétaire (mode Supabase uniquement ; ignoré en local). */
+  clubId?: string;
   /** Libellé saison sportive, ex. « 2025-2026 ». */
   label: string;
   startDate: string;

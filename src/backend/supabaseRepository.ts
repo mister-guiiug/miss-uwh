@@ -1,24 +1,34 @@
 /**
- * Repository Supabase — surface lecture/écriture de la comptabilité, arbitrée
- * par RLS côté serveur. Construit sur les mappers PURS (`supabaseMappers.ts`).
+ * Repository Supabase — accès données de la comptabilité, arbitré par RLS côté
+ * serveur. Construit sur les mappers PURS (`supabaseMappers.ts`).
  *
- * Statut : prêt et typé, mais PAS encore branché dans le store (l'app reste
- * local-first par défaut). Le branchement (remplacer `storage.ts` par ce
- * repository en mode `supabase`, gestion async + offline cache) est l'étape V2.
- * Nécessite un projet Supabase configuré pour être exercé end-to-end.
+ * Deux familles :
+ *  - `fetch*` : pull complet (hydratation du store local à la connexion) ;
+ *  - `upsert*` / `deleteEvent` : push idempotent (les ids sont des UUID générés
+ *    côté client, donc `on conflict (id)` fait insert OU update).
+ *
+ * NB : exercé end-to-end uniquement avec un projet Supabase configuré
+ * (`VITE_BACKEND=supabase`). Le mode local n'appelle jamais ce module.
  */
-import type { EntryInput } from '../store/useAppStore.ts';
 import type {
+  AuditEvent,
+  Club,
   EventLedger,
   JournalEntry,
   Season,
 } from '../shared/types/domain.ts';
 import { getSupabase } from '../lib/supabase.ts';
 import {
-  entryToRow,
+  entryToUpsertRow,
+  eventToRow,
+  rowToAudit,
+  rowToClub,
   rowToEntry,
   rowToEvent,
   rowToSeason,
+  seasonToUpsertRow,
+  type AuditRow,
+  type ClubRow,
   type EntryRow,
   type EventRow,
   type SeasonRow,
@@ -32,65 +42,90 @@ function unwrap<T>(res: {
   return res.data as T;
 }
 
-export async function listSeasons(): Promise<Season[]> {
+// ── Pull (hydratation) ───────────────────────────────────────────────
+export async function fetchClub(): Promise<(Club & { id: string }) | null> {
+  const rows = unwrap(
+    await getSupabase().from('clubs').select('*').limit(1)
+  ) as ClubRow[];
+  return rows[0] ? rowToClub(rows[0]) : null;
+}
+
+export async function fetchSeasons(): Promise<Season[]> {
   const rows = unwrap(
     await getSupabase().from('seasons').select('*').order('label')
   ) as SeasonRow[];
   return rows.map(rowToSeason);
 }
 
-export async function listEntries(seasonId: string): Promise<JournalEntry[]> {
+export async function fetchEvents(): Promise<EventLedger[]> {
   const rows = unwrap(
-    await getSupabase()
-      .from('entries')
-      .select('*')
-      .eq('season_id', seasonId)
-      .order('date')
-  ) as EntryRow[];
-  return rows.map(rowToEntry);
-}
-
-export async function listEvents(seasonId: string): Promise<EventLedger[]> {
-  const rows = unwrap(
-    await getSupabase().from('events').select('*').eq('season_id', seasonId)
+    await getSupabase().from('events').select('*')
   ) as EventRow[];
   return rows.map(rowToEvent);
 }
 
-export async function createEntry(input: EntryInput): Promise<JournalEntry> {
-  const payload = entryToRow({
-    ...input,
-    id: '',
-    createdAt: 0,
-    updatedAt: 0,
-    version: 1,
-  });
-  const row = unwrap(
-    await getSupabase().from('entries').insert(payload).select().single()
-  ) as EntryRow;
-  return rowToEntry(row);
+export async function fetchEntries(): Promise<JournalEntry[]> {
+  const rows = unwrap(
+    await getSupabase().from('entries').select('*').order('date')
+  ) as EntryRow[];
+  return rows.map(rowToEntry);
 }
 
-export async function patchEntry(
-  id: string,
-  patch: Partial<EntryInput>
-): Promise<void> {
-  const payload = entryToRow({
-    ...(patch as EntryInput),
-    id,
-    createdAt: 0,
-    updatedAt: 0,
-    version: 1,
-  });
-  unwrap(await getSupabase().from('entries').update(payload).eq('id', id));
+export async function fetchAudit(): Promise<AuditEvent[]> {
+  const sb = getSupabase();
+  const [metier, securite] = await Promise.all([
+    sb
+      .from('audit_metier')
+      .select('*')
+      .order('ts', { ascending: false })
+      .limit(500),
+    sb
+      .from('audit_securite')
+      .select('*')
+      .order('ts', { ascending: false })
+      .limit(500),
+  ]);
+  const m = (unwrap(metier) as AuditRow[]).map(r => rowToAudit(r, 'metier'));
+  const s = (unwrap(securite) as AuditRow[]).map(r =>
+    rowToAudit(r, 'securite')
+  );
+  return [...m, ...s].sort((a, b) => b.ts - a.ts);
 }
 
-/** Suppression LOGIQUE (le DELETE physique est refusé par la RLS). */
-export async function softDeleteEntry(id: string): Promise<void> {
+// ── Push (idempotent) ────────────────────────────────────────────────
+export async function upsertEntry(entry: JournalEntry): Promise<void> {
   unwrap(
     await getSupabase()
       .from('entries')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', id)
+      .upsert(entryToUpsertRow(entry), { onConflict: 'id' })
   );
+}
+
+export async function upsertEntries(entries: JournalEntry[]): Promise<void> {
+  if (entries.length === 0) return;
+  unwrap(
+    await getSupabase()
+      .from('entries')
+      .upsert(entries.map(entryToUpsertRow), { onConflict: 'id' })
+  );
+}
+
+export async function upsertSeason(season: Season): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('seasons')
+      .upsert(seasonToUpsertRow(season), { onConflict: 'id' })
+  );
+}
+
+export async function upsertEvent(event: EventLedger): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('events')
+      .upsert(eventToRow(event), { onConflict: 'id' })
+  );
+}
+
+export async function deleteEvent(id: string): Promise<void> {
+  unwrap(await getSupabase().from('events').delete().eq('id', id));
 }

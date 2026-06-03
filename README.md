@@ -233,11 +233,16 @@ Mobile-first, bottom-nav 5 onglets, utilisable aussi sur desktop (max-width 2xl)
 - [x] PWA installable / hors ligne, FR, accessible (focus, aria, tactile ≥ 44px).
 - [x] Backend Supabase : schéma, **RLS RBAC**, audit serveur, storage, triggers.
 
-**V2 (roadmap)**
+**V2 (en cours)**
 
-- [ ] Adaptateur de données Supabase (lecture/écriture temps réel, remplace `storage.ts`).
+- [x] Gestion des événements (créer / renommer / supprimer).
+- [x] Adaptateur de données Supabase **offline-first** : pull à la connexion
+      (`pullAll` → hydrate le store) + push idempotent de chaque mutation
+      (`syncBus` → `sync.ts` → upserts UUID), bandeau de statut. _À éprouver sur
+      un projet Supabase réel ; voir `supabase/README.md` §Synchronisation._
 - [ ] Connexion + MFA in-app, gestion des membres et des rôles (UI admin).
 - [ ] Upload des justificatifs vers le bucket privé + visionneuse.
+- [ ] File d'attente hors ligne persistante + résolution de conflits.
 - [ ] Rapprochement bancaire (import CSV de relevé, pointage).
 - [ ] Détail des inscriptions par adhérent + tableau effectifs.
 - [ ] Export Excel multi-feuilles (réplique du classeur d'origine) via SheetJS.

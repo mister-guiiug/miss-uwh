@@ -57,6 +57,7 @@ const eventSchema = z.object({
 
 const seasonSchema = z.object({
   id: z.string(),
+  clubId: z.string().optional(),
   label: z.string(),
   startDate: z.string(),
   endDate: z.string(),

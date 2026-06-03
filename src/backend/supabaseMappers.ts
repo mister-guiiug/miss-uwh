@@ -5,8 +5,12 @@
  * et tester ce mappage évite les erreurs silencieuses de schéma au runtime.
  */
 import type {
+  AuditCategory,
+  AuditEvent,
+  Club,
   EntrySens,
   EventKind,
+  EventLedger,
   JournalEntry,
   PaymentMethod,
   Season,
@@ -39,6 +43,7 @@ export interface EntryRow {
 
 export interface SeasonRow {
   id: string;
+  club_id: string;
   label: string;
   start_date: string;
   end_date: string;
@@ -117,6 +122,7 @@ export function entryToRow(
 export function rowToSeason(row: SeasonRow): Season {
   return {
     id: row.id,
+    clubId: row.club_id,
     label: row.label,
     startDate: row.start_date,
     endDate: row.end_date,
@@ -144,14 +150,73 @@ export function seasonToRow(s: Season): Partial<SeasonRow> {
   };
 }
 
+/** Ligne complète insérable (UPSERT) : inclut l'id pour `on conflict (id)`. */
+export function entryToUpsertRow(e: JournalEntry): Partial<EntryRow> {
+  return { id: e.id, ...entryToRow(e) };
+}
+
+export function seasonToUpsertRow(s: Season): Partial<SeasonRow> {
+  return {
+    id: s.id,
+    club_id: s.clubId,
+    ...seasonToRow(s),
+  } as Partial<SeasonRow>;
+}
+
 // ── Événements ───────────────────────────────────────────────────────
-export function rowToEvent(
-  row: EventRow
-): import('../shared/types/domain.ts').EventLedger {
+export function rowToEvent(row: EventRow): EventLedger {
   return {
     id: row.id,
     seasonId: row.season_id,
     name: row.name,
     kind: row.kind,
+  };
+}
+
+export function eventToRow(e: EventLedger): EventRow {
+  return { id: e.id, season_id: e.seasonId, name: e.name, kind: e.kind };
+}
+
+// ── Club ─────────────────────────────────────────────────────────────
+export interface ClubRow {
+  id: string;
+  name: string;
+  affiliation: string | null;
+}
+
+export function rowToClub(row: ClubRow): Club & { id: string } {
+  return {
+    id: row.id,
+    name: row.name,
+    ffessmAffiliation: orUndef(row.affiliation),
+  };
+}
+
+// ── Audit (tables audit_metier / audit_securite) ─────────────────────
+export interface AuditRow {
+  id: number | string;
+  ts: string;
+  actor: string | null;
+  actor_email: string | null;
+  action: string;
+  target_type: string;
+  target_id: string | null;
+  summary: string;
+  before?: unknown;
+  after?: unknown;
+}
+
+export function rowToAudit(row: AuditRow, category: AuditCategory): AuditEvent {
+  return {
+    id: String(row.id),
+    ts: isoToEpoch(row.ts) ?? 0,
+    actor: row.actor_email ?? row.actor ?? 'serveur',
+    action: row.action,
+    category,
+    targetType: row.target_type,
+    targetId: orUndef(row.target_id),
+    summary: row.summary,
+    before: row.before,
+    after: row.after,
   };
 }

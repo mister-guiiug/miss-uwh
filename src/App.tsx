@@ -9,6 +9,7 @@ import {
 import { useAppStore } from './store/useAppStore.ts';
 import { AuthProvider } from './auth/AuthContext.tsx';
 import { AuthGate } from './auth/AuthGate.tsx';
+import { SupabaseSync } from './backend/SupabaseSync.tsx';
 import { AppHeader } from './shared/components/AppHeader.tsx';
 import { BottomNav } from './shared/components/BottomNav.tsx';
 import { AppFooter } from './shared/components/AppFooter.tsx';
@@ -100,6 +101,7 @@ export function App() {
   return (
     <AuthProvider>
       <AuthGate>
+        <SupabaseSync />
         <Inner />
       </AuthGate>
     </AuthProvider>
