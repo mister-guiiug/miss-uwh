@@ -1,0 +1,99 @@
+import { describe, expect, it } from 'vitest';
+import {
+  entryToRow,
+  rowToEntry,
+  rowToSeason,
+  seasonToRow,
+  type EntryRow,
+  type SeasonRow,
+} from './supabaseMappers.ts';
+
+const entryRow: EntryRow = {
+  id: 'e1',
+  season_id: 's1',
+  category_code: 'R1',
+  date: '2025-09-10',
+  label: 'HelloAsso inscriptions',
+  sens: 'credit',
+  amount: '647.00', // numeric Postgres -> string côté client
+  method: 'helloasso',
+  piece_ref: null,
+  invoice_code: 'HelloAsso',
+  observation: null,
+  event_id: null,
+  components: { adulte_plein: 647 },
+  created_at: '2025-09-10T08:00:00.000Z',
+  created_by: 'u1',
+  updated_at: '2025-09-10T08:00:00.000Z',
+  updated_by: 'u1',
+  deleted_at: null,
+  deleted_by: null,
+  version: 1,
+};
+
+describe('rowToEntry', () => {
+  it('convertit snake_case/numeric/dates vers le domaine', () => {
+    const e = rowToEntry(entryRow);
+    expect(e.seasonId).toBe('s1');
+    expect(e.categoryCode).toBe('R1');
+    expect(e.amount).toBe(647); // string numeric -> number
+    expect(e.invoiceCode).toBe('HelloAsso');
+    expect(e.pieceRef).toBeUndefined(); // null -> undefined
+    expect(e.deletedAt).toBeUndefined();
+    expect(e.createdAt).toBe(Date.parse('2025-09-10T08:00:00.000Z'));
+    expect(e.components).toEqual({ adulte_plein: 647 });
+    expect(e.attachments).toEqual([]);
+  });
+});
+
+describe('entryToRow', () => {
+  it('ne renvoie que les colonnes insérables, undefined -> null', () => {
+    const row = entryToRow(rowToEntry(entryRow));
+    expect(row.category_code).toBe('R1');
+    expect(row.event_id).toBeNull();
+    expect(row.piece_ref).toBeNull();
+    expect(row.invoice_code).toBe('HelloAsso');
+    expect('created_at' in row).toBe(false); // géré par la BDD
+    expect('version' in row).toBe(false);
+  });
+
+  it('sérialise deletedAt (epoch) en ISO', () => {
+    const e = rowToEntry({
+      ...entryRow,
+      deleted_at: '2026-01-01T00:00:00.000Z',
+    });
+    const row = entryToRow(e);
+    expect(row.deleted_at).toBe('2026-01-01T00:00:00.000Z');
+  });
+});
+
+const seasonRow: SeasonRow = {
+  id: 's1',
+  label: '2025-2026',
+  start_date: '2025-05-15',
+  end_date: '2026-05-15',
+  status: 'cloturee',
+  opening_balance: '2364.85',
+  closing_balance: '9390.46',
+  locked_at: '2026-05-20T10:00:00.000Z',
+  reopened_at: null,
+  reopen_reason: null,
+};
+
+describe('saisons (round-trip)', () => {
+  it('rowToSeason convertit montants et dates', () => {
+    const s = rowToSeason(seasonRow);
+    expect(s.openingBalance).toBe(2364.85);
+    expect(s.closingBalance).toBe(9390.46);
+    expect(s.status).toBe('cloturee');
+    expect(s.lockedAt).toBe(Date.parse('2026-05-20T10:00:00.000Z'));
+  });
+
+  it('seasonToRow reconvertit en colonnes', () => {
+    const row = seasonToRow(rowToSeason(seasonRow));
+    expect(row.opening_balance).toBe(2364.85);
+    expect(row.closing_balance).toBe(9390.46);
+    expect(row.start_date).toBe('2025-05-15');
+    expect(row.reopen_reason).toBeNull();
+  });
+});

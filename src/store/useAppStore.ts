@@ -67,6 +67,8 @@ interface AppState {
 
   // Événements
   addEvent: (name: string, kind: EventKind) => string;
+  updateEvent: (id: string, patch: { name?: string; kind?: EventKind }) => void;
+  deleteEvent: (id: string) => void;
 
   // Écritures
   addEntry: (input: EntryInput) => string | null;
@@ -318,10 +320,55 @@ export const useAppStore = create<AppState>((set, get) => {
         kind,
       };
       set(s => ({
-        data: persist({ ...s.data, events: [...s.data.events, ev] }),
+        data: persist(
+          audit(
+            { ...s.data, events: [...s.data.events, ev] },
+            'event.create',
+            'metier',
+            'event',
+            `Création de l'événement « ${name} ».`,
+            { targetId: ev.id }
+          )
+        ),
       }));
       return ev.id;
     },
+
+    updateEvent: (id, patch) =>
+      set(s => ({
+        data: persist({
+          ...s.data,
+          events: s.data.events.map(e =>
+            e.id === id ? { ...e, ...patch } : e
+          ),
+        }),
+      })),
+
+    deleteEvent: id =>
+      set(s => {
+        const ev = s.data.events.find(e => e.id === id);
+        if (!ev) return s;
+        // Détache les écritures rattachées (sans les supprimer) puis retire l'événement.
+        const entries = s.data.entries.map(e =>
+          e.eventId === id ? { ...e, eventId: undefined } : e
+        );
+        return {
+          data: persist(
+            audit(
+              {
+                ...s.data,
+                entries,
+                events: s.data.events.filter(e => e.id !== id),
+              },
+              'event.delete',
+              'metier',
+              'event',
+              `Suppression de l'événement « ${ev.name} » (écritures détachées).`,
+              { targetId: id }
+            )
+          ),
+        };
+      }),
 
     addEntry: input => {
       const data = get().data;

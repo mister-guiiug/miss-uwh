@@ -38,9 +38,9 @@ const DEPENSES = CATEGORIES.filter(c => c.sens === 'depense');
 
 export function EntrySheet({ open, entry, onClose }: Props) {
   const season = useAppStore(selectActiveSeason);
-  const events = useAppStore(s =>
-    s.data.events.filter(e => e.seasonId === season.id)
-  );
+  // Sélecteur stable + filtrage dans le corps (cf. note EventsSheet).
+  const allEvents = useAppStore(s => s.data.events);
+  const events = allEvents.filter(e => e.seasonId === season.id);
   const addEntry = useAppStore(s => s.addEntry);
   const updateEntry = useAppStore(s => s.updateEntry);
   const softDeleteEntry = useAppStore(s => s.softDeleteEntry);

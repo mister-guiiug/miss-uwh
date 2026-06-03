@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowDownRight,
@@ -6,6 +7,7 @@ import {
   Lock,
   Printer,
   Scale,
+  Settings2,
   TrendingUp,
   Trophy,
   Wallet,
@@ -15,6 +17,7 @@ import { useBilan } from '../../shared/hooks/useBilan.ts';
 import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge, Money } from '../../shared/components/badges.tsx';
+import { EventsSheet } from '../events/EventsSheet.tsx';
 import type { BilanLine } from '../../shared/lib/engine.ts';
 
 function Kpi({
@@ -102,6 +105,7 @@ export function BilanScreen() {
   const showCompensated = useAppStore(s => s.data.settings.showCompensated);
   const { bilan, events } = useBilan();
   const hideCompensated = !showCompensated;
+  const [manageEvents, setManageEvents] = useState(false);
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -192,13 +196,22 @@ export function BilanScreen() {
 
       {events.length > 0 && (
         <Card>
-          <div className="mb-2 flex items-center gap-2">
-            <Trophy
-              size={16}
-              className="text-[var(--color-puck)]"
-              aria-hidden="true"
-            />
-            <h3 className="font-display font-bold">Résultat par événement</h3>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Trophy
+                size={16}
+                className="text-[var(--color-puck)]"
+                aria-hidden="true"
+              />
+              <h3 className="font-display font-bold">Résultat par événement</h3>
+            </div>
+            <Button
+              variant="ghost"
+              aria-label="Gérer les événements"
+              onClick={() => setManageEvents(true)}
+            >
+              <Settings2 size={16} aria-hidden="true" /> Gérer
+            </Button>
           </div>
           <ul className="divide-y divide-[var(--uwh-border)]">
             {events.map(ev => (
@@ -222,6 +235,17 @@ export function BilanScreen() {
         </Card>
       )}
 
+      {events.length === 0 && (
+        <Card className="no-print flex items-center justify-between gap-2">
+          <span className="text-sm text-[var(--uwh-text-soft)]">
+            Suivez vos événements (TDA, buvette, stage…) et leur résultat net.
+          </span>
+          <Button variant="secondary" onClick={() => setManageEvents(true)}>
+            <Trophy size={16} aria-hidden="true" /> Événements
+          </Button>
+        </Card>
+      )}
+
       <div className="flex gap-2 no-print">
         <Link to="/journal" className="flex-1">
           <Button variant="secondary" block>
@@ -234,6 +258,8 @@ export function BilanScreen() {
           </Button>
         </Link>
       </div>
+
+      <EventsSheet open={manageEvents} onClose={() => setManageEvents(false)} />
     </div>
   );
 }
