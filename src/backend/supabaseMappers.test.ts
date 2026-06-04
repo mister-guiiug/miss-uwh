@@ -1,16 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import {
+  adherentToUpsertRow,
   attachmentPath,
+  customCategoryToUpsertRow,
   entryToRow,
   entryToUpsertRow,
+  recurringToUpsertRow,
+  rowToAdherent,
   rowToAttachment,
+  rowToCategory,
+  rowToRecurring,
   rowToSeason,
   rowToEntry,
   safeFileName,
   seasonToRow,
   seasonToUpsertRow,
+  type AdherentRow,
   type AttachmentRow,
+  type CategoryRow,
   type EntryRow,
+  type RecurringRow,
   type SeasonRow,
 } from './supabaseMappers.ts';
 
@@ -119,6 +128,96 @@ describe('entryToUpsertRow', () => {
     const up = entryToUpsertRow(rowToEntry(entryRow));
     expect(up.id).toBe('e1');
     expect(up.category_code).toBe('R1');
+  });
+});
+
+describe('récurrences (round-trip)', () => {
+  const row: RecurringRow = {
+    id: 'r1',
+    club_id: 'club-1',
+    label: 'Frais bancaires SG',
+    category_code: 'D12',
+    amount: '14.67', // numeric Postgres -> string
+    method: 'prelevement',
+  };
+
+  it('rowToRecurring convertit montant et code catégorie', () => {
+    const t = rowToRecurring(row);
+    expect(t.id).toBe('r1');
+    expect(t.categoryCode).toBe('D12');
+    expect(t.amount).toBe(14.67);
+    expect(t.method).toBe('prelevement');
+  });
+
+  it('recurringToUpsertRow réinjecte id + club_id', () => {
+    const up = recurringToUpsertRow(rowToRecurring(row), 'club-9');
+    expect(up.id).toBe('r1');
+    expect(up.club_id).toBe('club-9');
+    expect(up.category_code).toBe('D12');
+    expect(up.amount).toBe(14.67);
+  });
+});
+
+describe('adhérents (round-trip)', () => {
+  const row: AdherentRow = {
+    id: 'a1',
+    season_id: 's1',
+    first_name: 'Jean',
+    last_name: 'Dupont',
+    category: 'adulte',
+    licence_number: null,
+    amount: '160.00',
+    paid: true,
+    notes: null,
+  };
+
+  it('rowToAdherent mappe snake_case + null -> undefined', () => {
+    const a = rowToAdherent(row);
+    expect(a.seasonId).toBe('s1');
+    expect(a.firstName).toBe('Jean');
+    expect(a.lastName).toBe('Dupont');
+    expect(a.category).toBe('adulte');
+    expect(a.amount).toBe(160);
+    expect(a.paid).toBe(true);
+    expect(a.licenceNumber).toBeUndefined();
+    expect(a.notes).toBeUndefined();
+  });
+
+  it('adherentToUpsertRow renvoie les colonnes, undefined -> null', () => {
+    const up = adherentToUpsertRow(rowToAdherent(row));
+    expect(up.id).toBe('a1');
+    expect(up.season_id).toBe('s1');
+    expect(up.first_name).toBe('Jean');
+    expect(up.licence_number).toBeNull();
+    expect(up.notes).toBeNull();
+    expect(up.paid).toBe(true);
+  });
+});
+
+describe('catégories personnalisées', () => {
+  const row: CategoryRow = {
+    code: 'C1',
+    label: 'Mécénat local',
+    sens: 'recette',
+    kind: 'exploitation',
+    components: null,
+    custom: true,
+  };
+
+  it('rowToCategory mappe vers le domaine', () => {
+    const c = rowToCategory(row);
+    expect(c.code).toBe('C1');
+    expect(c.label).toBe('Mécénat local');
+    expect(c.sens).toBe('recette');
+    expect(c.kind).toBe('exploitation');
+    expect(c.components).toBeUndefined();
+  });
+
+  it('customCategoryToUpsertRow force custom = true', () => {
+    const up = customCategoryToUpsertRow(rowToCategory(row));
+    expect(up.code).toBe('C1');
+    expect(up.custom).toBe(true);
+    expect(up.components).toBeNull();
   });
 });
 

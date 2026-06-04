@@ -38,6 +38,7 @@ import { loadData, saveData } from '../shared/lib/storage.ts';
 import { IS_SUPABASE } from '../backend/config.ts';
 import { emitRemote, type RemoteOp } from '../backend/syncBus.ts';
 import { getCurrentClubId } from '../backend/clubContext.ts';
+import { clearAll as clearSyncQueue } from '../backend/syncQueue.ts';
 
 /** Acteur courant (mode local). En mode Supabase, l'email de session le remplace. */
 let currentActor = 'local';
@@ -132,6 +133,12 @@ interface AppState {
   // Données globales
   replaceData: (data: AppData) => void;
   resetAll: (clubName?: string, seasonLabel?: string, opening?: number) => void;
+  /**
+   * Purge des données locales (mode Supabase, à la déconnexion) : vide le
+   * miroir localStorage + la file de synchro pour qu'aucune donnée d'un membre
+   * ne subsiste sur un appareil partagé (RGPD). Le serveur reste la source.
+   */
+  wipeLocal: () => void;
 }
 
 function persist(data: AppData): AppData {
@@ -442,20 +449,25 @@ export const useAppStore = create<AppState>((set, get) => {
       }),
 
     addRecurring: t => {
-      const tpl: RecurringTemplate = { ...t, id: createId('rec') };
+      // UUID : id local = clé primaire Postgres (upsert idempotent).
+      const tpl: RecurringTemplate = { ...t, id: createUuid() };
       set(s => ({
         data: persist({ ...s.data, recurrings: [...s.data.recurrings, tpl] }),
       }));
+      remote({ kind: 'recurring.upsert', recurring: tpl });
       return tpl.id;
     },
 
     deleteRecurring: id =>
-      set(s => ({
-        data: persist({
-          ...s.data,
-          recurrings: s.data.recurrings.filter(r => r.id !== id),
-        }),
-      })),
+      set(s => {
+        remote({ kind: 'recurring.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            recurrings: s.data.recurrings.filter(r => r.id !== id),
+          }),
+        };
+      }),
 
     generateFromRecurring: (id, date) => {
       const { data } = get();
@@ -515,21 +527,26 @@ export const useAppStore = create<AppState>((set, get) => {
           )
         ),
       }));
+      remote({ kind: 'category.upsert', category: cat });
       return code;
     },
 
     removeCustomCategory: code =>
-      set(s => ({
-        data: persist({
-          ...s.data,
-          customCategories: s.data.customCategories.filter(
-            c => c.code !== code
-          ),
-        }),
-      })),
+      set(s => {
+        remote({ kind: 'category.delete', code });
+        return {
+          data: persist({
+            ...s.data,
+            customCategories: s.data.customCategories.filter(
+              c => c.code !== code
+            ),
+          }),
+        };
+      }),
 
     addAdherent: a => {
-      const adherent: Adherent = { ...a, id: createId('adh') };
+      // UUID : id local = clé primaire Postgres (upsert idempotent).
+      const adherent: Adherent = { ...a, id: createUuid() };
       set(s => ({
         data: persist(
           audit(
@@ -542,26 +559,34 @@ export const useAppStore = create<AppState>((set, get) => {
           )
         ),
       }));
+      remote({ kind: 'adherent.upsert', adherent });
       return adherent.id;
     },
 
     updateAdherent: (id, patch) =>
-      set(s => ({
-        data: persist({
-          ...s.data,
-          adherents: s.data.adherents.map(x =>
-            x.id === id ? { ...x, ...patch } : x
-          ),
-        }),
-      })),
+      set(s => {
+        const before = s.data.adherents.find(x => x.id === id);
+        if (!before) return s;
+        const after: Adherent = { ...before, ...patch };
+        remote({ kind: 'adherent.upsert', adherent: after });
+        return {
+          data: persist({
+            ...s.data,
+            adherents: s.data.adherents.map(x => (x.id === id ? after : x)),
+          }),
+        };
+      }),
 
     deleteAdherent: id =>
-      set(s => ({
-        data: persist({
-          ...s.data,
-          adherents: s.data.adherents.filter(x => x.id !== id),
-        }),
-      })),
+      set(s => {
+        remote({ kind: 'adherent.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            adherents: s.data.adherents.filter(x => x.id !== id),
+          }),
+        };
+      }),
 
     addEntry: input => {
       const data = get().data;
@@ -830,6 +855,16 @@ export const useAppStore = create<AppState>((set, get) => {
       set(() => ({
         data: persist(createEmptyData(clubName, seasonLabel, opening)),
       })),
+
+    wipeLocal: () => {
+      // Vide la file de synchro (rien ne doit être rejoué pour un autre compte)
+      // puis réinitialise le miroir local. Le prochain login re-pull le serveur.
+      clearSyncQueue();
+      set({
+        data: persist(createEmptyData()),
+        syncStatus: { state: 'idle' },
+      });
+    },
   };
 });
 

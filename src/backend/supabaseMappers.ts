@@ -5,17 +5,23 @@
  * et tester ce mappage évite les erreurs silencieuses de schéma au runtime.
  */
 import type {
+  Adherent,
+  AdherentCategory,
   Attachment,
   AuditCategory,
   AuditEvent,
+  Category,
+  CategoryKind,
   Club,
   EntrySens,
   EventKind,
   EventLedger,
   JournalEntry,
   PaymentMethod,
+  RecurringTemplate,
   Season,
   SeasonStatus,
+  Sens,
 } from '../shared/types/domain.ts';
 
 // ── Formes des lignes Postgres (cf. supabase/migrations/0001_schema.sql) ──
@@ -179,6 +185,113 @@ export function rowToEvent(row: EventRow): EventLedger {
 
 export function eventToRow(e: EventLedger): EventRow {
   return { id: e.id, season_id: e.seasonId, name: e.name, kind: e.kind };
+}
+
+// ── Récurrences (modèles d'écriture) ─────────────────────────────────
+export interface RecurringRow {
+  id: string;
+  club_id: string;
+  label: string;
+  category_code: string;
+  amount: number | string;
+  method: string;
+}
+
+export function rowToRecurring(row: RecurringRow): RecurringTemplate {
+  return {
+    id: row.id,
+    label: row.label,
+    categoryCode: row.category_code,
+    amount: num(row.amount),
+    method: row.method as PaymentMethod,
+  };
+}
+
+/** Ligne UPSERT : le club courant est injecté par le repository. */
+export function recurringToUpsertRow(
+  t: RecurringTemplate,
+  clubId: string
+): RecurringRow {
+  return {
+    id: t.id,
+    club_id: clubId,
+    label: t.label,
+    category_code: t.categoryCode,
+    amount: t.amount,
+    method: t.method,
+  };
+}
+
+// ── Adhérents (registre des inscriptions) ────────────────────────────
+export interface AdherentRow {
+  id: string;
+  season_id: string;
+  first_name: string;
+  last_name: string;
+  category: AdherentCategory;
+  licence_number: string | null;
+  amount: number | string;
+  paid: boolean;
+  notes: string | null;
+}
+
+export function rowToAdherent(row: AdherentRow): Adherent {
+  return {
+    id: row.id,
+    seasonId: row.season_id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    category: row.category,
+    licenceNumber: orUndef(row.licence_number),
+    amount: num(row.amount),
+    paid: row.paid,
+    notes: orUndef(row.notes),
+  };
+}
+
+export function adherentToUpsertRow(a: Adherent): AdherentRow {
+  return {
+    id: a.id,
+    season_id: a.seasonId,
+    first_name: a.firstName,
+    last_name: a.lastName,
+    category: a.category,
+    licence_number: a.licenceNumber ?? null,
+    amount: a.amount,
+    paid: a.paid,
+    notes: a.notes ?? null,
+  };
+}
+
+// ── Catégories personnalisées (table `categories`, colonne `custom`) ──
+export interface CategoryRow {
+  code: string;
+  label: string;
+  sens: Sens;
+  kind: CategoryKind;
+  components: string[] | null;
+  custom: boolean;
+}
+
+export function rowToCategory(row: CategoryRow): Category {
+  return {
+    code: row.code,
+    label: row.label,
+    sens: row.sens,
+    kind: row.kind,
+    components: orUndef(row.components),
+  };
+}
+
+export function customCategoryToUpsertRow(c: Category): CategoryRow {
+  return {
+    code: c.code,
+    label: c.label,
+    sens: c.sens,
+    kind: c.kind,
+    components: c.components ?? null,
+    custom: true,
+  };
 }
 
 // ── Club ─────────────────────────────────────────────────────────────

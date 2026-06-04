@@ -11,29 +11,42 @@
  * (`VITE_BACKEND=supabase`). Le mode local n'appelle jamais ce module.
  */
 import type {
+  Adherent,
   Attachment,
   AuditEvent,
+  Category,
   Club,
   EventLedger,
   JournalEntry,
+  RecurringTemplate,
   Season,
 } from '../shared/types/domain.ts';
 import { getSupabase } from '../lib/supabase.ts';
+import { getCurrentClubId } from './clubContext.ts';
 import {
+  adherentToUpsertRow,
+  customCategoryToUpsertRow,
   entryToUpsertRow,
   eventToRow,
+  recurringToUpsertRow,
+  rowToAdherent,
   rowToAttachment,
   rowToAudit,
+  rowToCategory,
   rowToClub,
   rowToEntry,
   rowToEvent,
+  rowToRecurring,
   rowToSeason,
   seasonToUpsertRow,
+  type AdherentRow,
   type AttachmentRow,
   type AuditRow,
+  type CategoryRow,
   type ClubRow,
   type EntryRow,
   type EventRow,
+  type RecurringRow,
   type SeasonRow,
 } from './supabaseMappers.ts';
 
@@ -104,6 +117,28 @@ export async function fetchAttachments(): Promise<
   return rows.map(r => ({ entryId: r.entry_id, att: rowToAttachment(r) }));
 }
 
+export async function fetchRecurrings(): Promise<RecurringTemplate[]> {
+  const rows = unwrap(
+    await getSupabase().from('recurrings').select('*').order('label')
+  ) as RecurringRow[];
+  return rows.map(rowToRecurring);
+}
+
+export async function fetchAdherents(): Promise<Adherent[]> {
+  const rows = unwrap(
+    await getSupabase().from('adherents').select('*')
+  ) as AdherentRow[];
+  return rows.map(rowToAdherent);
+}
+
+/** Catégories PERSONNALISÉES uniquement (la taxonomie fixe est dans le code). */
+export async function fetchCustomCategories(): Promise<Category[]> {
+  const rows = unwrap(
+    await getSupabase().from('categories').select('*').eq('custom', true)
+  ) as CategoryRow[];
+  return rows.map(rowToCategory);
+}
+
 // ── Push (idempotent) ────────────────────────────────────────────────
 export async function upsertEntry(entry: JournalEntry): Promise<void> {
   unwrap(
@@ -140,6 +175,50 @@ export async function upsertEvent(event: EventLedger): Promise<void> {
 
 export async function deleteEvent(id: string): Promise<void> {
   unwrap(await getSupabase().from('events').delete().eq('id', id));
+}
+
+export async function upsertRecurring(t: RecurringTemplate): Promise<void> {
+  const clubId = getCurrentClubId();
+  if (!clubId) throw new Error('Club courant inconnu (récurrence en attente).');
+  unwrap(
+    await getSupabase()
+      .from('recurrings')
+      .upsert(recurringToUpsertRow(t, clubId), { onConflict: 'id' })
+  );
+}
+
+export async function deleteRecurring(id: string): Promise<void> {
+  unwrap(await getSupabase().from('recurrings').delete().eq('id', id));
+}
+
+export async function upsertAdherent(a: Adherent): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('adherents')
+      .upsert(adherentToUpsertRow(a), { onConflict: 'id' })
+  );
+}
+
+export async function deleteAdherent(id: string): Promise<void> {
+  unwrap(await getSupabase().from('adherents').delete().eq('id', id));
+}
+
+export async function upsertCustomCategory(c: Category): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('categories')
+      .upsert(customCategoryToUpsertRow(c), { onConflict: 'code' })
+  );
+}
+
+export async function deleteCustomCategory(code: string): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('categories')
+      .delete()
+      .eq('code', code)
+      .eq('custom', true)
+  );
 }
 
 /** Clôture via RPC : le serveur calcule le solde et vérifie le rôle (0005). */

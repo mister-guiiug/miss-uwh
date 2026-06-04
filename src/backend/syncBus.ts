@@ -8,8 +8,11 @@
  * le mode local reste totalement indépendant de Supabase).
  */
 import type {
+  Adherent,
+  Category,
   EventLedger,
   JournalEntry,
+  RecurringTemplate,
   Season,
 } from '../shared/types/domain.ts';
 
@@ -20,7 +23,13 @@ export type RemoteOp =
   | { kind: 'season.close'; id: string }
   | { kind: 'season.reopen'; id: string; reason: string }
   | { kind: 'event.upsert'; event: EventLedger }
-  | { kind: 'event.delete'; id: string };
+  | { kind: 'event.delete'; id: string }
+  | { kind: 'recurring.upsert'; recurring: RecurringTemplate }
+  | { kind: 'recurring.delete'; id: string }
+  | { kind: 'adherent.upsert'; adherent: Adherent }
+  | { kind: 'adherent.delete'; id: string }
+  | { kind: 'category.upsert'; category: Category }
+  | { kind: 'category.delete'; code: string };
 
 type Handler = (op: RemoteOp) => void;
 

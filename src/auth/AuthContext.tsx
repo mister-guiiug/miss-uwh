@@ -12,6 +12,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [needsMfa, setNeedsMfa] = useState(false);
   const [hasTotp, setHasTotp] = useState(false);
   const logSecurity = useAppStore(s => s.logSecurity);
+  const wipeLocal = useAppStore(s => s.wipeLocal);
 
   const refreshMfa = useCallback(async () => {
     if (!IS_SUPABASE) return;
@@ -54,10 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       void hydrate(s);
       if (event === 'SIGNED_IN' && s?.user?.email)
         logSecurity('auth.signin', `Connexion de ${s.user.email}.`);
-      if (event === 'SIGNED_OUT') logSecurity('auth.signout', 'Déconnexion.');
+      // Déconnexion : on purge les données locales (appareil potentiellement
+      // partagé) — aucune écriture ne doit subsister pour le membre suivant.
+      if (event === 'SIGNED_OUT') wipeLocal();
     });
     return () => sub.subscription.unsubscribe();
-  }, [logSecurity, refreshMfa]);
+  }, [logSecurity, refreshMfa, wipeLocal]);
 
   async function signIn(email: string, password: string) {
     const { error } = await getSupabase().auth.signInWithPassword({

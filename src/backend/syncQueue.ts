@@ -49,6 +49,18 @@ export function entityKey(op: RemoteOp): string | null {
       return `event:${op.event.id}`;
     case 'event.delete':
       return `event:${op.id}`;
+    case 'recurring.upsert':
+      return `recurring:${op.recurring.id}`;
+    case 'recurring.delete':
+      return `recurring:${op.id}`;
+    case 'adherent.upsert':
+      return `adherent:${op.adherent.id}`;
+    case 'adherent.delete':
+      return `adherent:${op.id}`;
+    case 'category.upsert':
+      return `category:${op.category.code}`;
+    case 'category.delete':
+      return `category:${op.code}`;
     case 'entry.bulkUpsert':
     case 'season.close':
     case 'season.reopen':

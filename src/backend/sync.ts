@@ -44,15 +44,27 @@ function isTransient(message: string): boolean {
 export async function pullAll(): Promise<void> {
   setStatus('syncing');
   try {
-    const [club, seasons, events, entries, audit, attachments] =
-      await Promise.all([
-        repo.fetchClub(),
-        repo.fetchSeasons(),
-        repo.fetchEvents(),
-        repo.fetchEntries(),
-        repo.fetchAudit(),
-        repo.fetchAttachments(),
-      ]);
+    const [
+      club,
+      seasons,
+      events,
+      entries,
+      audit,
+      attachments,
+      recurrings,
+      adherents,
+      customCategories,
+    ] = await Promise.all([
+      repo.fetchClub(),
+      repo.fetchSeasons(),
+      repo.fetchEvents(),
+      repo.fetchEntries(),
+      repo.fetchAudit(),
+      repo.fetchAttachments(),
+      repo.fetchRecurrings(),
+      repo.fetchAdherents(),
+      repo.fetchCustomCategories(),
+    ]);
 
     if (club) setCurrentClubId(club.id);
 
@@ -83,11 +95,11 @@ export async function pullAll(): Promise<void> {
       activeSeasonId,
       entries,
       events,
-      recurrings: prev.recurrings, // local pour l'instant
-      customCategories: prev.customCategories,
-      adherents: prev.adherents,
+      recurrings,
+      customCategories,
+      adherents,
       audit,
-      settings: prev.settings,
+      settings: prev.settings, // préférence d'appareil : reste locale
       onboarded: true,
     };
 
@@ -117,6 +129,18 @@ async function applyOp(op: RemoteOp): Promise<void> {
       return repo.upsertEvent(op.event);
     case 'event.delete':
       return repo.deleteEvent(op.id);
+    case 'recurring.upsert':
+      return repo.upsertRecurring(op.recurring);
+    case 'recurring.delete':
+      return repo.deleteRecurring(op.id);
+    case 'adherent.upsert':
+      return repo.upsertAdherent(op.adherent);
+    case 'adherent.delete':
+      return repo.deleteAdherent(op.id);
+    case 'category.upsert':
+      return repo.upsertCustomCategory(op.category);
+    case 'category.delete':
+      return repo.deleteCustomCategory(op.code);
   }
 }
 
@@ -194,6 +218,21 @@ function subscribeRealtime(): void {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'events' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'recurrings' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'adherents' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'categories' },
       scheduleReconcilePull
     )
     .subscribe();
