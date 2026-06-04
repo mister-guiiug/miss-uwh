@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { cn } from '../lib/cn.ts';
 import { Button } from './Button.tsx';
 
 interface SheetProps {
@@ -7,13 +8,19 @@ interface SheetProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /**
+   * Barre d'actions épinglée en bas de la feuille : reste TOUJOURS visible
+   * même quand le corps défile (essentiel sur mobile pour les formulaires longs).
+   */
+  footer?: ReactNode;
 }
 
 /**
  * Feuille modale (bottom sheet mobile). Accessible : role dialog + aria-modal,
  * fermeture par Échap, focus déplacé à l'ouverture, scroll de fond verrouillé.
+ * En-tête figé, corps défilant, pied d'actions optionnel épinglé.
  */
-export function Sheet({ open, title, onClose, children }: SheetProps) {
+export function Sheet({ open, title, onClose, children, footer }: SheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,7 +42,7 @@ export function Sheet({ open, title, onClose, children }: SheetProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center no-print"
+      className="fixed inset-0 z-50 flex items-end justify-center no-print sm:items-center"
       onMouseDown={e => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -50,15 +57,32 @@ export function Sheet({ open, title, onClose, children }: SheetProps) {
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[var(--uwh-surface)] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] uwh-rise outline-none"
+        className="relative flex max-h-[90dvh] w-full flex-col rounded-t-3xl bg-[var(--uwh-surface)] uwh-rise outline-none sm:max-w-lg sm:rounded-3xl"
       >
-        <div className="mb-4 flex items-center justify-between gap-3">
+        {/* En-tête figé */}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--uwh-border)] px-5 py-4">
           <h2 className="text-lg font-bold">{title}</h2>
           <Button variant="ghost" aria-label="Fermer" onClick={onClose}>
             <X size={20} aria-hidden="true" />
           </Button>
         </div>
-        {children}
+
+        {/* Corps défilant */}
+        <div
+          className={cn(
+            'flex-1 overflow-y-auto px-5 pt-5',
+            footer ? 'pb-5' : 'pb-[max(1.25rem,env(safe-area-inset-bottom))]'
+          )}
+        >
+          {children}
+        </div>
+
+        {/* Pied d'actions épinglé (toujours visible) */}
+        {footer && (
+          <div className="shrink-0 border-t border-[var(--uwh-border)] bg-[var(--uwh-surface)] px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

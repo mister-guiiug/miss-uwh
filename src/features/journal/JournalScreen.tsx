@@ -245,7 +245,7 @@ export function JournalScreen() {
                   disabled={season.status === 'cloturee'}
                   aria-label={entry.reconciled ? 'Dépointer' : 'Pointer'}
                   aria-pressed={!!entry.reconciled}
-                  className="shrink-0 rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface)] px-2"
+                  className="flex shrink-0 items-center justify-center rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface)] px-3 disabled:opacity-70"
                 >
                   {entry.reconciled ? (
                     <CircleCheck
@@ -264,28 +264,34 @@ export function JournalScreen() {
                 <button
                   onClick={() => setEditing(entry)}
                   disabled={season.status === 'cloturee'}
-                  className="flex flex-1 items-center gap-3 rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface)] p-3 text-left active:scale-[0.99] disabled:opacity-70"
+                  className="flex flex-1 flex-col gap-1 overflow-hidden rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface)] p-3 text-left active:scale-[0.99] disabled:opacity-70"
                 >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
+                  <div className="flex items-baseline gap-2">
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold">
                       {entry.label}
-                    </p>
-                    <p className="truncate text-xs text-[var(--uwh-text-soft)]">
-                      {formatDateShort(entry.date)} · {entry.categoryCode}
-                      {cat ? ` ${cat.label}` : ''} ·{' '}
-                      {PAYMENT_METHOD_LABELS[entry.method]}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-right">
+                    </span>
                     <Money
                       value={
                         entry.sens === 'credit' ? entry.amount : -entry.amount
                       }
                       signed
+                      className="shrink-0"
                     />
-                    <p className="tnum text-xs text-[var(--uwh-text-soft)]">
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-[var(--uwh-text-soft)]">
+                    <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                      <span className="tnum shrink-0 rounded-md bg-[var(--uwh-surface-2)] px-1.5 py-0.5 font-semibold">
+                        {entry.categoryCode}
+                      </span>
+                      <span className="truncate">
+                        {cat ? `${cat.label} · ` : ''}
+                        {formatDateShort(entry.date)} ·{' '}
+                        {PAYMENT_METHOD_LABELS[entry.method]}
+                      </span>
+                    </span>
+                    <span className="tnum shrink-0">
                       solde {solde.toLocaleString('fr-FR')} €
-                    </p>
+                    </span>
                   </div>
                 </button>
               </li>

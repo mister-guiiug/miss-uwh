@@ -199,6 +199,22 @@ export function EntrySheet({ open, entry, onClose }: Props) {
       open={open}
       title={entry ? 'Modifier l’écriture' : 'Nouvelle écriture'}
       onClose={onClose}
+      footer={
+        <div className="flex gap-2">
+          {entry && (
+            <Button
+              variant="danger"
+              aria-label="Supprimer"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 size={18} aria-hidden="true" />
+            </Button>
+          )}
+          <Button block onClick={save} disabled={season.status === 'cloturee'}>
+            {entry ? 'Enregistrer' : 'Ajouter'}
+          </Button>
+        </div>
+      }
     >
       <div className="flex flex-col gap-4">
         <SelectField
@@ -403,21 +419,6 @@ export function EntrySheet({ open, entry, onClose }: Props) {
             {errors.season}
           </p>
         )}
-
-        <div className="flex gap-2">
-          {entry && (
-            <Button
-              variant="danger"
-              aria-label="Supprimer"
-              onClick={() => setConfirmDelete(true)}
-            >
-              <Trash2 size={18} aria-hidden="true" />
-            </Button>
-          )}
-          <Button block onClick={save} disabled={season.status === 'cloturee'}>
-            {entry ? 'Enregistrer' : 'Ajouter'}
-          </Button>
-        </div>
       </div>
 
       <ConfirmDialog
