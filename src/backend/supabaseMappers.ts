@@ -19,6 +19,8 @@ import type {
   EntrySens,
   EventKind,
   EventLedger,
+  Exercise,
+  ExerciseCategory,
   Guardian,
   GuardianRelation,
   JournalEntry,
@@ -29,6 +31,9 @@ import type {
   Season,
   SeasonStatus,
   Sens,
+  TrainingSession,
+  Tournament,
+  TournamentStatus,
 } from '../shared/types/domain.ts';
 
 // ── Formes des lignes Postgres (cf. supabase/migrations/0001_schema.sql) ──
@@ -381,6 +386,119 @@ export function announcementToUpsertRow(a: Announcement): AnnouncementRow {
     title: a.title,
     body: a.body,
     pinned: a.pinned ?? false,
+  };
+}
+
+// ── Tournois ─────────────────────────────────────────────────────────
+export interface TournamentRow {
+  id: string;
+  season_id: string;
+  name: string;
+  date: string;
+  location: string | null;
+  status: TournamentStatus;
+  event_id: string | null;
+  notes: string | null;
+}
+
+export function rowToTournament(row: TournamentRow): Tournament {
+  return {
+    id: row.id,
+    seasonId: row.season_id,
+    name: row.name,
+    date: row.date,
+    location: orUndef(row.location),
+    status: row.status,
+    eventId: orUndef(row.event_id),
+    notes: orUndef(row.notes),
+  };
+}
+
+export function tournamentToUpsertRow(t: Tournament): TournamentRow {
+  return {
+    id: t.id,
+    season_id: t.seasonId,
+    name: t.name,
+    date: t.date,
+    location: t.location ?? null,
+    status: t.status,
+    event_id: t.eventId ?? null,
+    notes: t.notes ?? null,
+  };
+}
+
+// ── Séances d'entraînement ───────────────────────────────────────────
+export interface TrainingSessionRow {
+  id: string;
+  season_id: string;
+  date: string;
+  location: string | null;
+  team_group: string | null;
+  coach_id: string | null;
+  focus: string | null;
+  attendance: string[] | null;
+}
+
+export function rowToTrainingSession(row: TrainingSessionRow): TrainingSession {
+  return {
+    id: row.id,
+    seasonId: row.season_id,
+    date: row.date,
+    location: orUndef(row.location),
+    group: orUndef(row.team_group),
+    coachId: orUndef(row.coach_id),
+    focus: orUndef(row.focus),
+    attendance: row.attendance ?? [],
+  };
+}
+
+export function trainingSessionToUpsertRow(
+  s: TrainingSession
+): TrainingSessionRow {
+  return {
+    id: s.id,
+    season_id: s.seasonId,
+    date: s.date,
+    location: s.location ?? null,
+    team_group: s.group ?? null,
+    coach_id: s.coachId ?? null,
+    focus: s.focus ?? null,
+    attendance: s.attendance ?? [],
+  };
+}
+
+// ── Exercices ────────────────────────────────────────────────────────
+export interface ExerciseRow {
+  id: string;
+  season_id: string;
+  name: string;
+  category: ExerciseCategory;
+  description: string | null;
+  duration_min: number | string | null;
+  level: string | null;
+}
+
+export function rowToExercise(row: ExerciseRow): Exercise {
+  return {
+    id: row.id,
+    seasonId: row.season_id,
+    name: row.name,
+    category: row.category,
+    description: orUndef(row.description),
+    durationMin: row.duration_min == null ? undefined : num(row.duration_min),
+    level: orUndef(row.level),
+  };
+}
+
+export function exerciseToUpsertRow(e: Exercise): ExerciseRow {
+  return {
+    id: e.id,
+    season_id: e.seasonId,
+    name: e.name,
+    category: e.category,
+    description: e.description ?? null,
+    duration_min: e.durationMin ?? null,
+    level: e.level ?? null,
   };
 }
 

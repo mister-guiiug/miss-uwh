@@ -13,10 +13,13 @@ import type {
   Category,
   ClubEvent,
   EventLedger,
+  Exercise,
   Guardian,
   JournalEntry,
   RecurringTemplate,
   Season,
+  TrainingSession,
+  Tournament,
 } from '../shared/types/domain.ts';
 
 export type RemoteOp =
@@ -37,6 +40,12 @@ export type RemoteOp =
   | { kind: 'clubevent.delete'; id: string }
   | { kind: 'announcement.upsert'; announcement: Announcement }
   | { kind: 'announcement.delete'; id: string }
+  | { kind: 'tournament.upsert'; tournament: Tournament }
+  | { kind: 'tournament.delete'; id: string }
+  | { kind: 'session.upsert'; session: TrainingSession }
+  | { kind: 'session.delete'; id: string }
+  | { kind: 'exercise.upsert'; exercise: Exercise }
+  | { kind: 'exercise.delete'; id: string }
   | { kind: 'category.upsert'; category: Category }
   | { kind: 'category.delete'; code: string };
 

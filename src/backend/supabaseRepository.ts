@@ -19,10 +19,13 @@ import type {
   Club,
   ClubEvent,
   EventLedger,
+  Exercise,
   Guardian,
   JournalEntry,
   RecurringTemplate,
   Season,
+  TrainingSession,
+  Tournament,
 } from '../shared/types/domain.ts';
 import { getSupabase } from '../lib/supabase.ts';
 import { getCurrentClubId } from './clubContext.ts';
@@ -33,6 +36,7 @@ import {
   customCategoryToUpsertRow,
   entryToUpsertRow,
   eventToRow,
+  exerciseToUpsertRow,
   guardianToUpsertRow,
   recurringToUpsertRow,
   rowToAdherent,
@@ -44,10 +48,15 @@ import {
   rowToClubEvent,
   rowToEntry,
   rowToEvent,
+  rowToExercise,
   rowToGuardian,
   rowToRecurring,
   rowToSeason,
+  rowToTournament,
+  rowToTrainingSession,
   seasonToUpsertRow,
+  tournamentToUpsertRow,
+  trainingSessionToUpsertRow,
   type AdherentRow,
   type AnnouncementRow,
   type AttachmentRow,
@@ -57,9 +66,12 @@ import {
   type ClubRow,
   type EntryRow,
   type EventRow,
+  type ExerciseRow,
   type GuardianRow,
   type RecurringRow,
   type SeasonRow,
+  type TournamentRow,
+  type TrainingSessionRow,
 } from './supabaseMappers.ts';
 
 function unwrap<T>(res: {
@@ -172,6 +184,27 @@ export async function fetchAnnouncements(): Promise<Announcement[]> {
   return rows.map(rowToAnnouncement);
 }
 
+export async function fetchTournaments(): Promise<Tournament[]> {
+  const rows = unwrap(
+    await getSupabase().from('tournaments').select('*').order('date')
+  ) as TournamentRow[];
+  return rows.map(rowToTournament);
+}
+
+export async function fetchTrainingSessions(): Promise<TrainingSession[]> {
+  const rows = unwrap(
+    await getSupabase().from('training_sessions').select('*').order('date')
+  ) as TrainingSessionRow[];
+  return rows.map(rowToTrainingSession);
+}
+
+export async function fetchExercises(): Promise<Exercise[]> {
+  const rows = unwrap(
+    await getSupabase().from('exercises').select('*').order('name')
+  ) as ExerciseRow[];
+  return rows.map(rowToExercise);
+}
+
 // ── Push (idempotent) ────────────────────────────────────────────────
 export async function upsertEntry(entry: JournalEntry): Promise<void> {
   unwrap(
@@ -270,6 +303,42 @@ export async function upsertAnnouncement(a: Announcement): Promise<void> {
 
 export async function deleteAnnouncement(id: string): Promise<void> {
   unwrap(await getSupabase().from('announcements').delete().eq('id', id));
+}
+
+export async function upsertTournament(t: Tournament): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('tournaments')
+      .upsert(tournamentToUpsertRow(t), { onConflict: 'id' })
+  );
+}
+
+export async function deleteTournament(id: string): Promise<void> {
+  unwrap(await getSupabase().from('tournaments').delete().eq('id', id));
+}
+
+export async function upsertTrainingSession(s: TrainingSession): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('training_sessions')
+      .upsert(trainingSessionToUpsertRow(s), { onConflict: 'id' })
+  );
+}
+
+export async function deleteTrainingSession(id: string): Promise<void> {
+  unwrap(await getSupabase().from('training_sessions').delete().eq('id', id));
+}
+
+export async function upsertExercise(e: Exercise): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('exercises')
+      .upsert(exerciseToUpsertRow(e), { onConflict: 'id' })
+  );
+}
+
+export async function deleteExercise(id: string): Promise<void> {
+  unwrap(await getSupabase().from('exercises').delete().eq('id', id));
 }
 
 export async function upsertCustomCategory(c: Category): Promise<void> {

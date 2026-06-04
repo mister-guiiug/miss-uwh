@@ -7,6 +7,7 @@ import {
   customCategoryToUpsertRow,
   entryToRow,
   entryToUpsertRow,
+  exerciseToUpsertRow,
   guardianToUpsertRow,
   recurringToUpsertRow,
   rowToAdherent,
@@ -14,22 +15,30 @@ import {
   rowToAttachment,
   rowToCategory,
   rowToClubEvent,
+  rowToExercise,
   rowToGuardian,
   rowToRecurring,
   rowToSeason,
   rowToEntry,
+  rowToTournament,
+  rowToTrainingSession,
   safeFileName,
   seasonToRow,
   seasonToUpsertRow,
+  tournamentToUpsertRow,
+  trainingSessionToUpsertRow,
   type AdherentRow,
   type AnnouncementRow,
   type AttachmentRow,
   type CategoryRow,
   type ClubEventRow,
   type EntryRow,
+  type ExerciseRow,
   type GuardianRow,
   type RecurringRow,
   type SeasonRow,
+  type TournamentRow,
+  type TrainingSessionRow,
 } from './supabaseMappers.ts';
 
 const entryRow: EntryRow = {
@@ -295,6 +304,71 @@ describe('vie du club (round-trip)', () => {
     const up = announcementToUpsertRow({ ...a, pinned: true });
     expect(up.pinned).toBe(true);
     expect(up.body).toBe('Reprise des entraînements lundi.');
+  });
+});
+
+describe('tournois / entraînements (round-trip)', () => {
+  it('tournoi : event_id null -> undefined', () => {
+    const row: TournamentRow = {
+      id: 't1',
+      season_id: 's1',
+      name: 'Tournoi des Arvernes',
+      date: '2026-02-04',
+      location: 'Coubertin',
+      status: 'prevu',
+      event_id: null,
+      notes: null,
+    };
+    const t = rowToTournament(row);
+    expect(t.name).toBe('Tournoi des Arvernes');
+    expect(t.status).toBe('prevu');
+    expect(t.eventId).toBeUndefined();
+    const up = tournamentToUpsertRow(t);
+    expect(up.id).toBe('t1');
+    expect(up.event_id).toBeNull();
+  });
+
+  it('séance : team_group/coach_id mappés, attendance défaut []', () => {
+    const row: TrainingSessionRow = {
+      id: 'se1',
+      season_id: 's1',
+      date: '2026-01-12',
+      location: 'Piscine',
+      team_group: 'Compét',
+      coach_id: 'a1',
+      focus: 'Passes',
+      attendance: ['a1', 'a2'],
+    };
+    const s = rowToTrainingSession(row);
+    expect(s.group).toBe('Compét');
+    expect(s.coachId).toBe('a1');
+    expect(s.attendance).toEqual(['a1', 'a2']);
+    const up = trainingSessionToUpsertRow(s);
+    expect(up.team_group).toBe('Compét');
+    expect(up.coach_id).toBe('a1');
+    expect(
+      rowToTrainingSession({ ...row, attendance: null }).attendance
+    ).toEqual([]);
+  });
+
+  it('exercice : duration_min numeric -> number', () => {
+    const row: ExerciseRow = {
+      id: 'ex1',
+      season_id: 's1',
+      name: 'Sprint 25m',
+      category: 'physique',
+      description: null,
+      duration_min: '15',
+      level: null,
+    };
+    const e = rowToExercise(row);
+    expect(e.category).toBe('physique');
+    expect(e.durationMin).toBe(15);
+    const up = exerciseToUpsertRow(e);
+    expect(up.duration_min).toBe(15);
+    expect(
+      rowToExercise({ ...row, duration_min: null }).durationMin
+    ).toBeUndefined();
   });
 });
 
