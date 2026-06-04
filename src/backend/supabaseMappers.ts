@@ -16,6 +16,8 @@ import type {
   EntrySens,
   EventKind,
   EventLedger,
+  Guardian,
+  GuardianRelation,
   JournalEntry,
   MemberRole,
   MemberStatus,
@@ -277,6 +279,38 @@ export function adherentToUpsertRow(a: Adherent): AdherentRow {
     amount: a.amount,
     paid: a.paid,
     notes: a.notes ?? null,
+  };
+}
+
+// ── Tuteurs / contacts (familles) ────────────────────────────────────
+export interface GuardianRow {
+  id: string;
+  member_id: string;
+  relation: GuardianRelation;
+  name: string;
+  phone: string | null;
+  email: string | null;
+}
+
+export function rowToGuardian(row: GuardianRow): Guardian {
+  return {
+    id: row.id,
+    memberId: row.member_id,
+    relation: row.relation,
+    name: row.name,
+    phone: orUndef(row.phone),
+    email: orUndef(row.email),
+  };
+}
+
+export function guardianToUpsertRow(g: Guardian): GuardianRow {
+  return {
+    id: g.id,
+    member_id: g.memberId,
+    relation: g.relation,
+    name: g.name,
+    phone: g.phone ?? null,
+    email: g.email ?? null,
   };
 }
 

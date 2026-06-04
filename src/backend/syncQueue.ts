@@ -57,6 +57,10 @@ export function entityKey(op: RemoteOp): string | null {
       return `adherent:${op.adherent.id}`;
     case 'adherent.delete':
       return `adherent:${op.id}`;
+    case 'guardian.upsert':
+      return `guardian:${op.guardian.id}`;
+    case 'guardian.delete':
+      return `guardian:${op.id}`;
     case 'category.upsert':
       return `category:${op.category.code}`;
     case 'category.delete':

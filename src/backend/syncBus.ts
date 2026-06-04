@@ -11,6 +11,7 @@ import type {
   Adherent,
   Category,
   EventLedger,
+  Guardian,
   JournalEntry,
   RecurringTemplate,
   Season,
@@ -28,6 +29,8 @@ export type RemoteOp =
   | { kind: 'recurring.delete'; id: string }
   | { kind: 'adherent.upsert'; adherent: Adherent }
   | { kind: 'adherent.delete'; id: string }
+  | { kind: 'guardian.upsert'; guardian: Guardian }
+  | { kind: 'guardian.delete'; id: string }
   | { kind: 'category.upsert'; category: Category }
   | { kind: 'category.delete'; code: string };
 

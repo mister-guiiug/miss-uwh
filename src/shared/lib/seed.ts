@@ -396,6 +396,7 @@ export function createInitialData(): AppData {
         paid: false,
       },
     ],
+    guardians: [],
     audit: [
       {
         id: createId('aud'),
@@ -436,6 +437,7 @@ export function createEmptyData(
     recurrings: [],
     customCategories: [],
     adherents: [],
+    guardians: [],
     audit: [],
     settings: DEFAULT_SETTINGS,
     onboarded: true,
