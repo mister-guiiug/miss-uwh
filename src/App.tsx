@@ -18,6 +18,7 @@ import { UpdatePrompt } from './pwa/UpdatePrompt.tsx';
 import { Onboarding } from './features/onboarding/Onboarding.tsx';
 import { HomeLauncher } from './features/home/HomeLauncher.tsx';
 import { PlaceholderScreen } from './features/home/PlaceholderScreen.tsx';
+import { MembersScreen } from './features/adherents/MembersScreen.tsx';
 import { useActiveLens } from './shared/hooks/useActiveLens.ts';
 import { lensById } from './shared/lib/lenses.ts';
 import { BilanScreen } from './features/bilan/BilanScreen.tsx';
@@ -119,26 +120,28 @@ function Inner() {
               </LensGuard>
             }
           >
+            <Route index element={<MembersScreen />} />
             <Route
-              index
+              path="familles"
               element={
                 <PlaceholderScreen
-                  title="Membres"
-                  note="Registre des membres (joueurs & encadrants) — à venir."
+                  title="Familles / Tuteurs"
+                  note="Parents / tuteurs et contacts d'urgence — prochain lot."
                 />
               }
             />
             <Route
-              path="familles"
-              element={<PlaceholderScreen title="Familles / Tuteurs" />}
-            />
-            <Route
               path="encadrement"
-              element={<PlaceholderScreen title="Encadrement" />}
+              element={<MembersScreen roleFilter="encadrant" />}
             />
             <Route
               path="cotisations"
-              element={<PlaceholderScreen title="Cotisations" />}
+              element={
+                <PlaceholderScreen
+                  title="Cotisations"
+                  note="Suivi des cotisations dues/réglées — prochain lot."
+                />
+              }
             />
           </Route>
 
