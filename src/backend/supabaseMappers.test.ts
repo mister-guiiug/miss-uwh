@@ -164,19 +164,29 @@ describe('adhérents (round-trip)', () => {
     season_id: 's1',
     first_name: 'Jean',
     last_name: 'Dupont',
-    category: 'adulte',
+    birth_date: '2010-05-01',
+    category: 'jeune',
+    member_roles: ['joueur', 'encadrant'],
     licence_number: null,
+    email: 'jean@example.org',
+    phone: null,
+    status: 'actif',
     amount: '160.00',
     paid: true,
     notes: null,
   };
 
-  it('rowToAdherent mappe snake_case + null -> undefined', () => {
+  it('rowToAdherent mappe snake_case + null -> undefined + rôles', () => {
     const a = rowToAdherent(row);
     expect(a.seasonId).toBe('s1');
     expect(a.firstName).toBe('Jean');
     expect(a.lastName).toBe('Dupont');
-    expect(a.category).toBe('adulte');
+    expect(a.birthDate).toBe('2010-05-01');
+    expect(a.category).toBe('jeune');
+    expect(a.roles).toEqual(['joueur', 'encadrant']);
+    expect(a.email).toBe('jean@example.org');
+    expect(a.phone).toBeUndefined();
+    expect(a.status).toBe('actif');
     expect(a.amount).toBe(160);
     expect(a.paid).toBe(true);
     expect(a.licenceNumber).toBeUndefined();
@@ -188,9 +198,26 @@ describe('adhérents (round-trip)', () => {
     expect(up.id).toBe('a1');
     expect(up.season_id).toBe('s1');
     expect(up.first_name).toBe('Jean');
+    expect(up.birth_date).toBe('2010-05-01');
+    expect(up.member_roles).toEqual(['joueur', 'encadrant']);
+    expect(up.email).toBe('jean@example.org');
+    expect(up.phone).toBeNull();
+    expect(up.status).toBe('actif');
     expect(up.licence_number).toBeNull();
     expect(up.notes).toBeNull();
     expect(up.paid).toBe(true);
+  });
+
+  it('rôles par défaut [] et statut actif quand colonnes vides', () => {
+    const a = rowToAdherent({
+      ...row,
+      member_roles: null,
+      status: null,
+      birth_date: null,
+    });
+    expect(a.roles).toEqual([]);
+    expect(a.status).toBe('actif');
+    expect(a.birthDate).toBeUndefined();
   });
 });
 

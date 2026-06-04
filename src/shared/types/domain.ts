@@ -184,14 +184,45 @@ export const ADHERENT_CATEGORIES = [
 ] as const;
 export type AdherentCategory = (typeof ADHERENT_CATEGORIES)[number];
 
-/** Adhérent du club (registre des inscriptions — règle 8, suivi par personne). */
+/** Rôles d'un adhérent AU SEIN du club (donnée, distincte des rôles d'accès RBAC). */
+export const MEMBER_ROLES = [
+  'joueur',
+  'encadrant',
+  'arbitre',
+  'dirigeant',
+] as const;
+export type MemberRole = (typeof MEMBER_ROLES)[number];
+
+export const MEMBER_ROLE_LABELS: Record<MemberRole, string> = {
+  joueur: 'Joueur',
+  encadrant: 'Encadrant',
+  arbitre: 'Arbitre',
+  dirigeant: 'Dirigeant',
+};
+
+export const MEMBER_STATUSES = ['actif', 'inactif'] as const;
+export type MemberStatus = (typeof MEMBER_STATUSES)[number];
+
+/**
+ * Adhérent / membre du club (registre des personnes — règle 8). Porte à la fois
+ * la personne (identité, rôles dans le club, contact) ET sa cotisation
+ * (montant/réglé) ; l'espace Adhérents gère les deux facettes.
+ */
 export interface Adherent {
   id: string;
   seasonId: string;
   firstName: string;
   lastName: string;
+  /** Date de naissance (ISO `yyyy-mm-dd`) — pour distinguer mineurs/majeurs. */
+  birthDate?: string;
   category: AdherentCategory;
+  /** Rôles dans le club (joueur, encadrant, arbitre, dirigeant). */
+  roles?: MemberRole[];
   licenceNumber?: string;
+  email?: string;
+  phone?: string;
+  /** Adhérent actif sur la saison ou archivé. */
+  status?: MemberStatus;
   /** Cotisation due/réglée. */
   amount: number;
   paid: boolean;

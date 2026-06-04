@@ -17,6 +17,8 @@ import type {
   EventKind,
   EventLedger,
   JournalEntry,
+  MemberRole,
+  MemberStatus,
   PaymentMethod,
   RecurringTemplate,
   Season,
@@ -228,8 +230,13 @@ export interface AdherentRow {
   season_id: string;
   first_name: string;
   last_name: string;
+  birth_date: string | null;
   category: AdherentCategory;
+  member_roles: MemberRole[] | null;
   licence_number: string | null;
+  email: string | null;
+  phone: string | null;
+  status: MemberStatus | string | null;
   amount: number | string;
   paid: boolean;
   notes: string | null;
@@ -241,8 +248,13 @@ export function rowToAdherent(row: AdherentRow): Adherent {
     seasonId: row.season_id,
     firstName: row.first_name,
     lastName: row.last_name,
+    birthDate: orUndef(row.birth_date),
     category: row.category,
+    roles: row.member_roles ?? [],
     licenceNumber: orUndef(row.licence_number),
+    email: orUndef(row.email),
+    phone: orUndef(row.phone),
+    status: (row.status as MemberStatus) ?? 'actif',
     amount: num(row.amount),
     paid: row.paid,
     notes: orUndef(row.notes),
@@ -255,8 +267,13 @@ export function adherentToUpsertRow(a: Adherent): AdherentRow {
     season_id: a.seasonId,
     first_name: a.firstName,
     last_name: a.lastName,
+    birth_date: a.birthDate ?? null,
     category: a.category,
+    member_roles: a.roles ?? [],
     licence_number: a.licenceNumber ?? null,
+    email: a.email ?? null,
+    phone: a.phone ?? null,
+    status: a.status ?? 'actif',
     amount: a.amount,
     paid: a.paid,
     notes: a.notes ?? null,
