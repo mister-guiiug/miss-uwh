@@ -157,28 +157,32 @@ export function EvolutionChart({ data }: { data: EvolutionPoint[] }) {
         ))}
       </ul>
 
-      {/* Données accessibles (lecteur d'écran) */}
-      <table className="sr-only">
-        <caption>Évolution par saison</caption>
-        <thead>
-          <tr>
-            <th>Saison</th>
-            <th>Recettes</th>
-            <th>Dépenses</th>
-            <th>Solde créditeur</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map(d => (
-            <tr key={d.label}>
-              <td>{d.label}</td>
-              <td>{formatEuro(d.recettes)}</td>
-              <td>{formatEuro(d.depenses)}</td>
-              <td>{formatEuro(d.solde)}</td>
+      {/* Données accessibles (lecteur d'écran). Conteneur sr-only en <div> :
+          un <table> ignore width/height:1px (table-layout) et resterait visible,
+          son <caption> chevauchant alors le titre de la carte. */}
+      <div className="sr-only">
+        <table>
+          <caption>Évolution par saison</caption>
+          <thead>
+            <tr>
+              <th>Saison</th>
+              <th>Recettes</th>
+              <th>Dépenses</th>
+              <th>Solde créditeur</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map(d => (
+              <tr key={d.label}>
+                <td>{d.label}</td>
+                <td>{formatEuro(d.recettes)}</td>
+                <td>{formatEuro(d.depenses)}</td>
+                <td>{formatEuro(d.solde)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

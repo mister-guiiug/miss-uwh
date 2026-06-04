@@ -104,26 +104,30 @@ export function DonutChart({
           ))}
       </ul>
 
-      {/* Données accessibles (lecteur d'écran) */}
-      <table className="sr-only">
-        <caption>{ariaLabel}</caption>
-        <thead>
-          <tr>
-            <th>Catégorie</th>
-            <th>Montant</th>
-            <th>Part</th>
-          </tr>
-        </thead>
-        <tbody>
-          {segments.map((d, i) => (
-            <tr key={i}>
-              <td>{d.label}</td>
-              <td>{formatEuro(d.value)}</td>
-              <td>{Math.round((d.value / total) * 100)}%</td>
+      {/* Données accessibles (lecteur d'écran). Le conteneur sr-only est un
+          <div> : un <table> ignore width/height:1px (table-layout) et resterait
+          visible, son <caption> chevauchant alors le titre de la carte. */}
+      <div className="sr-only">
+        <table>
+          <caption>{ariaLabel}</caption>
+          <thead>
+            <tr>
+              <th>Catégorie</th>
+              <th>Montant</th>
+              <th>Part</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {segments.map((d, i) => (
+              <tr key={i}>
+                <td>{d.label}</td>
+                <td>{formatEuro(d.value)}</td>
+                <td>{Math.round((d.value / total) * 100)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
