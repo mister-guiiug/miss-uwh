@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import {
   HashRouter,
+  Navigate,
   Outlet,
   Route,
   Routes,
@@ -11,9 +12,14 @@ import { AuthProvider } from './auth/AuthContext.tsx';
 import { AuthGate } from './auth/AuthGate.tsx';
 import { SupabaseSync } from './backend/SupabaseSync.tsx';
 import { AppHeader } from './shared/components/AppHeader.tsx';
-import { BottomNav } from './shared/components/BottomNav.tsx';
+import { LensNav } from './shared/components/LensNav.tsx';
+import { LensGuard } from './shared/components/LensGuard.tsx';
 import { UpdatePrompt } from './pwa/UpdatePrompt.tsx';
 import { Onboarding } from './features/onboarding/Onboarding.tsx';
+import { HomeLauncher } from './features/home/HomeLauncher.tsx';
+import { PlaceholderScreen } from './features/home/PlaceholderScreen.tsx';
+import { useActiveLens } from './shared/hooks/useActiveLens.ts';
+import { lensById } from './shared/lib/lenses.ts';
 import { BilanScreen } from './features/bilan/BilanScreen.tsx';
 
 const JournalScreen = lazy(() =>
@@ -47,23 +53,20 @@ const SettingsScreen = lazy(() =>
   }))
 );
 
-const TITLES: Record<string, string> = {
-  '/': 'Bilan',
-  '/journal': 'Journal comptable',
-  '/categories': 'Catégories',
-  '/synthese': 'Synthèse',
-  '/seasons': 'Saisons',
-  '/audit': 'Journal d’audit',
+/** Titres des routes GLOBALES (hors lens). Le titre d'un lens vient de sa config. */
+const GLOBAL_TITLES: Record<string, string> = {
   '/settings': 'Réglages',
+  '/audit': 'Journal d’audit',
 };
 
 function Shell() {
+  const lens = useActiveLens();
   const { pathname } = useLocation();
-  const title = TITLES[pathname] ?? 'Miss UWH';
+  const title = lens?.label ?? GLOBAL_TITLES[pathname] ?? 'Miss UWH';
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
-      <AppHeader title={title} />
+      <AppHeader title={title} lens={lens} />
       <main className="flex-1">
         <Suspense
           fallback={
@@ -75,7 +78,7 @@ function Shell() {
           <Outlet />
         </Suspense>
       </main>
-      <BottomNav />
+      {lens && <LensNav lens={lens} />}
       <UpdatePrompt />
     </div>
   );
@@ -89,13 +92,127 @@ function Inner() {
     <HashRouter>
       <Routes>
         <Route element={<Shell />}>
-          <Route index element={<BilanScreen />} />
-          <Route path="journal" element={<JournalScreen />} />
-          <Route path="categories" element={<CategoriesScreen />} />
-          <Route path="synthese" element={<SyntheseScreen />} />
-          <Route path="seasons" element={<SeasonsScreen />} />
-          <Route path="audit" element={<AuditScreen />} />
+          <Route index element={<HomeLauncher />} />
+
+          {/* 💶 Finances */}
+          <Route
+            path="finances"
+            element={
+              <LensGuard lens={lensById('finances')!}>
+                <Outlet />
+              </LensGuard>
+            }
+          >
+            <Route index element={<BilanScreen />} />
+            <Route path="journal" element={<JournalScreen />} />
+            <Route path="categories" element={<CategoriesScreen />} />
+            <Route path="synthese" element={<SyntheseScreen />} />
+            <Route path="seasons" element={<SeasonsScreen />} />
+          </Route>
+
+          {/* 👥 Adhérents (scaffold) */}
+          <Route
+            path="adherents"
+            element={
+              <LensGuard lens={lensById('adherents')!}>
+                <Outlet />
+              </LensGuard>
+            }
+          >
+            <Route
+              index
+              element={
+                <PlaceholderScreen
+                  title="Membres"
+                  note="Registre des membres (joueurs & encadrants) — à venir."
+                />
+              }
+            />
+            <Route
+              path="familles"
+              element={<PlaceholderScreen title="Familles / Tuteurs" />}
+            />
+            <Route
+              path="encadrement"
+              element={<PlaceholderScreen title="Encadrement" />}
+            />
+            <Route
+              path="cotisations"
+              element={<PlaceholderScreen title="Cotisations" />}
+            />
+          </Route>
+
+          {/* 🏑 Entraînements / Stratégie (scaffold) */}
+          <Route
+            path="entrainements"
+            element={
+              <LensGuard lens={lensById('entrainements')!}>
+                <Outlet />
+              </LensGuard>
+            }
+          >
+            <Route index element={<PlaceholderScreen title="Séances" />} />
+            <Route
+              path="exercices"
+              element={<PlaceholderScreen title="Exercices" />}
+            />
+            <Route
+              path="strategie"
+              element={<PlaceholderScreen title="Stratégie" />}
+            />
+            <Route
+              path="arbitrage"
+              element={<PlaceholderScreen title="Arbitrage" />}
+            />
+          </Route>
+
+          {/* 🎉 Vie du club (scaffold) */}
+          <Route
+            path="vie-club"
+            element={
+              <LensGuard lens={lensById('vie-club')!}>
+                <Outlet />
+              </LensGuard>
+            }
+          >
+            <Route index element={<PlaceholderScreen title="Événements" />} />
+            <Route
+              path="tournois"
+              element={<PlaceholderScreen title="Tournois" />}
+            />
+            <Route
+              path="annonces"
+              element={<PlaceholderScreen title="Annonces" />}
+            />
+            <Route
+              path="galerie"
+              element={<PlaceholderScreen title="Galerie" />}
+            />
+          </Route>
+
+          {/* Routes globales (hors lens) */}
           <Route path="settings" element={<SettingsScreen />} />
+          <Route path="audit" element={<AuditScreen />} />
+
+          {/* Redirections des anciens chemins (bookmarks / raccourcis PWA) */}
+          <Route
+            path="journal"
+            element={<Navigate to="/finances/journal" replace />}
+          />
+          <Route
+            path="categories"
+            element={<Navigate to="/finances/categories" replace />}
+          />
+          <Route
+            path="synthese"
+            element={<Navigate to="/finances/synthese" replace />}
+          />
+          <Route
+            path="seasons"
+            element={<Navigate to="/finances/seasons" replace />}
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
     </HashRouter>

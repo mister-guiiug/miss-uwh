@@ -11,6 +11,8 @@ export type Role =
   | 'tresorier'
   | 'tresorier_adjoint'
   | 'president'
+  | 'secretaire'
+  | 'entraineur'
   | 'resp_evenement'
   | 'resp_materiel'
   | 'controleur'

@@ -17,6 +17,8 @@ const ROLES: { key: Role; label: string }[] = [
   { key: 'tresorier', label: 'Trésorier' },
   { key: 'tresorier_adjoint', label: 'Trésorier adjoint' },
   { key: 'president', label: 'Président' },
+  { key: 'secretaire', label: 'Secrétaire' },
+  { key: 'entraineur', label: 'Entraîneur' },
   { key: 'resp_evenement', label: 'Resp. événement' },
   { key: 'resp_materiel', label: 'Resp. matériel' },
   { key: 'controleur', label: 'Contrôleur' },

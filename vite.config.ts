@@ -76,21 +76,25 @@ export default defineConfig(({ command }) => {
           dir: 'ltr',
           categories: ['finance', 'productivity', 'sports'],
           shortcuts: [
-            { name: 'Bilan', short_name: 'Bilan', url: `${basePath}#/` },
+            {
+              name: 'Bilan',
+              short_name: 'Bilan',
+              url: `${basePath}#/finances`,
+            },
             {
               name: 'Journal',
               short_name: 'Journal',
-              url: `${basePath}#/journal`,
+              url: `${basePath}#/finances/journal`,
             },
             {
               name: 'Catégories',
               short_name: 'Catégories',
-              url: `${basePath}#/categories`,
+              url: `${basePath}#/finances/categories`,
             },
             {
               name: 'Saisons',
               short_name: 'Saisons',
-              url: `${basePath}#/seasons`,
+              url: `${basePath}#/finances/seasons`,
             },
           ],
           icons: [
