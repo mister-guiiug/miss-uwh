@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
   adherentToUpsertRow,
+  announcementToUpsertRow,
   attachmentPath,
+  clubEventToUpsertRow,
   customCategoryToUpsertRow,
   entryToRow,
   entryToUpsertRow,
   guardianToUpsertRow,
   recurringToUpsertRow,
   rowToAdherent,
+  rowToAnnouncement,
   rowToAttachment,
   rowToCategory,
+  rowToClubEvent,
   rowToGuardian,
   rowToRecurring,
   rowToSeason,
@@ -18,8 +22,10 @@ import {
   seasonToRow,
   seasonToUpsertRow,
   type AdherentRow,
+  type AnnouncementRow,
   type AttachmentRow,
   type CategoryRow,
+  type ClubEventRow,
   type EntryRow,
   type GuardianRow,
   type RecurringRow,
@@ -249,6 +255,46 @@ describe('tuteurs / familles (round-trip)', () => {
     expect(up.member_id).toBe('a1');
     expect(up.relation).toBe('mere');
     expect(up.email).toBeNull();
+  });
+});
+
+describe('vie du club (round-trip)', () => {
+  it('événement : rowToClubEvent / clubEventToUpsertRow', () => {
+    const row: ClubEventRow = {
+      id: 'ce1',
+      season_id: 's1',
+      date: '2026-03-15',
+      title: 'Assemblée générale',
+      type: 'ag',
+      location: 'Piscine',
+      description: null,
+    };
+    const e = rowToClubEvent(row);
+    expect(e.seasonId).toBe('s1');
+    expect(e.type).toBe('ag');
+    expect(e.location).toBe('Piscine');
+    expect(e.description).toBeUndefined();
+    const up = clubEventToUpsertRow(e);
+    expect(up.id).toBe('ce1');
+    expect(up.season_id).toBe('s1');
+    expect(up.description).toBeNull();
+  });
+
+  it('annonce : pinned par défaut false', () => {
+    const row: AnnouncementRow = {
+      id: 'an1',
+      season_id: 's1',
+      date: '2026-01-10',
+      title: 'Reprise',
+      body: 'Reprise des entraînements lundi.',
+      pinned: null,
+    };
+    const a = rowToAnnouncement(row);
+    expect(a.title).toBe('Reprise');
+    expect(a.pinned).toBe(false);
+    const up = announcementToUpsertRow({ ...a, pinned: true });
+    expect(up.pinned).toBe(true);
+    expect(up.body).toBe('Reprise des entraînements lundi.');
   });
 });
 

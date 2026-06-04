@@ -7,12 +7,15 @@
 import type {
   Adherent,
   AdherentCategory,
+  Announcement,
   Attachment,
   AuditCategory,
   AuditEvent,
   Category,
   CategoryKind,
   Club,
+  ClubEvent,
+  ClubEventType,
   EntrySens,
   EventKind,
   EventLedger,
@@ -311,6 +314,73 @@ export function guardianToUpsertRow(g: Guardian): GuardianRow {
     name: g.name,
     phone: g.phone ?? null,
     email: g.email ?? null,
+  };
+}
+
+// ── Vie du club : agenda ─────────────────────────────────────────────
+export interface ClubEventRow {
+  id: string;
+  season_id: string;
+  date: string;
+  title: string;
+  type: ClubEventType;
+  location: string | null;
+  description: string | null;
+}
+
+export function rowToClubEvent(row: ClubEventRow): ClubEvent {
+  return {
+    id: row.id,
+    seasonId: row.season_id,
+    date: row.date,
+    title: row.title,
+    type: row.type,
+    location: orUndef(row.location),
+    description: orUndef(row.description),
+  };
+}
+
+export function clubEventToUpsertRow(e: ClubEvent): ClubEventRow {
+  return {
+    id: e.id,
+    season_id: e.seasonId,
+    date: e.date,
+    title: e.title,
+    type: e.type,
+    location: e.location ?? null,
+    description: e.description ?? null,
+  };
+}
+
+// ── Vie du club : annonces ───────────────────────────────────────────
+export interface AnnouncementRow {
+  id: string;
+  season_id: string;
+  date: string;
+  title: string;
+  body: string;
+  pinned: boolean | null;
+}
+
+export function rowToAnnouncement(row: AnnouncementRow): Announcement {
+  return {
+    id: row.id,
+    seasonId: row.season_id,
+    date: row.date,
+    title: row.title,
+    body: row.body,
+    pinned: row.pinned ?? false,
+  };
+}
+
+export function announcementToUpsertRow(a: Announcement): AnnouncementRow {
+  return {
+    id: a.id,
+    season_id: a.seasonId,
+    date: a.date,
+    title: a.title,
+    body: a.body,
+    pinned: a.pinned ?? false,
   };
 }
 
