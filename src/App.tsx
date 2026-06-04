@@ -19,6 +19,8 @@ import { Onboarding } from './features/onboarding/Onboarding.tsx';
 import { HomeLauncher } from './features/home/HomeLauncher.tsx';
 import { PlaceholderScreen } from './features/home/PlaceholderScreen.tsx';
 import { MembersScreen } from './features/adherents/MembersScreen.tsx';
+import { FamillesScreen } from './features/adherents/FamillesScreen.tsx';
+import { CotisationsScreen } from './features/adherents/CotisationsScreen.tsx';
 import { useActiveLens } from './shared/hooks/useActiveLens.ts';
 import { lensById } from './shared/lib/lenses.ts';
 import { BilanScreen } from './features/bilan/BilanScreen.tsx';
@@ -121,28 +123,12 @@ function Inner() {
             }
           >
             <Route index element={<MembersScreen />} />
-            <Route
-              path="familles"
-              element={
-                <PlaceholderScreen
-                  title="Familles / Tuteurs"
-                  note="Parents / tuteurs et contacts d'urgence — prochain lot."
-                />
-              }
-            />
+            <Route path="familles" element={<FamillesScreen />} />
             <Route
               path="encadrement"
               element={<MembersScreen roleFilter="encadrant" />}
             />
-            <Route
-              path="cotisations"
-              element={
-                <PlaceholderScreen
-                  title="Cotisations"
-                  note="Suivi des cotisations dues/réglées — prochain lot."
-                />
-              }
-            />
+            <Route path="cotisations" element={<CotisationsScreen />} />
           </Route>
 
           {/* 🏑 Entraînements / Stratégie (scaffold) */}

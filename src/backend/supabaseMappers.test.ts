@@ -5,10 +5,12 @@ import {
   customCategoryToUpsertRow,
   entryToRow,
   entryToUpsertRow,
+  guardianToUpsertRow,
   recurringToUpsertRow,
   rowToAdherent,
   rowToAttachment,
   rowToCategory,
+  rowToGuardian,
   rowToRecurring,
   rowToSeason,
   rowToEntry,
@@ -19,6 +21,7 @@ import {
   type AttachmentRow,
   type CategoryRow,
   type EntryRow,
+  type GuardianRow,
   type RecurringRow,
   type SeasonRow,
 } from './supabaseMappers.ts';
@@ -218,6 +221,34 @@ describe('adhérents (round-trip)', () => {
     expect(a.roles).toEqual([]);
     expect(a.status).toBe('actif');
     expect(a.birthDate).toBeUndefined();
+  });
+});
+
+describe('tuteurs / familles (round-trip)', () => {
+  const row: GuardianRow = {
+    id: 'g1',
+    member_id: 'a1',
+    relation: 'mere',
+    name: 'Sophie Dupont',
+    phone: '0601020304',
+    email: null,
+  };
+
+  it('rowToGuardian mappe member_id + null -> undefined', () => {
+    const g = rowToGuardian(row);
+    expect(g.memberId).toBe('a1');
+    expect(g.relation).toBe('mere');
+    expect(g.name).toBe('Sophie Dupont');
+    expect(g.phone).toBe('0601020304');
+    expect(g.email).toBeUndefined();
+  });
+
+  it('guardianToUpsertRow réinjecte member_id, undefined -> null', () => {
+    const up = guardianToUpsertRow(rowToGuardian(row));
+    expect(up.id).toBe('g1');
+    expect(up.member_id).toBe('a1');
+    expect(up.relation).toBe('mere');
+    expect(up.email).toBeNull();
   });
 });
 

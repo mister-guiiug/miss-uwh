@@ -229,6 +229,32 @@ export interface Adherent {
   notes?: string;
 }
 
+/** Lien familial / contact d'un adhérent (parents, tuteur, urgence — mineurs). */
+export const GUARDIAN_RELATIONS = [
+  'pere',
+  'mere',
+  'tuteur',
+  'urgence',
+] as const;
+export type GuardianRelation = (typeof GUARDIAN_RELATIONS)[number];
+
+export const GUARDIAN_RELATION_LABELS: Record<GuardianRelation, string> = {
+  pere: 'Père',
+  mere: 'Mère',
+  tuteur: 'Tuteur',
+  urgence: "Contact d'urgence",
+};
+
+export interface Guardian {
+  id: string;
+  /** Adhérent rattaché (`Adherent.id`). */
+  memberId: string;
+  relation: GuardianRelation;
+  name: string;
+  phone?: string;
+  email?: string;
+}
+
 export const AUDIT_CATEGORIES = ['metier', 'securite'] as const;
 export type AuditCategory = (typeof AUDIT_CATEGORIES)[number];
 
@@ -272,6 +298,8 @@ export interface AppData {
   customCategories: Category[];
   /** Registre des adhérents (toutes saisons). */
   adherents: Adherent[];
+  /** Liens familiaux / contacts des adhérents (parents, tuteurs, urgence). */
+  guardians: Guardian[];
   audit: AuditEvent[];
   settings: Settings;
   onboarded: boolean;

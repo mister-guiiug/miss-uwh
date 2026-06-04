@@ -54,6 +54,7 @@ export async function pullAll(): Promise<void> {
       recurrings,
       adherents,
       customCategories,
+      guardians,
     ] = await Promise.all([
       repo.fetchClub(),
       repo.fetchSeasons(),
@@ -64,6 +65,7 @@ export async function pullAll(): Promise<void> {
       repo.fetchRecurrings(),
       repo.fetchAdherents(),
       repo.fetchCustomCategories(),
+      repo.fetchGuardians(),
     ]);
 
     if (club) setCurrentClubId(club.id);
@@ -98,6 +100,7 @@ export async function pullAll(): Promise<void> {
       recurrings,
       customCategories,
       adherents,
+      guardians,
       audit,
       settings: prev.settings, // préférence d'appareil : reste locale
       onboarded: true,
@@ -137,6 +140,10 @@ async function applyOp(op: RemoteOp): Promise<void> {
       return repo.upsertAdherent(op.adherent);
     case 'adherent.delete':
       return repo.deleteAdherent(op.id);
+    case 'guardian.upsert':
+      return repo.upsertGuardian(op.guardian);
+    case 'guardian.delete':
+      return repo.deleteGuardian(op.id);
     case 'category.upsert':
       return repo.upsertCustomCategory(op.category);
     case 'category.delete':
@@ -228,6 +235,11 @@ function subscribeRealtime(): void {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'adherents' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'guardians' },
       scheduleReconcilePull
     )
     .on(

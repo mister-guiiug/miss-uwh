@@ -21,6 +21,7 @@ import type {
   Club,
   EventKind,
   EventLedger,
+  Guardian,
   JournalEntry,
   RecurringTemplate,
   Season,
@@ -116,6 +117,11 @@ interface AppState {
   addAdherent: (a: Omit<Adherent, 'id'>) => string;
   updateAdherent: (id: string, patch: Partial<Omit<Adherent, 'id'>>) => void;
   deleteAdherent: (id: string) => void;
+
+  // Familles / tuteurs
+  addGuardian: (g: Omit<Guardian, 'id'>) => string;
+  updateGuardian: (id: string, patch: Partial<Omit<Guardian, 'id'>>) => void;
+  deleteGuardian: (id: string) => void;
 
   // Écritures
   addEntry: (input: EntryInput) => string | null;
@@ -580,10 +586,55 @@ export const useAppStore = create<AppState>((set, get) => {
     deleteAdherent: id =>
       set(s => {
         remote({ kind: 'adherent.delete', id });
+        // Le serveur supprime les tuteurs en cascade (FK) ; on reflète localement.
         return {
           data: persist({
             ...s.data,
             adherents: s.data.adherents.filter(x => x.id !== id),
+            guardians: s.data.guardians.filter(g => g.memberId !== id),
+          }),
+        };
+      }),
+
+    addGuardian: g => {
+      const guardian: Guardian = { ...g, id: createUuid() };
+      set(s => ({
+        data: persist(
+          audit(
+            { ...s.data, guardians: [...s.data.guardians, guardian] },
+            'guardian.create',
+            'metier',
+            'guardian',
+            `Tuteur/contact « ${g.name} » ajouté.`,
+            { targetId: guardian.id }
+          )
+        ),
+      }));
+      remote({ kind: 'guardian.upsert', guardian });
+      return guardian.id;
+    },
+
+    updateGuardian: (id, patch) =>
+      set(s => {
+        const before = s.data.guardians.find(x => x.id === id);
+        if (!before) return s;
+        const after: Guardian = { ...before, ...patch };
+        remote({ kind: 'guardian.upsert', guardian: after });
+        return {
+          data: persist({
+            ...s.data,
+            guardians: s.data.guardians.map(x => (x.id === id ? after : x)),
+          }),
+        };
+      }),
+
+    deleteGuardian: id =>
+      set(s => {
+        remote({ kind: 'guardian.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            guardians: s.data.guardians.filter(x => x.id !== id),
           }),
         };
       }),

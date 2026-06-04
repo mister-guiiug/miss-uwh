@@ -17,6 +17,7 @@ import type {
   Category,
   Club,
   EventLedger,
+  Guardian,
   JournalEntry,
   RecurringTemplate,
   Season,
@@ -28,6 +29,7 @@ import {
   customCategoryToUpsertRow,
   entryToUpsertRow,
   eventToRow,
+  guardianToUpsertRow,
   recurringToUpsertRow,
   rowToAdherent,
   rowToAttachment,
@@ -36,6 +38,7 @@ import {
   rowToClub,
   rowToEntry,
   rowToEvent,
+  rowToGuardian,
   rowToRecurring,
   rowToSeason,
   seasonToUpsertRow,
@@ -46,6 +49,7 @@ import {
   type ClubRow,
   type EntryRow,
   type EventRow,
+  type GuardianRow,
   type RecurringRow,
   type SeasonRow,
 } from './supabaseMappers.ts';
@@ -139,6 +143,13 @@ export async function fetchCustomCategories(): Promise<Category[]> {
   return rows.map(rowToCategory);
 }
 
+export async function fetchGuardians(): Promise<Guardian[]> {
+  const rows = unwrap(
+    await getSupabase().from('guardians').select('*')
+  ) as GuardianRow[];
+  return rows.map(rowToGuardian);
+}
+
 // ── Push (idempotent) ────────────────────────────────────────────────
 export async function upsertEntry(entry: JournalEntry): Promise<void> {
   unwrap(
@@ -201,6 +212,18 @@ export async function upsertAdherent(a: Adherent): Promise<void> {
 
 export async function deleteAdherent(id: string): Promise<void> {
   unwrap(await getSupabase().from('adherents').delete().eq('id', id));
+}
+
+export async function upsertGuardian(g: Guardian): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('guardians')
+      .upsert(guardianToUpsertRow(g), { onConflict: 'id' })
+  );
+}
+
+export async function deleteGuardian(id: string): Promise<void> {
+  unwrap(await getSupabase().from('guardians').delete().eq('id', id));
 }
 
 export async function upsertCustomCategory(c: Category): Promise<void> {

@@ -11,6 +11,7 @@ import {
   CATEGORY_KINDS,
   ENTRY_SENS,
   EVENT_KINDS,
+  GUARDIAN_RELATIONS,
   MEMBER_ROLES,
   MEMBER_STATUSES,
   PAYMENT_METHODS,
@@ -43,6 +44,15 @@ const adherentSchema = z.object({
   amount: z.number().nonnegative().catch(0),
   paid: z.boolean().catch(false),
   notes: z.string().optional(),
+});
+
+const guardianSchema = z.object({
+  id: z.string(),
+  memberId: z.string(),
+  relation: z.enum(GUARDIAN_RELATIONS).catch('tuteur'),
+  name: z.string(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
 });
 
 const attachmentSchema = z.object({
@@ -151,6 +161,7 @@ export const appDataSchema = z.object({
   recurrings: z.array(recurringSchema).catch([]),
   customCategories: z.array(categorySchema).catch([]),
   adherents: z.array(adherentSchema).catch([]),
+  guardians: z.array(guardianSchema).catch([]),
   audit: z.array(auditSchema).catch([]),
   settings: settingsSchema,
   onboarded: z.boolean(),
