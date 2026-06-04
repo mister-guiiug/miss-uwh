@@ -33,10 +33,24 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Polices chargées en non-bloquant (media="print" -> "all" à l'onload) :
+      la feuille de style distante ne bloque plus le rendu, ce qui évitait
+      l'avertissement « mise en page forcée avant le chargement complet »
+      (FOUC). display=swap affiche d'abord la police système puis échange.
+    -->
     <link
       href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <title>Miss UWH — Bilan comptable Hockey Subaquatique</title>
   </head>
   <body>
