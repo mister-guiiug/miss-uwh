@@ -1,12 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Home, Lock, Moon, Settings, Sun, Waves } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Lens } from '../lib/lenses.ts';
 import { Button } from './Button.tsx';
 
 /**
- * En-tête : retour à l'accueil (dans un lens) ou logo (sur le lanceur), titre,
- * chip saison + roue Réglages (toujours accessibles) + bascule de thème.
+ * En-tête : retour à l'accueil (hors lanceur — lens ET routes globales comme
+ * Réglages/Audit) ou logo (sur le lanceur), titre, chip saison + roue Réglages
+ * (toujours accessibles) + bascule de thème.
  */
 export function AppHeader({
   title,
@@ -19,25 +20,27 @@ export function AppHeader({
   const setTheme = useAppStore(s => s.setTheme);
   const season = useAppStore(selectActiveSeason);
   const isDark = theme === 'dark';
+  const { pathname } = useLocation();
+  const isLauncher = pathname === '/';
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-[var(--uwh-border)] bg-[var(--uwh-surface)]/95 px-4 py-3 backdrop-blur pt-[max(0.75rem,env(safe-area-inset-top))] no-print">
       <div className="flex min-w-0 items-center gap-2">
-        {lens ? (
-          <Link
-            to="/"
-            aria-label="Retour à l'accueil"
-            className="-ml-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--uwh-text-soft)]"
-            style={{ color: lens.accent }}
-          >
-            <Home size={20} aria-hidden="true" />
-          </Link>
-        ) : (
+        {isLauncher ? (
           <Waves
             size={22}
             className="shrink-0 text-primary"
             aria-hidden="true"
           />
+        ) : (
+          <Link
+            to="/"
+            aria-label="Retour à l'accueil"
+            className="-ml-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--uwh-text-soft)]"
+            style={lens ? { color: lens.accent } : undefined}
+          >
+            <Home size={20} aria-hidden="true" />
+          </Link>
         )}
         <h1 className="truncate font-display text-lg font-bold leading-none">
           {title}
