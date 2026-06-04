@@ -399,6 +399,9 @@ export function createInitialData(): AppData {
     guardians: [],
     clubEvents: [],
     announcements: [],
+    tournaments: [],
+    trainingSessions: [],
+    exercises: [],
     audit: [
       {
         id: createId('aud'),
@@ -442,6 +445,9 @@ export function createEmptyData(
     guardians: [],
     clubEvents: [],
     announcements: [],
+    tournaments: [],
+    trainingSessions: [],
+    exercises: [],
     audit: [],
     settings: DEFAULT_SETTINGS,
     onboarded: true,

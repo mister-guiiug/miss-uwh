@@ -299,6 +299,76 @@ export interface Announcement {
   pinned?: boolean;
 }
 
+// ── Tournois (Lot B) ─────────────────────────────────────────────────
+export const TOURNAMENT_STATUSES = ['prevu', 'en_cours', 'termine'] as const;
+export type TournamentStatus = (typeof TOURNAMENT_STATUSES)[number];
+
+export const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
+  prevu: 'Prévu',
+  en_cours: 'En cours',
+  termine: 'Terminé',
+};
+
+export interface Tournament {
+  id: string;
+  seasonId: string;
+  name: string;
+  /** Date (ou date de début) ISO `yyyy-mm-dd`. */
+  date: string;
+  location?: string;
+  status: TournamentStatus;
+  /** Lien optionnel vers l'événement comptable (résultat financier). */
+  eventId?: string;
+  notes?: string;
+}
+
+// ── Entraînements / Stratégie (Lot C) ────────────────────────────────
+/** Séance d'entraînement (planning + présences). */
+export interface TrainingSession {
+  id: string;
+  seasonId: string;
+  date: string;
+  location?: string;
+  /** Groupe concerné (ex. « Compét », « Loisir », « Jeunes »). */
+  group?: string;
+  /** Encadrant responsable (`Adherent.id`). */
+  coachId?: string;
+  /** Thème / objectif de la séance. */
+  focus?: string;
+  /** Présents : identifiants d'adhérents. */
+  attendance: string[];
+}
+
+/** Exercice de la bibliothèque (drills). */
+export const EXERCISE_CATEGORIES = [
+  'echauffement',
+  'technique',
+  'physique',
+  'jeu',
+  'gardien',
+] as const;
+export type ExerciseCategory = (typeof EXERCISE_CATEGORIES)[number];
+
+export const EXERCISE_CATEGORY_LABELS: Record<ExerciseCategory, string> = {
+  echauffement: 'Échauffement',
+  technique: 'Technique',
+  physique: 'Physique',
+  jeu: 'Jeu',
+  gardien: 'Gardien',
+};
+
+export interface Exercise {
+  id: string;
+  seasonId: string;
+  name: string;
+  category: ExerciseCategory;
+  description?: string;
+  /** Durée indicative (minutes). */
+  durationMin?: number;
+  /** Niveau / public (texte libre). */
+  level?: string;
+}
+
 export const AUDIT_CATEGORIES = ['metier', 'securite'] as const;
 export type AuditCategory = (typeof AUDIT_CATEGORIES)[number];
 
@@ -348,6 +418,12 @@ export interface AppData {
   clubEvents: ClubEvent[];
   /** Annonces / actualités du club. */
   announcements: Announcement[];
+  /** Tournois (organisation / suivi). */
+  tournaments: Tournament[];
+  /** Séances d'entraînement (planning + présences). */
+  trainingSessions: TrainingSession[];
+  /** Bibliothèque d'exercices. */
+  exercises: Exercise[];
   audit: AuditEvent[];
   settings: Settings;
   onboarded: boolean;

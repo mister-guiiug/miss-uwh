@@ -23,6 +23,9 @@ import { FamillesScreen } from './features/adherents/FamillesScreen.tsx';
 import { CotisationsScreen } from './features/adherents/CotisationsScreen.tsx';
 import { EvenementsScreen } from './features/vieclub/EvenementsScreen.tsx';
 import { AnnoncesScreen } from './features/vieclub/AnnoncesScreen.tsx';
+import { TournamentsScreen } from './features/tournois/TournamentsScreen.tsx';
+import { SeancesScreen } from './features/entrainements/SeancesScreen.tsx';
+import { ExercicesScreen } from './features/entrainements/ExercicesScreen.tsx';
 import { useActiveLens } from './shared/hooks/useActiveLens.ts';
 import { lensById } from './shared/lib/lenses.ts';
 import { BilanScreen } from './features/bilan/BilanScreen.tsx';
@@ -142,14 +145,16 @@ function Inner() {
               </LensGuard>
             }
           >
-            <Route index element={<PlaceholderScreen title="Séances" />} />
-            <Route
-              path="exercices"
-              element={<PlaceholderScreen title="Exercices" />}
-            />
+            <Route index element={<SeancesScreen />} />
+            <Route path="exercices" element={<ExercicesScreen />} />
             <Route
               path="strategie"
-              element={<PlaceholderScreen title="Stratégie" />}
+              element={
+                <PlaceholderScreen
+                  title="Stratégie"
+                  note="Systèmes de jeu / compositions — prochain lot."
+                />
+              }
             />
             <Route
               path="arbitrage"
@@ -167,15 +172,7 @@ function Inner() {
             }
           >
             <Route index element={<EvenementsScreen />} />
-            <Route
-              path="tournois"
-              element={
-                <PlaceholderScreen
-                  title="Tournois"
-                  note="Organisation des tournois (équipes, matchs, résultats) — prochain lot."
-                />
-              }
-            />
+            <Route path="tournois" element={<TournamentsScreen />} />
             <Route path="annonces" element={<AnnoncesScreen />} />
             <Route
               path="galerie"

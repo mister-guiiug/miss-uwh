@@ -12,12 +12,14 @@ import {
   CLUB_EVENT_TYPES,
   ENTRY_SENS,
   EVENT_KINDS,
+  EXERCISE_CATEGORIES,
   GUARDIAN_RELATIONS,
   MEMBER_ROLES,
   MEMBER_STATUSES,
   PAYMENT_METHODS,
   SEASON_STATUS,
   SENS,
+  TOURNAMENT_STATUSES,
 } from '../types/domain.ts';
 
 const categorySchema = z.object({
@@ -73,6 +75,38 @@ const announcementSchema = z.object({
   title: z.string(),
   body: z.string(),
   pinned: z.boolean().catch(false),
+});
+
+const tournamentSchema = z.object({
+  id: z.string(),
+  seasonId: z.string(),
+  name: z.string(),
+  date: z.string(),
+  location: z.string().optional(),
+  status: z.enum(TOURNAMENT_STATUSES).catch('prevu'),
+  eventId: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const trainingSessionSchema = z.object({
+  id: z.string(),
+  seasonId: z.string(),
+  date: z.string(),
+  location: z.string().optional(),
+  group: z.string().optional(),
+  coachId: z.string().optional(),
+  focus: z.string().optional(),
+  attendance: z.array(z.string()).catch([]),
+});
+
+const exerciseSchema = z.object({
+  id: z.string(),
+  seasonId: z.string(),
+  name: z.string(),
+  category: z.enum(EXERCISE_CATEGORIES).catch('technique'),
+  description: z.string().optional(),
+  durationMin: z.number().optional(),
+  level: z.string().optional(),
 });
 
 const attachmentSchema = z.object({
@@ -184,6 +218,9 @@ export const appDataSchema = z.object({
   guardians: z.array(guardianSchema).catch([]),
   clubEvents: z.array(clubEventSchema).catch([]),
   announcements: z.array(announcementSchema).catch([]),
+  tournaments: z.array(tournamentSchema).catch([]),
+  trainingSessions: z.array(trainingSessionSchema).catch([]),
+  exercises: z.array(exerciseSchema).catch([]),
   audit: z.array(auditSchema).catch([]),
   settings: settingsSchema,
   onboarded: z.boolean(),

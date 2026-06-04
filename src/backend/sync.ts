@@ -57,6 +57,9 @@ export async function pullAll(): Promise<void> {
       guardians,
       clubEvents,
       announcements,
+      tournaments,
+      trainingSessions,
+      exercises,
     ] = await Promise.all([
       repo.fetchClub(),
       repo.fetchSeasons(),
@@ -70,6 +73,9 @@ export async function pullAll(): Promise<void> {
       repo.fetchGuardians(),
       repo.fetchClubEvents(),
       repo.fetchAnnouncements(),
+      repo.fetchTournaments(),
+      repo.fetchTrainingSessions(),
+      repo.fetchExercises(),
     ]);
 
     if (club) setCurrentClubId(club.id);
@@ -107,6 +113,9 @@ export async function pullAll(): Promise<void> {
       guardians,
       clubEvents,
       announcements,
+      tournaments,
+      trainingSessions,
+      exercises,
       audit,
       settings: prev.settings, // préférence d'appareil : reste locale
       onboarded: true,
@@ -158,6 +167,18 @@ async function applyOp(op: RemoteOp): Promise<void> {
       return repo.upsertAnnouncement(op.announcement);
     case 'announcement.delete':
       return repo.deleteAnnouncement(op.id);
+    case 'tournament.upsert':
+      return repo.upsertTournament(op.tournament);
+    case 'tournament.delete':
+      return repo.deleteTournament(op.id);
+    case 'session.upsert':
+      return repo.upsertTrainingSession(op.session);
+    case 'session.delete':
+      return repo.deleteTrainingSession(op.id);
+    case 'exercise.upsert':
+      return repo.upsertExercise(op.exercise);
+    case 'exercise.delete':
+      return repo.deleteExercise(op.id);
     case 'category.upsert':
       return repo.upsertCustomCategory(op.category);
     case 'category.delete':
@@ -264,6 +285,21 @@ function subscribeRealtime(): void {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'announcements' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'tournaments' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'training_sessions' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'exercises' },
       scheduleReconcilePull
     )
     .on(

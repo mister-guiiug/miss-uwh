@@ -69,6 +69,18 @@ export function entityKey(op: RemoteOp): string | null {
       return `announcement:${op.announcement.id}`;
     case 'announcement.delete':
       return `announcement:${op.id}`;
+    case 'tournament.upsert':
+      return `tournament:${op.tournament.id}`;
+    case 'tournament.delete':
+      return `tournament:${op.id}`;
+    case 'session.upsert':
+      return `session:${op.session.id}`;
+    case 'session.delete':
+      return `session:${op.id}`;
+    case 'exercise.upsert':
+      return `exercise:${op.exercise.id}`;
+    case 'exercise.delete':
+      return `exercise:${op.id}`;
     case 'category.upsert':
       return `category:${op.category.code}`;
     case 'category.delete':

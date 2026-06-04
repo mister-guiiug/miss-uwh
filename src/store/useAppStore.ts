@@ -23,12 +23,15 @@ import type {
   ClubEvent,
   EventKind,
   EventLedger,
+  Exercise,
   Guardian,
   JournalEntry,
   RecurringTemplate,
   Season,
   Sens,
   Settings,
+  TrainingSession,
+  Tournament,
 } from '../shared/types/domain.ts';
 import { createId, createUuid } from '../shared/lib/id.ts';
 import {
@@ -135,6 +138,25 @@ interface AppState {
     patch: Partial<Omit<Announcement, 'id'>>
   ) => void;
   deleteAnnouncement: (id: string) => void;
+
+  // Tournois
+  addTournament: (t: Omit<Tournament, 'id'>) => string;
+  updateTournament: (
+    id: string,
+    patch: Partial<Omit<Tournament, 'id'>>
+  ) => void;
+  deleteTournament: (id: string) => void;
+
+  // Entraînements : séances & exercices
+  addTrainingSession: (s: Omit<TrainingSession, 'id'>) => string;
+  updateTrainingSession: (
+    id: string,
+    patch: Partial<Omit<TrainingSession, 'id'>>
+  ) => void;
+  deleteTrainingSession: (id: string) => void;
+  addExercise: (e: Omit<Exercise, 'id'>) => string;
+  updateExercise: (id: string, patch: Partial<Omit<Exercise, 'id'>>) => void;
+  deleteExercise: (id: string) => void;
 
   // Écritures
   addEntry: (input: EntryInput) => string | null;
@@ -736,6 +758,140 @@ export const useAppStore = create<AppState>((set, get) => {
           data: persist({
             ...s.data,
             announcements: s.data.announcements.filter(x => x.id !== id),
+          }),
+        };
+      }),
+
+    addTournament: t => {
+      const tournament: Tournament = { ...t, id: createUuid() };
+      set(s => ({
+        data: persist(
+          audit(
+            { ...s.data, tournaments: [...s.data.tournaments, tournament] },
+            'tournament.create',
+            'metier',
+            'tournament',
+            `Tournoi « ${t.name} » créé.`,
+            { targetId: tournament.id }
+          )
+        ),
+      }));
+      remote({ kind: 'tournament.upsert', tournament });
+      return tournament.id;
+    },
+
+    updateTournament: (id, patch) =>
+      set(s => {
+        const before = s.data.tournaments.find(x => x.id === id);
+        if (!before) return s;
+        const after: Tournament = { ...before, ...patch };
+        remote({ kind: 'tournament.upsert', tournament: after });
+        return {
+          data: persist({
+            ...s.data,
+            tournaments: s.data.tournaments.map(x => (x.id === id ? after : x)),
+          }),
+        };
+      }),
+
+    deleteTournament: id =>
+      set(s => {
+        remote({ kind: 'tournament.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            tournaments: s.data.tournaments.filter(x => x.id !== id),
+          }),
+        };
+      }),
+
+    addTrainingSession: sess => {
+      const session: TrainingSession = { ...sess, id: createUuid() };
+      set(s => ({
+        data: persist(
+          audit(
+            {
+              ...s.data,
+              trainingSessions: [...s.data.trainingSessions, session],
+            },
+            'session.create',
+            'metier',
+            'session',
+            `Séance du ${session.date} ajoutée.`,
+            { targetId: session.id }
+          )
+        ),
+      }));
+      remote({ kind: 'session.upsert', session });
+      return session.id;
+    },
+
+    updateTrainingSession: (id, patch) =>
+      set(s => {
+        const before = s.data.trainingSessions.find(x => x.id === id);
+        if (!before) return s;
+        const after: TrainingSession = { ...before, ...patch };
+        remote({ kind: 'session.upsert', session: after });
+        return {
+          data: persist({
+            ...s.data,
+            trainingSessions: s.data.trainingSessions.map(x =>
+              x.id === id ? after : x
+            ),
+          }),
+        };
+      }),
+
+    deleteTrainingSession: id =>
+      set(s => {
+        remote({ kind: 'session.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            trainingSessions: s.data.trainingSessions.filter(x => x.id !== id),
+          }),
+        };
+      }),
+
+    addExercise: e => {
+      const exercise: Exercise = { ...e, id: createUuid() };
+      set(s => ({
+        data: persist(
+          audit(
+            { ...s.data, exercises: [...s.data.exercises, exercise] },
+            'exercise.create',
+            'metier',
+            'exercise',
+            `Exercice « ${e.name} » ajouté.`,
+            { targetId: exercise.id }
+          )
+        ),
+      }));
+      remote({ kind: 'exercise.upsert', exercise });
+      return exercise.id;
+    },
+
+    updateExercise: (id, patch) =>
+      set(s => {
+        const before = s.data.exercises.find(x => x.id === id);
+        if (!before) return s;
+        const after: Exercise = { ...before, ...patch };
+        remote({ kind: 'exercise.upsert', exercise: after });
+        return {
+          data: persist({
+            ...s.data,
+            exercises: s.data.exercises.map(x => (x.id === id ? after : x)),
+          }),
+        };
+      }),
+
+    deleteExercise: id =>
+      set(s => {
+        remote({ kind: 'exercise.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            exercises: s.data.exercises.filter(x => x.id !== id),
           }),
         };
       }),
