@@ -61,6 +61,14 @@ export function entityKey(op: RemoteOp): string | null {
       return `guardian:${op.guardian.id}`;
     case 'guardian.delete':
       return `guardian:${op.id}`;
+    case 'clubevent.upsert':
+      return `clubevent:${op.clubEvent.id}`;
+    case 'clubevent.delete':
+      return `clubevent:${op.id}`;
+    case 'announcement.upsert':
+      return `announcement:${op.announcement.id}`;
+    case 'announcement.delete':
+      return `announcement:${op.id}`;
     case 'category.upsert':
       return `category:${op.category.code}`;
     case 'category.delete':
