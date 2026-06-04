@@ -9,6 +9,7 @@ import {
   ADHERENT_CATEGORIES,
   AUDIT_CATEGORIES,
   CATEGORY_KINDS,
+  CLUB_EVENT_TYPES,
   ENTRY_SENS,
   EVENT_KINDS,
   GUARDIAN_RELATIONS,
@@ -53,6 +54,25 @@ const guardianSchema = z.object({
   name: z.string(),
   phone: z.string().optional(),
   email: z.string().optional(),
+});
+
+const clubEventSchema = z.object({
+  id: z.string(),
+  seasonId: z.string(),
+  date: z.string(),
+  title: z.string(),
+  type: z.enum(CLUB_EVENT_TYPES).catch('autre'),
+  location: z.string().optional(),
+  description: z.string().optional(),
+});
+
+const announcementSchema = z.object({
+  id: z.string(),
+  seasonId: z.string(),
+  date: z.string(),
+  title: z.string(),
+  body: z.string(),
+  pinned: z.boolean().catch(false),
 });
 
 const attachmentSchema = z.object({
@@ -162,6 +182,8 @@ export const appDataSchema = z.object({
   customCategories: z.array(categorySchema).catch([]),
   adherents: z.array(adherentSchema).catch([]),
   guardians: z.array(guardianSchema).catch([]),
+  clubEvents: z.array(clubEventSchema).catch([]),
+  announcements: z.array(announcementSchema).catch([]),
   audit: z.array(auditSchema).catch([]),
   settings: settingsSchema,
   onboarded: z.boolean(),

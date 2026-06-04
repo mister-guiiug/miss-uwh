@@ -13,12 +13,14 @@
 import { create } from 'zustand';
 import type {
   Adherent,
+  Announcement,
   AppData,
   Attachment,
   AuditCategory,
   AuditEvent,
   Category,
   Club,
+  ClubEvent,
   EventKind,
   EventLedger,
   Guardian,
@@ -122,6 +124,17 @@ interface AppState {
   addGuardian: (g: Omit<Guardian, 'id'>) => string;
   updateGuardian: (id: string, patch: Partial<Omit<Guardian, 'id'>>) => void;
   deleteGuardian: (id: string) => void;
+
+  // Vie du club : événements (agenda) & annonces
+  addClubEvent: (e: Omit<ClubEvent, 'id'>) => string;
+  updateClubEvent: (id: string, patch: Partial<Omit<ClubEvent, 'id'>>) => void;
+  deleteClubEvent: (id: string) => void;
+  addAnnouncement: (a: Omit<Announcement, 'id'>) => string;
+  updateAnnouncement: (
+    id: string,
+    patch: Partial<Omit<Announcement, 'id'>>
+  ) => void;
+  deleteAnnouncement: (id: string) => void;
 
   // Écritures
   addEntry: (input: EntryInput) => string | null;
@@ -635,6 +648,94 @@ export const useAppStore = create<AppState>((set, get) => {
           data: persist({
             ...s.data,
             guardians: s.data.guardians.filter(x => x.id !== id),
+          }),
+        };
+      }),
+
+    addClubEvent: e => {
+      const ev: ClubEvent = { ...e, id: createUuid() };
+      set(s => ({
+        data: persist(
+          audit(
+            { ...s.data, clubEvents: [...s.data.clubEvents, ev] },
+            'clubevent.create',
+            'metier',
+            'clubevent',
+            `Événement « ${e.title} » ajouté à l'agenda.`,
+            { targetId: ev.id }
+          )
+        ),
+      }));
+      remote({ kind: 'clubevent.upsert', clubEvent: ev });
+      return ev.id;
+    },
+
+    updateClubEvent: (id, patch) =>
+      set(s => {
+        const before = s.data.clubEvents.find(x => x.id === id);
+        if (!before) return s;
+        const after: ClubEvent = { ...before, ...patch };
+        remote({ kind: 'clubevent.upsert', clubEvent: after });
+        return {
+          data: persist({
+            ...s.data,
+            clubEvents: s.data.clubEvents.map(x => (x.id === id ? after : x)),
+          }),
+        };
+      }),
+
+    deleteClubEvent: id =>
+      set(s => {
+        remote({ kind: 'clubevent.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            clubEvents: s.data.clubEvents.filter(x => x.id !== id),
+          }),
+        };
+      }),
+
+    addAnnouncement: a => {
+      const ann: Announcement = { ...a, id: createUuid() };
+      set(s => ({
+        data: persist(
+          audit(
+            { ...s.data, announcements: [...s.data.announcements, ann] },
+            'announcement.create',
+            'metier',
+            'announcement',
+            `Annonce « ${a.title} » publiée.`,
+            { targetId: ann.id }
+          )
+        ),
+      }));
+      remote({ kind: 'announcement.upsert', announcement: ann });
+      return ann.id;
+    },
+
+    updateAnnouncement: (id, patch) =>
+      set(s => {
+        const before = s.data.announcements.find(x => x.id === id);
+        if (!before) return s;
+        const after: Announcement = { ...before, ...patch };
+        remote({ kind: 'announcement.upsert', announcement: after });
+        return {
+          data: persist({
+            ...s.data,
+            announcements: s.data.announcements.map(x =>
+              x.id === id ? after : x
+            ),
+          }),
+        };
+      }),
+
+    deleteAnnouncement: id =>
+      set(s => {
+        remote({ kind: 'announcement.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            announcements: s.data.announcements.filter(x => x.id !== id),
           }),
         };
       }),

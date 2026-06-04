@@ -9,7 +9,9 @@
  */
 import type {
   Adherent,
+  Announcement,
   Category,
+  ClubEvent,
   EventLedger,
   Guardian,
   JournalEntry,
@@ -31,6 +33,10 @@ export type RemoteOp =
   | { kind: 'adherent.delete'; id: string }
   | { kind: 'guardian.upsert'; guardian: Guardian }
   | { kind: 'guardian.delete'; id: string }
+  | { kind: 'clubevent.upsert'; clubEvent: ClubEvent }
+  | { kind: 'clubevent.delete'; id: string }
+  | { kind: 'announcement.upsert'; announcement: Announcement }
+  | { kind: 'announcement.delete'; id: string }
   | { kind: 'category.upsert'; category: Category }
   | { kind: 'category.delete'; code: string };
 
