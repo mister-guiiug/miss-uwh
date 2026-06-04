@@ -18,7 +18,7 @@ function GitHubMark() {
 
 export function AppFooter() {
   return (
-    <footer className="no-print px-4 pb-6 pt-2 text-center text-xs text-[var(--uwh-text-soft)]">
+    <footer className="no-print pt-1 text-center text-xs text-[var(--uwh-text-soft)]">
       <div className="flex items-center justify-center gap-4">
         <a
           href={REPO_URL}
@@ -39,9 +39,6 @@ export function AppFooter() {
           Soutenir
         </a>
       </div>
-      <p className="mt-2">
-        Miss UWH — bilan comptable Hockey Subaquatique · 100% local par défaut
-      </p>
     </footer>
   );
 }

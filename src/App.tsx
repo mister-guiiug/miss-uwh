@@ -12,7 +12,6 @@ import { AuthGate } from './auth/AuthGate.tsx';
 import { SupabaseSync } from './backend/SupabaseSync.tsx';
 import { AppHeader } from './shared/components/AppHeader.tsx';
 import { BottomNav } from './shared/components/BottomNav.tsx';
-import { AppFooter } from './shared/components/AppFooter.tsx';
 import { UpdatePrompt } from './pwa/UpdatePrompt.tsx';
 import { Onboarding } from './features/onboarding/Onboarding.tsx';
 import { BilanScreen } from './features/bilan/BilanScreen.tsx';
@@ -76,7 +75,6 @@ function Shell() {
           <Outlet />
         </Suspense>
       </main>
-      <AppFooter />
       <BottomNav />
       <UpdatePrompt />
     </div>

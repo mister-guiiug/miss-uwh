@@ -34,6 +34,7 @@ import { Button } from '../../shared/components/Button.tsx';
 import { TextField } from '../../shared/components/Field.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
+import { AppFooter } from '../../shared/components/AppFooter.tsx';
 
 export function SettingsScreen() {
   const club = useAppStore(s => s.data.club);
@@ -137,19 +138,16 @@ export function SettingsScreen() {
       {IS_SUPABASE && (
         <>
           <MfaCard />
-          <Card>
-            <h3 className="mb-3 font-display font-bold">Compte</h3>
-            <div className="flex flex-wrap gap-2">
-              {isAdmin && (
+          {isAdmin && (
+            <Card>
+              <h3 className="mb-3 font-display font-bold">Compte</h3>
+              <div className="flex flex-wrap gap-2">
                 <Button variant="secondary" onClick={() => setMembers(true)}>
                   <Users size={16} aria-hidden="true" /> Membres & rôles
                 </Button>
-              )}
-              <Button variant="ghost" onClick={() => void signOut()}>
-                <LogOut size={16} aria-hidden="true" /> Se déconnecter
-              </Button>
-            </div>
-          </Card>
+              </div>
+            </Card>
+          )}
         </>
       )}
 
@@ -246,6 +244,14 @@ export function SettingsScreen() {
           données locales ne sont pas effacées.
         </p>
       </Card>
+
+      {/* Déconnexion (mode Supabase) + liens — uniquement ici */}
+      {IS_SUPABASE && (
+        <Button variant="secondary" block onClick={() => void signOut()}>
+          <LogOut size={16} aria-hidden="true" /> Se déconnecter
+        </Button>
+      )}
+      <AppFooter />
 
       <ImportSheet open={importing} onClose={() => setImporting(false)} />
       <RecurringSheet open={recurring} onClose={() => setRecurring(false)} />
