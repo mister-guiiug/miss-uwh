@@ -247,7 +247,7 @@ export function BilanScreen() {
       )}
 
       <div className="flex gap-2 no-print">
-        <Link to="/journal" className="flex-1">
+        <Link to="/finances/journal" className="flex-1">
           <Button variant="secondary" block>
             <Calculator size={18} aria-hidden="true" /> Voir le journal
           </Button>
