@@ -255,6 +255,50 @@ export interface Guardian {
   email?: string;
 }
 
+// ── Vie du club ──────────────────────────────────────────────────────
+/** Événement de la vie du club (agenda) — distinct de l'`EventLedger` comptable. */
+export const CLUB_EVENT_TYPES = [
+  'reunion',
+  'sortie',
+  'ag',
+  'soiree',
+  'competition',
+  'autre',
+] as const;
+export type ClubEventType = (typeof CLUB_EVENT_TYPES)[number];
+
+export const CLUB_EVENT_TYPE_LABELS: Record<ClubEventType, string> = {
+  reunion: 'Réunion',
+  sortie: 'Sortie',
+  ag: 'Assemblée générale',
+  soiree: 'Soirée',
+  competition: 'Compétition',
+  autre: 'Autre',
+};
+
+export interface ClubEvent {
+  id: string;
+  seasonId: string;
+  /** Date de l'événement (ISO `yyyy-mm-dd`). */
+  date: string;
+  title: string;
+  type: ClubEventType;
+  location?: string;
+  description?: string;
+}
+
+/** Annonce / actualité / convocation diffusée au club. */
+export interface Announcement {
+  id: string;
+  seasonId: string;
+  /** Date de publication (ISO `yyyy-mm-dd`). */
+  date: string;
+  title: string;
+  body: string;
+  /** Épinglée en tête de liste. */
+  pinned?: boolean;
+}
+
 export const AUDIT_CATEGORIES = ['metier', 'securite'] as const;
 export type AuditCategory = (typeof AUDIT_CATEGORIES)[number];
 
@@ -300,6 +344,10 @@ export interface AppData {
   adherents: Adherent[];
   /** Liens familiaux / contacts des adhérents (parents, tuteurs, urgence). */
   guardians: Guardian[];
+  /** Agenda de la vie du club. */
+  clubEvents: ClubEvent[];
+  /** Annonces / actualités du club. */
+  announcements: Announcement[];
   audit: AuditEvent[];
   settings: Settings;
   onboarded: boolean;

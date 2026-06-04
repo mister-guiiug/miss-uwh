@@ -12,10 +12,12 @@
  */
 import type {
   Adherent,
+  Announcement,
   Attachment,
   AuditEvent,
   Category,
   Club,
+  ClubEvent,
   EventLedger,
   Guardian,
   JournalEntry,
@@ -26,16 +28,20 @@ import { getSupabase } from '../lib/supabase.ts';
 import { getCurrentClubId } from './clubContext.ts';
 import {
   adherentToUpsertRow,
+  announcementToUpsertRow,
+  clubEventToUpsertRow,
   customCategoryToUpsertRow,
   entryToUpsertRow,
   eventToRow,
   guardianToUpsertRow,
   recurringToUpsertRow,
   rowToAdherent,
+  rowToAnnouncement,
   rowToAttachment,
   rowToAudit,
   rowToCategory,
   rowToClub,
+  rowToClubEvent,
   rowToEntry,
   rowToEvent,
   rowToGuardian,
@@ -43,9 +49,11 @@ import {
   rowToSeason,
   seasonToUpsertRow,
   type AdherentRow,
+  type AnnouncementRow,
   type AttachmentRow,
   type AuditRow,
   type CategoryRow,
+  type ClubEventRow,
   type ClubRow,
   type EntryRow,
   type EventRow,
@@ -150,6 +158,20 @@ export async function fetchGuardians(): Promise<Guardian[]> {
   return rows.map(rowToGuardian);
 }
 
+export async function fetchClubEvents(): Promise<ClubEvent[]> {
+  const rows = unwrap(
+    await getSupabase().from('club_events').select('*').order('date')
+  ) as ClubEventRow[];
+  return rows.map(rowToClubEvent);
+}
+
+export async function fetchAnnouncements(): Promise<Announcement[]> {
+  const rows = unwrap(
+    await getSupabase().from('announcements').select('*').order('date')
+  ) as AnnouncementRow[];
+  return rows.map(rowToAnnouncement);
+}
+
 // ── Push (idempotent) ────────────────────────────────────────────────
 export async function upsertEntry(entry: JournalEntry): Promise<void> {
   unwrap(
@@ -224,6 +246,30 @@ export async function upsertGuardian(g: Guardian): Promise<void> {
 
 export async function deleteGuardian(id: string): Promise<void> {
   unwrap(await getSupabase().from('guardians').delete().eq('id', id));
+}
+
+export async function upsertClubEvent(e: ClubEvent): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('club_events')
+      .upsert(clubEventToUpsertRow(e), { onConflict: 'id' })
+  );
+}
+
+export async function deleteClubEvent(id: string): Promise<void> {
+  unwrap(await getSupabase().from('club_events').delete().eq('id', id));
+}
+
+export async function upsertAnnouncement(a: Announcement): Promise<void> {
+  unwrap(
+    await getSupabase()
+      .from('announcements')
+      .upsert(announcementToUpsertRow(a), { onConflict: 'id' })
+  );
+}
+
+export async function deleteAnnouncement(id: string): Promise<void> {
+  unwrap(await getSupabase().from('announcements').delete().eq('id', id));
 }
 
 export async function upsertCustomCategory(c: Category): Promise<void> {

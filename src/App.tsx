@@ -21,6 +21,8 @@ import { PlaceholderScreen } from './features/home/PlaceholderScreen.tsx';
 import { MembersScreen } from './features/adherents/MembersScreen.tsx';
 import { FamillesScreen } from './features/adherents/FamillesScreen.tsx';
 import { CotisationsScreen } from './features/adherents/CotisationsScreen.tsx';
+import { EvenementsScreen } from './features/vieclub/EvenementsScreen.tsx';
+import { AnnoncesScreen } from './features/vieclub/AnnoncesScreen.tsx';
 import { useActiveLens } from './shared/hooks/useActiveLens.ts';
 import { lensById } from './shared/lib/lenses.ts';
 import { BilanScreen } from './features/bilan/BilanScreen.tsx';
@@ -164,15 +166,17 @@ function Inner() {
               </LensGuard>
             }
           >
-            <Route index element={<PlaceholderScreen title="Événements" />} />
+            <Route index element={<EvenementsScreen />} />
             <Route
               path="tournois"
-              element={<PlaceholderScreen title="Tournois" />}
+              element={
+                <PlaceholderScreen
+                  title="Tournois"
+                  note="Organisation des tournois (équipes, matchs, résultats) — prochain lot."
+                />
+              }
             />
-            <Route
-              path="annonces"
-              element={<PlaceholderScreen title="Annonces" />}
-            />
+            <Route path="annonces" element={<AnnoncesScreen />} />
             <Route
               path="galerie"
               element={<PlaceholderScreen title="Galerie" />}

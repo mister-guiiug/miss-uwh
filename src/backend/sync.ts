@@ -55,6 +55,8 @@ export async function pullAll(): Promise<void> {
       adherents,
       customCategories,
       guardians,
+      clubEvents,
+      announcements,
     ] = await Promise.all([
       repo.fetchClub(),
       repo.fetchSeasons(),
@@ -66,6 +68,8 @@ export async function pullAll(): Promise<void> {
       repo.fetchAdherents(),
       repo.fetchCustomCategories(),
       repo.fetchGuardians(),
+      repo.fetchClubEvents(),
+      repo.fetchAnnouncements(),
     ]);
 
     if (club) setCurrentClubId(club.id);
@@ -101,6 +105,8 @@ export async function pullAll(): Promise<void> {
       customCategories,
       adherents,
       guardians,
+      clubEvents,
+      announcements,
       audit,
       settings: prev.settings, // préférence d'appareil : reste locale
       onboarded: true,
@@ -144,6 +150,14 @@ async function applyOp(op: RemoteOp): Promise<void> {
       return repo.upsertGuardian(op.guardian);
     case 'guardian.delete':
       return repo.deleteGuardian(op.id);
+    case 'clubevent.upsert':
+      return repo.upsertClubEvent(op.clubEvent);
+    case 'clubevent.delete':
+      return repo.deleteClubEvent(op.id);
+    case 'announcement.upsert':
+      return repo.upsertAnnouncement(op.announcement);
+    case 'announcement.delete':
+      return repo.deleteAnnouncement(op.id);
     case 'category.upsert':
       return repo.upsertCustomCategory(op.category);
     case 'category.delete':
@@ -240,6 +254,16 @@ function subscribeRealtime(): void {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'guardians' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'club_events' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'announcements' },
       scheduleReconcilePull
     )
     .on(
