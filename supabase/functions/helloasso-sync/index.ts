@@ -5,8 +5,11 @@
 //
 // Secrets à définir (Dashboard Supabase → Edge Functions → Secrets, ou
 // `supabase secrets set ...`) :
-//   HELLOASSO_CLIENT_ID, HELLOASSO_CLIENT_SECRET, HELLOASSO_ORG_SLUG,
-//   HELLOASSO_FORM_SLUG  (+ HELLOASSO_FORM_TYPE optionnel, défaut "Membership")
+//   HELLOASSO_CLIENT_ID, HELLOASSO_CLIENT_SECRET  (confidentiels, obligatoires)
+//   HELLOASSO_ORG_SLUG, HELLOASSO_FORM_SLUG, HELLOASSO_FORM_TYPE (optionnels :
+//   servent de repli si l'app ne fournit pas les slugs dans la requête).
+// L'organisation et le formulaire sont de préférence paramétrés DANS l'app
+// (Réglages → Intégration HelloAsso) et transmis ici via le corps de la requête.
 // SUPABASE_URL / SUPABASE_ANON_KEY sont injectés automatiquement.
 //
 // Déploiement : `supabase functions deploy helloasso-sync`
@@ -14,7 +17,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
@@ -31,18 +35,52 @@ Deno.serve(async (req: Request) => {
     const auth = req.headers.get('Authorization') ?? '';
     if (!auth) return json({ error: 'Non authentifié.' }, 401);
 
-    const { seasonId } = await req.json().catch(() => ({}));
+    const body = (await req.json().catch(() => ({}))) as {
+      seasonId?: string;
+      orgSlug?: string;
+      formSlug?: string;
+      formType?: string;
+    };
+    const seasonId = body.seasonId;
     if (!seasonId) return json({ error: 'seasonId requis.' }, 400);
 
+    // Identifiants OAuth : secrets serveur uniquement.
     const clientId = Deno.env.get('HELLOASSO_CLIENT_ID');
     const clientSecret = Deno.env.get('HELLOASSO_CLIENT_SECRET');
-    const orgSlug = Deno.env.get('HELLOASSO_ORG_SLUG');
-    const formSlug = Deno.env.get('HELLOASSO_FORM_SLUG');
-    const formType = Deno.env.get('HELLOASSO_FORM_TYPE') ?? 'Membership';
-    if (!clientId || !clientSecret || !orgSlug || !formSlug) {
+    if (!clientId || !clientSecret) {
       return json(
-        { error: 'Configuration HelloAsso manquante (secrets non définis).' },
+        {
+          error:
+            'Identifiants HelloAsso manquants (secrets serveur non définis).',
+        },
         500
+      );
+    }
+
+    // Organisation / formulaire : paramétrés dans l'app (corps de la requête),
+    // avec repli sur d'éventuels secrets serveur.
+    const orgSlug = (
+      body.orgSlug ||
+      Deno.env.get('HELLOASSO_ORG_SLUG') ||
+      ''
+    ).trim();
+    const formSlug = (
+      body.formSlug ||
+      Deno.env.get('HELLOASSO_FORM_SLUG') ||
+      ''
+    ).trim();
+    const formType = (
+      body.formType ||
+      Deno.env.get('HELLOASSO_FORM_TYPE') ||
+      'Membership'
+    ).trim();
+    if (!orgSlug || !formSlug) {
+      return json(
+        {
+          error:
+            'Organisation / formulaire HelloAsso non renseignés (Réglages → Intégration HelloAsso).',
+        },
+        400
       );
     }
 
