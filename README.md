@@ -181,7 +181,14 @@ Détails et mise en place : [`supabase/README.md`](supabase/README.md).
 
 ## 7. Écrans (wireframes)
 
-Mobile-first, bottom-nav 5 onglets, utilisable aussi sur desktop (max-width 2xl).
+Mobile-first, utilisable aussi sur desktop (max-width 2xl). **Navigation par
+espaces (lens)** : un **lanceur d'accueil** ouvre 4 espaces — **Finances**,
+**Adhérents**, **Entraînements**, **Vie du club** — chacun avec sa propre barre du
+bas. Réglages, **Membres & rôles** et Audit sont des écrans transverses (depuis
+l'en-tête / les réglages). Le registre des espaces est déclaré une seule fois dans
+[`lenses.ts`](src/shared/lib/lenses.ts) (il pilote nav, lanceur et contrôle d'accès).
+
+**Espace Finances**
 
 - **Bilan** — KPI (recettes, dépenses, solde créditeur, résultat d'exploitation),
   trésorerie, recettes/dépenses par catégorie, **résultat par événement**, bouton PDF.
@@ -191,12 +198,26 @@ Mobile-first, bottom-nav 5 onglets, utilisable aussi sur desktop (max-width 2xl)
   libellé, mode de règlement, n° pièce, code facture, **événement**, **composantes
   tarifaires** (inscriptions/licences/assurances), observation, **pièces jointes**.
 - **Catégories** — totaux et statut « à compléter » par catégorie, détail des écritures.
+- **Synthèse** — donuts recettes/dépenses par catégorie + évolution multi-saisons (SVG pur).
 - **Saisons** — liste, activation, **clôture/verrouillage**, **réouverture** (motif),
   **report du reliquat**, comparaison des soldes.
+
+**Espace Adhérents** — membres (personnes), **familles & tuteurs**, encadrement,
+**cotisations** (payé/impayé) avec **import HelloAsso** des adhésions.
+
+**Espace Vie du club** — **agenda d'événements** (avec **import Google Agenda** iCal),
+tournois, annonces, **galerie** (liens Google Photos). _(Espace Entraînements —
+séances, exercices, stratégie, arbitrage — en cours.)_
+
+**Écrans transverses**
+
 - **Audit** — onglets Tout / Métier / Sécurité, **corbeille** d'écritures supprimées
   (restaurables).
+- **Membres & rôles** — écran d'administration (mode Supabase, rôle admin) : activation
+  des comptes et attribution des rôles, arbitré par la RLS serveur.
 - **Réglages** — club, affichage, **statut backend**, exports (Journal/Bilan CSV,
-  sauvegarde JSON, PDF), **import Excel**, restauration, réinitialisation.
+  sauvegarde JSON, PDF, **Excel multi-feuilles**), **import Excel**, restauration,
+  réinitialisation, et **intégrations** (HelloAsso, Google Agenda).
 
 ```
 ┌─ Bilan ───────────────┐   ┌─ Journal ─────────────┐   ┌─ Saisie ──────────────┐
@@ -213,7 +234,7 @@ Mobile-first, bottom-nav 5 onglets, utilisable aussi sur desktop (max-width 2xl)
 │ Dépenses par catégorie│   └───────────────────────┘   └───────────────────────┘
 │ Résultat / événement  │
 └───────────────────────┘
-   Bilan · Journal · Catégories · Saisons · Réglages
+   Accueil (lanceur) → espace Finances : Bilan · Journal · Catégories · Synthèse · Saisons
 ```
 
 ---
@@ -267,10 +288,27 @@ Mobile-first, bottom-nav 5 onglets, utilisable aussi sur desktop (max-width 2xl)
 - [x] **Dette technique** : ESLint 0 warning, tables a11y sous les graphiques,
       dédup de la file de sync, script `supabase:types`.
 - [x] **Tests** : store, composants, robustesse monétaire ; **planchers de
-      couverture** sur le cœur pur (65 tests).
+      couverture** sur le cœur pur (82 tests).
 - [—] **Montants en centimes entiers** : _évalué, non retenu_ — `numeric(12,2)` +
   `round2` est testé et exact à l'échelle d'un club (cf. `money.test.ts`) ;
   refactor transverse = risque > bénéfice. Option documentée si l'échelle change.
+
+**Espaces & intégrations (juin 2026)**
+
+- [x] **Navigation par espaces (lens)** : lanceur d'accueil + 4 espaces (Finances,
+      Adhérents, Entraînements, Vie du club), chacun avec sa barre du bas ; registre
+      déclaratif unique ([`lenses.ts`](src/shared/lib/lenses.ts)) pilotant nav et accès.
+- [x] **Espace Adhérents** : membres en personnes, **familles & tuteurs**, encadrement,
+      **cotisations** (payé/impayé).
+- [x] **Import HelloAsso** des adhésions via Edge Function `helloasso-sync` (OAuth2 côté
+      serveur, upsert arbitré par RLS) ; **organisation/formulaire configurables dans
+      l'app** (Réglages → Intégration HelloAsso), secrets OAuth jamais exposés au client.
+- [x] **Import Google Agenda** (iCal) dans l'agenda du club via Edge Function
+      `gcal-import` (proxy CORS côté serveur, restreint à `calendar.google.com`) ;
+      **URL iCal configurable** (Réglages → Intégration Google Agenda).
+- [x] **Écran dédié Membres & rôles** (route `/members`) en remplacement du sheet.
+- [x] **Rebrand** aux couleurs du club (logo CHS) : bleu cobalt + doré, thèmes clair/sombre.
+- [x] Polices Google Fonts en chargement **non bloquant** (corrige l'avertissement FOUC).
 
 **Restant**
 
