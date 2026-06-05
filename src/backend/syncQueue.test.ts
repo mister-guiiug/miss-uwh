@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { RemoteOp } from './syncBus.ts';
 import {
   ack,
+  backoffDelay,
   bumpAttempt,
   clearAll,
   deadCount,
@@ -14,6 +15,32 @@ import {
 } from './syncQueue.ts';
 
 const op = (id: string): RemoteOp => ({ kind: 'event.delete', id });
+
+describe('backoffDelay', () => {
+  const noJitter = () => 0.5; // (rand*2-1)=0 → jitter nul, valeurs exactes
+
+  it('croît exponentiellement depuis la base', () => {
+    expect(backoffDelay(1, 1000, 60_000, noJitter)).toBe(1000);
+    expect(backoffDelay(2, 1000, 60_000, noJitter)).toBe(2000);
+    expect(backoffDelay(3, 1000, 60_000, noJitter)).toBe(4000);
+    expect(backoffDelay(4, 1000, 60_000, noJitter)).toBe(8000);
+  });
+
+  it('plafonne au cap', () => {
+    expect(backoffDelay(20, 1000, 60_000, noJitter)).toBe(60_000);
+  });
+
+  it('applique un jitter borné à ±20 %', () => {
+    const lo = backoffDelay(4, 1000, 60_000, () => 0); // jitter -20%
+    const hi = backoffDelay(4, 1000, 60_000, () => 1); // jitter +20%
+    expect(lo).toBe(6400);
+    expect(hi).toBe(9600);
+  });
+
+  it('ne renvoie jamais de délai négatif', () => {
+    expect(backoffDelay(0, 1000, 60_000, () => 0)).toBeGreaterThanOrEqual(0);
+  });
+});
 
 describe('syncQueue', () => {
   beforeEach(() => clearAll());
