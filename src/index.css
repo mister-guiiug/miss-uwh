@@ -1,17 +1,18 @@
 @import 'tailwindcss';
 
 /*
- * Univers visuel « Miss UWH » : aquatique, sobre et lisible (app de gestion).
- * Teal profond + accents corail (palet) ; vert = crédit/recette, rose = débit/
- * dépense. Coins arrondis, ombres douces. Déclinable via --color-primary.
+ * Univers visuel « Miss UWH » aux couleurs du club (logo CHS) : bleu cobalt +
+ * jaune doré, posés sur des neutres bleutés. Sémantique comptable conservée :
+ * vert = crédit/recette, rose = débit/dépense. Coins arrondis, ombres douces.
+ * Déclinable via --color-primary.
  *
  * Tailwind v4 : tokens exposés via @theme -> classes utilitaires (bg-primary…).
  */
 @theme {
-  --color-primary: #0f766e;
-  --color-primary-soft: #ccfbf1;
-  --color-accent: #fb7185;
-  --color-credit: #0d9488;
+  --color-primary: #1758ba;
+  --color-primary-soft: #d8e6fb;
+  --color-accent: #edc715;
+  --color-credit: #15803d;
   --color-debit: #e11d48;
   --color-amber: #f59e0b;
   --color-sky: #0ea5e9;
@@ -24,28 +25,28 @@
 }
 
 :root {
-  --uwh-bg: #f0fbfa;
+  --uwh-bg: #f3f6fc;
   --uwh-surface: #ffffff;
-  --uwh-surface-2: #f4fbfa;
-  --uwh-text: #0f2a28;
-  --uwh-text-soft: #5b7a77;
-  --uwh-border: #d6eeeb;
-  --uwh-ring: #0f766e;
-  --uwh-credit: #0d9488;
+  --uwh-surface-2: #eef3fb;
+  --uwh-text: #0e1f3a;
+  --uwh-text-soft: #5a6a86;
+  --uwh-border: #d9e2f1;
+  --uwh-ring: #1758ba;
+  --uwh-credit: #15803d;
   --uwh-debit: #e11d48;
   --uwh-warn: #f59e0b;
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --uwh-bg: #07201e;
-  --uwh-surface: #0e2e2b;
-  --uwh-surface-2: #123633;
-  --uwh-text: #ecfdfb;
-  --uwh-text-soft: #8fb4b0;
-  --uwh-border: #1c4742;
-  --uwh-ring: #5eead4;
-  --uwh-credit: #2dd4bf;
+  --uwh-bg: #0a1626;
+  --uwh-surface: #10213b;
+  --uwh-surface-2: #16294a;
+  --uwh-text: #eaf1fc;
+  --uwh-text-soft: #9fb2cf;
+  --uwh-border: #243a5e;
+  --uwh-ring: #7aa6f0;
+  --uwh-credit: #4ade80;
   --uwh-debit: #fb7185;
   --uwh-warn: #fbbf24;
   color-scheme: dark;
