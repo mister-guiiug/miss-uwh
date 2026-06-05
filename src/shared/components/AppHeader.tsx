@@ -1,5 +1,14 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Lock, Moon, Search, Settings, Sun, Waves } from 'lucide-react';
+import {
+  Bell,
+  Home,
+  Lock,
+  Moon,
+  Search,
+  Settings,
+  Sun,
+  Waves,
+} from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Lens } from '../lib/lenses.ts';
 import { Button } from './Button.tsx';
@@ -13,10 +22,14 @@ export function AppHeader({
   title,
   lens,
   onSearch,
+  onAlerts,
+  alertCount = 0,
 }: {
   title: string;
   lens?: Lens | null;
   onSearch?: () => void;
+  onAlerts?: () => void;
+  alertCount?: number;
 }) {
   const theme = useAppStore(s => s.data.settings.theme);
   const setTheme = useAppStore(s => s.setTheme);
@@ -57,6 +70,21 @@ export function AppHeader({
             className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--uwh-text-soft)]"
           >
             <Search size={20} aria-hidden="true" />
+          </button>
+        )}
+        {onAlerts && (
+          <button
+            type="button"
+            onClick={onAlerts}
+            aria-label={`Alertes${alertCount > 0 ? ` (${alertCount})` : ''}`}
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--uwh-text-soft)]"
+          >
+            <Bell size={20} aria-hidden="true" />
+            {alertCount > 0 && (
+              <span className="absolute right-1 top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--uwh-debit)] px-1 text-[10px] font-bold leading-none text-white">
+                {alertCount > 9 ? '9+' : alertCount}
+              </span>
+            )}
           </button>
         )}
         <Link

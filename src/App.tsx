@@ -18,6 +18,8 @@ import { UpdatePrompt } from './pwa/UpdatePrompt.tsx';
 import { Onboarding } from './features/onboarding/Onboarding.tsx';
 import { HomeLauncher } from './features/home/HomeLauncher.tsx';
 import { GlobalSearch } from './features/search/GlobalSearch.tsx';
+import { NotificationCenter } from './features/alerts/NotificationCenter.tsx';
+import { useAlerts } from './features/alerts/useAlerts.ts';
 import { MembersScreen } from './features/adherents/MembersScreen.tsx';
 import { FamillesScreen } from './features/adherents/FamillesScreen.tsx';
 import { CotisationsScreen } from './features/adherents/CotisationsScreen.tsx';
@@ -81,6 +83,8 @@ function Shell() {
   const { pathname } = useLocation();
   const title = lens?.label ?? GLOBAL_TITLES[pathname] ?? 'Miss UWH';
   const [searchOpen, setSearchOpen] = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
+  const alerts = useAlerts();
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
@@ -88,8 +92,15 @@ function Shell() {
         title={title}
         lens={lens}
         onSearch={() => setSearchOpen(true)}
+        onAlerts={() => setAlertsOpen(true)}
+        alertCount={alerts.length}
       />
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <NotificationCenter
+        open={alertsOpen}
+        onClose={() => setAlertsOpen(false)}
+        alerts={alerts}
+      />
       <main className="flex-1">
         <Suspense
           fallback={
