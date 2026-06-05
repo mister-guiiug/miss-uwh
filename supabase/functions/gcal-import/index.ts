@@ -4,6 +4,9 @@
 // le parse, et renvoie les événements en JSON. Aucune écriture en base —
 // l'insertion dans l'agenda se fait côté client (local-first).
 //
+// Gère les événements simples ET les récurrences (RRULE) FREQ DAILY/WEEKLY/
+// MONTHLY/YEARLY avec INTERVAL/COUNT/UNTIL, expansées sur un horizon borné.
+//
 // Aucun secret requis : l'URL iCal est publique et fournie par l'app (Réglages →
 // Intégration Google Agenda). L'accès est restreint à `calendar.google.com`
 // (https) pour éviter tout détournement en proxy ouvert (SSRF).
@@ -32,6 +35,10 @@ interface IcsEvent {
   description?: string;
 }
 
+const MAX_EVENTS = 1000; // garde-fou sur la taille de la réponse
+const HORIZON_MONTHS = 18; // fenêtre d'expansion des récurrences
+const MAX_OCCURRENCES = 366; // par série récurrente
+
 /** Déplie les lignes repliées (RFC 5545 : CRLF + espace/tab = continuation). */
 function unfold(text: string): string {
   return text.replace(/\r\n/g, '\n').replace(/\n[ \t]/g, '');
@@ -53,12 +60,67 @@ function icsDateToIso(raw: string): string | null {
   return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
 }
 
+function parseRRule(rule: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const part of rule.split(';')) {
+    const [k, v] = part.split('=');
+    if (k && v) out[k.toUpperCase()] = v;
+  }
+  return out;
+}
+
+function stepUtc(d: Date, freq: string, interval: number): void {
+  switch (freq) {
+    case 'DAILY':
+      d.setUTCDate(d.getUTCDate() + interval);
+      break;
+    case 'WEEKLY':
+      d.setUTCDate(d.getUTCDate() + 7 * interval);
+      break;
+    case 'MONTHLY':
+      d.setUTCMonth(d.getUTCMonth() + interval);
+      break;
+    case 'YEARLY':
+      d.setUTCFullYear(d.getUTCFullYear() + interval);
+      break;
+  }
+}
+
+/**
+ * Liste des dates (ISO `yyyy-mm-dd`) d'une série récurrente, depuis `startIso`,
+ * bornée par UNTIL / COUNT / l'horizon. RRULE non reconnu → date unique.
+ */
+function expandRecurrence(startIso: string, rule: string): string[] {
+  const r = parseRRule(rule);
+  const freq = r.FREQ;
+  if (!['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(freq ?? '')) {
+    return [startIso];
+  }
+  const interval = Math.max(1, Number.parseInt(r.INTERVAL ?? '1', 10) || 1);
+  const count = r.COUNT ? Number.parseInt(r.COUNT, 10) : Infinity;
+  const untilIso = r.UNTIL ? icsDateToIso(r.UNTIL) : null;
+  const until = untilIso ? new Date(`${untilIso}T00:00:00Z`) : null;
+  const horizon = new Date(`${startIso}T00:00:00Z`);
+  horizon.setUTCMonth(horizon.getUTCMonth() + HORIZON_MONTHS);
+
+  const dates: string[] = [];
+  const cur = new Date(`${startIso}T00:00:00Z`);
+  const limit = Math.min(count, MAX_OCCURRENCES);
+  while (dates.length < limit && cur <= horizon) {
+    if (until && cur > until) break;
+    dates.push(cur.toISOString().slice(0, 10));
+    stepUtc(cur, freq!, interval);
+  }
+  return dates.length ? dates : [startIso];
+}
+
 function parseIcs(text: string): IcsEvent[] {
   const lines = unfold(text).split('\n');
   const events: IcsEvent[] = [];
   let cur: Record<string, string> | null = null;
 
   for (const raw of lines) {
+    if (events.length >= MAX_EVENTS) break;
     const line = raw.replace(/\r$/, '');
     if (line === 'BEGIN:VEVENT') {
       cur = {};
@@ -69,15 +131,22 @@ function parseIcs(text: string): IcsEvent[] {
         const date = cur.DTSTART ? icsDateToIso(cur.DTSTART) : null;
         const title = cur.SUMMARY ? unescapeText(cur.SUMMARY) : '';
         if (date && title) {
-          events.push({
-            uid: cur.UID,
-            date,
+          const base = {
             title,
             location: cur.LOCATION ? unescapeText(cur.LOCATION) : undefined,
             description: cur.DESCRIPTION
               ? unescapeText(cur.DESCRIPTION)
               : undefined,
-          });
+          };
+          const dates = cur.RRULE ? expandRecurrence(date, cur.RRULE) : [date];
+          for (const d of dates) {
+            if (events.length >= MAX_EVENTS) break;
+            events.push({
+              ...base,
+              uid: cur.UID ? `${cur.UID}:${d}` : undefined,
+              date: d,
+            });
+          }
         }
       }
       cur = null;
@@ -139,6 +208,11 @@ Deno.serve(async (req: Request) => {
     const events = parseIcs(text);
     return json({ events, total: events.length });
   } catch (e) {
-    return json({ error: String(e) }, 500);
+    // On journalise le détail côté serveur, on renvoie un message générique.
+    console.error('gcal-import:', e);
+    return json(
+      { error: 'Erreur interne lors de la lecture du calendrier.' },
+      500
+    );
   }
 });
