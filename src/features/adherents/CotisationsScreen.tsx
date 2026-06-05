@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, Coins, Download, X } from 'lucide-react';
+import { Check, Coins, Download, Mail, X } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { formatEuro } from '../../shared/lib/format.ts';
 import type { Adherent } from '../../shared/types/domain.ts';
@@ -14,6 +14,7 @@ import { CotisationSheet } from './CotisationSheet.tsx';
 export function CotisationsScreen() {
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.adherents);
+  const club = useAppStore(s => s.data.club);
   const updateAdherent = useAppStore(s => s.updateAdherent);
   const helloAsso = useAppStore(s => s.data.settings.helloAsso);
   const [editing, setEditing] = useState<Adherent | null>(null);
@@ -59,6 +60,27 @@ export function CotisationsScreen() {
     return { total, collected, paidCount, unpaid: rows.length - paidCount };
   }, [rows]);
 
+  // Emails des adhérents non à jour (pour une relance groupée en copie cachée).
+  const unpaidEmails = useMemo(
+    () =>
+      rows.filter(a => !a.paid && a.email?.trim()).map(a => a.email!.trim()),
+    [rows]
+  );
+
+  function relancerImpayes() {
+    if (unpaidEmails.length === 0) return;
+    const subject = `Rappel de cotisation — ${club.name} (${season.label})`;
+    const body =
+      `Bonjour,\n\nSauf erreur de notre part, votre cotisation pour la saison ` +
+      `${season.label} n'a pas encore été réglée. Merci de bien vouloir la ` +
+      `régulariser.\n\nSportivement,\n${club.treasurer || club.name}`;
+    const href =
+      `mailto:?bcc=${encodeURIComponent(unpaidEmails.join(','))}` +
+      `&subject=${encodeURIComponent(subject)}` +
+      `&body=${encodeURIComponent(body)}`;
+    window.location.href = href;
+  }
+
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="rounded-2xl bg-[var(--uwh-surface-2)] p-3 text-sm">
@@ -75,6 +97,25 @@ export function CotisationsScreen() {
           <strong>{formatEuro(summary.total)}</strong>
         </p>
       </div>
+
+      {summary.unpaid > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <Button
+            variant="secondary"
+            disabled={unpaidEmails.length === 0}
+            onClick={relancerImpayes}
+          >
+            <Mail size={16} aria-hidden="true" /> Relancer les impayés (
+            {unpaidEmails.length})
+          </Button>
+          {unpaidEmails.length < summary.unpaid && (
+            <p className="text-xs text-[var(--uwh-text-soft)]">
+              {summary.unpaid - unpaidEmails.length} impayé(s) sans email — à
+              contacter autrement.
+            </p>
+          )}
+        </div>
+      )}
 
       {IS_SUPABASE && (
         <div className="flex flex-col gap-1.5">
