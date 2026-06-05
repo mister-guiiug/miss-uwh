@@ -109,7 +109,10 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'URL invalide.' }, 400);
     }
     // Anti-SSRF : on n'autorise que les adresses iCal publiques de Google.
-    if (parsed.protocol !== 'https:' || parsed.hostname !== 'calendar.google.com') {
+    if (
+      parsed.protocol !== 'https:' ||
+      parsed.hostname !== 'calendar.google.com'
+    ) {
       return json(
         {
           error:
