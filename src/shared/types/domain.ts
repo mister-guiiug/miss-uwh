@@ -299,6 +299,18 @@ export interface Announcement {
   pinned?: boolean;
 }
 
+/** Album photo (lien Google Photos partagé). */
+export interface PhotoAlbum {
+  id: string;
+  seasonId: string;
+  title: string;
+  /** Lien de l'album partagé (Google Photos). */
+  url: string;
+  date?: string;
+  /** Image de couverture (URL, optionnel). */
+  coverUrl?: string;
+}
+
 // ── Tournois (Lot B) ─────────────────────────────────────────────────
 export const TOURNAMENT_STATUSES = ['prevu', 'en_cours', 'termine'] as const;
 export type TournamentStatus = (typeof TOURNAMENT_STATUSES)[number];
@@ -369,6 +381,43 @@ export interface Exercise {
   level?: string;
 }
 
+/** Système de jeu / composition (stratégie). */
+export const STRATEGY_PHASES = [
+  'attaque',
+  'defense',
+  'transition',
+  'specifique',
+] as const;
+export type StrategyPhase = (typeof STRATEGY_PHASES)[number];
+
+export const STRATEGY_PHASE_LABELS: Record<StrategyPhase, string> = {
+  attaque: 'Attaque',
+  defense: 'Défense',
+  transition: 'Transition',
+  specifique: 'Situation spéciale',
+};
+
+export interface Strategy {
+  id: string;
+  seasonId: string;
+  name: string;
+  phase: StrategyPhase;
+  description?: string;
+  /** Lien vers un schéma tactique (image). */
+  diagramUrl?: string;
+}
+
+/** Arbitre du club (registre arbitrage). */
+export interface Referee {
+  id: string;
+  seasonId: string;
+  name: string;
+  /** Niveau (Départemental / Régional / National / International…). */
+  level?: string;
+  certifications?: string;
+  active: boolean;
+}
+
 export const AUDIT_CATEGORIES = ['metier', 'securite'] as const;
 export type AuditCategory = (typeof AUDIT_CATEGORIES)[number];
 
@@ -424,6 +473,12 @@ export interface AppData {
   trainingSessions: TrainingSession[];
   /** Bibliothèque d'exercices. */
   exercises: Exercise[];
+  /** Systèmes de jeu / stratégies. */
+  strategies: Strategy[];
+  /** Arbitres du club. */
+  referees: Referee[];
+  /** Albums photos (liens Google Photos). */
+  photoAlbums: PhotoAlbum[];
   audit: AuditEvent[];
   settings: Settings;
   onboarded: boolean;

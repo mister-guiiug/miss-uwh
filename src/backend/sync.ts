@@ -60,6 +60,9 @@ export async function pullAll(): Promise<void> {
       tournaments,
       trainingSessions,
       exercises,
+      strategies,
+      referees,
+      photoAlbums,
     ] = await Promise.all([
       repo.fetchClub(),
       repo.fetchSeasons(),
@@ -76,6 +79,9 @@ export async function pullAll(): Promise<void> {
       repo.fetchTournaments(),
       repo.fetchTrainingSessions(),
       repo.fetchExercises(),
+      repo.fetchStrategies(),
+      repo.fetchReferees(),
+      repo.fetchPhotoAlbums(),
     ]);
 
     if (club) setCurrentClubId(club.id);
@@ -116,6 +122,9 @@ export async function pullAll(): Promise<void> {
       tournaments,
       trainingSessions,
       exercises,
+      strategies,
+      referees,
+      photoAlbums,
       audit,
       settings: prev.settings, // préférence d'appareil : reste locale
       onboarded: true,
@@ -179,6 +188,18 @@ async function applyOp(op: RemoteOp): Promise<void> {
       return repo.upsertExercise(op.exercise);
     case 'exercise.delete':
       return repo.deleteExercise(op.id);
+    case 'strategy.upsert':
+      return repo.upsertStrategy(op.strategy);
+    case 'strategy.delete':
+      return repo.deleteStrategy(op.id);
+    case 'referee.upsert':
+      return repo.upsertReferee(op.referee);
+    case 'referee.delete':
+      return repo.deleteReferee(op.id);
+    case 'album.upsert':
+      return repo.upsertPhotoAlbum(op.album);
+    case 'album.delete':
+      return repo.deletePhotoAlbum(op.id);
     case 'category.upsert':
       return repo.upsertCustomCategory(op.category);
     case 'category.delete':
@@ -300,6 +321,21 @@ function subscribeRealtime(): void {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'exercises' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'strategies' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'referees' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'photo_albums' },
       scheduleReconcilePull
     )
     .on(

@@ -26,10 +26,13 @@ import type {
   Exercise,
   Guardian,
   JournalEntry,
+  PhotoAlbum,
   RecurringTemplate,
+  Referee,
   Season,
   Sens,
   Settings,
+  Strategy,
   TrainingSession,
   Tournament,
 } from '../shared/types/domain.ts';
@@ -157,6 +160,20 @@ interface AppState {
   addExercise: (e: Omit<Exercise, 'id'>) => string;
   updateExercise: (id: string, patch: Partial<Omit<Exercise, 'id'>>) => void;
   deleteExercise: (id: string) => void;
+  addStrategy: (s: Omit<Strategy, 'id'>) => string;
+  updateStrategy: (id: string, patch: Partial<Omit<Strategy, 'id'>>) => void;
+  deleteStrategy: (id: string) => void;
+  addReferee: (r: Omit<Referee, 'id'>) => string;
+  updateReferee: (id: string, patch: Partial<Omit<Referee, 'id'>>) => void;
+  deleteReferee: (id: string) => void;
+
+  // Galerie (albums Google Photos)
+  addPhotoAlbum: (a: Omit<PhotoAlbum, 'id'>) => string;
+  updatePhotoAlbum: (
+    id: string,
+    patch: Partial<Omit<PhotoAlbum, 'id'>>
+  ) => void;
+  deletePhotoAlbum: (id: string) => void;
 
   // Écritures
   addEntry: (input: EntryInput) => string | null;
@@ -892,6 +909,135 @@ export const useAppStore = create<AppState>((set, get) => {
           data: persist({
             ...s.data,
             exercises: s.data.exercises.filter(x => x.id !== id),
+          }),
+        };
+      }),
+
+    addStrategy: st => {
+      const strategy: Strategy = { ...st, id: createUuid() };
+      set(s => ({
+        data: persist(
+          audit(
+            { ...s.data, strategies: [...s.data.strategies, strategy] },
+            'strategy.create',
+            'metier',
+            'strategy',
+            `Stratégie « ${st.name} » ajoutée.`,
+            { targetId: strategy.id }
+          )
+        ),
+      }));
+      remote({ kind: 'strategy.upsert', strategy });
+      return strategy.id;
+    },
+
+    updateStrategy: (id, patch) =>
+      set(s => {
+        const before = s.data.strategies.find(x => x.id === id);
+        if (!before) return s;
+        const after: Strategy = { ...before, ...patch };
+        remote({ kind: 'strategy.upsert', strategy: after });
+        return {
+          data: persist({
+            ...s.data,
+            strategies: s.data.strategies.map(x => (x.id === id ? after : x)),
+          }),
+        };
+      }),
+
+    deleteStrategy: id =>
+      set(s => {
+        remote({ kind: 'strategy.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            strategies: s.data.strategies.filter(x => x.id !== id),
+          }),
+        };
+      }),
+
+    addReferee: r => {
+      const referee: Referee = { ...r, id: createUuid() };
+      set(s => ({
+        data: persist(
+          audit(
+            { ...s.data, referees: [...s.data.referees, referee] },
+            'referee.create',
+            'metier',
+            'referee',
+            `Arbitre « ${r.name} » ajouté.`,
+            { targetId: referee.id }
+          )
+        ),
+      }));
+      remote({ kind: 'referee.upsert', referee });
+      return referee.id;
+    },
+
+    updateReferee: (id, patch) =>
+      set(s => {
+        const before = s.data.referees.find(x => x.id === id);
+        if (!before) return s;
+        const after: Referee = { ...before, ...patch };
+        remote({ kind: 'referee.upsert', referee: after });
+        return {
+          data: persist({
+            ...s.data,
+            referees: s.data.referees.map(x => (x.id === id ? after : x)),
+          }),
+        };
+      }),
+
+    deleteReferee: id =>
+      set(s => {
+        remote({ kind: 'referee.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            referees: s.data.referees.filter(x => x.id !== id),
+          }),
+        };
+      }),
+
+    addPhotoAlbum: a => {
+      const album: PhotoAlbum = { ...a, id: createUuid() };
+      set(s => ({
+        data: persist(
+          audit(
+            { ...s.data, photoAlbums: [...s.data.photoAlbums, album] },
+            'album.create',
+            'metier',
+            'album',
+            `Album « ${a.title} » ajouté.`,
+            { targetId: album.id }
+          )
+        ),
+      }));
+      remote({ kind: 'album.upsert', album });
+      return album.id;
+    },
+
+    updatePhotoAlbum: (id, patch) =>
+      set(s => {
+        const before = s.data.photoAlbums.find(x => x.id === id);
+        if (!before) return s;
+        const after: PhotoAlbum = { ...before, ...patch };
+        remote({ kind: 'album.upsert', album: after });
+        return {
+          data: persist({
+            ...s.data,
+            photoAlbums: s.data.photoAlbums.map(x => (x.id === id ? after : x)),
+          }),
+        };
+      }),
+
+    deletePhotoAlbum: id =>
+      set(s => {
+        remote({ kind: 'album.delete', id });
+        return {
+          data: persist({
+            ...s.data,
+            photoAlbums: s.data.photoAlbums.filter(x => x.id !== id),
           }),
         };
       }),
