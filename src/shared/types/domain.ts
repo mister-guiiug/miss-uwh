@@ -341,7 +341,17 @@ export interface Tournament {
 }
 
 // ── Entraînements / Stratégie (Lot C) ────────────────────────────────
-/** Séance d'entraînement (planning + présences). */
+/** Élément du plan d'une séance : un exercice planifié (l'ordre = la position). */
+export interface SessionPlanItem {
+  /** Exercice de la bibliothèque (`Exercise.id`). */
+  exerciseId: string;
+  /** Durée prévue (minutes) — défaut : durée indicative de l'exercice. */
+  durationMin?: number;
+  /** Consigne / variante propre à cette séance. */
+  notes?: string;
+}
+
+/** Séance d'entraînement (planning + plan d'exercices + présences). */
 export interface TrainingSession {
   id: string;
   seasonId: string;
@@ -353,6 +363,8 @@ export interface TrainingSession {
   coachId?: string;
   /** Thème / objectif de la séance. */
   focus?: string;
+  /** Plan ordonné d'exercices de la séance. */
+  plan?: SessionPlanItem[];
   /** Présents : identifiants d'adhérents. */
   attendance: string[];
 }

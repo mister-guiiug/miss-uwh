@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CalendarClock, Plus, Target, Users } from 'lucide-react';
+import { CalendarClock, ListChecks, Plus, Target, Users } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { type TrainingSession } from '../../shared/types/domain.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
@@ -7,11 +7,13 @@ import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
 import { SeanceSheet } from './SeanceSheet.tsx';
+import { planTotalMinutes } from './sessionPlan.ts';
 
 /** Planning des séances d'entraînement et suivi des présences. */
 export function SeancesScreen() {
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.trainingSessions);
+  const exercises = useAppStore(s => s.data.exercises);
   const [editing, setEditing] = useState<TrainingSession | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -57,6 +59,14 @@ export function SeancesScreen() {
                       <span className="inline-flex min-w-0 items-center gap-1">
                         <Target size={11} aria-hidden="true" />
                         <span className="truncate">{s.focus}</span>
+                      </span>
+                    )}
+                    {s.plan && s.plan.length > 0 && (
+                      <span className="inline-flex items-center gap-1">
+                        <ListChecks size={11} aria-hidden="true" />
+                        {s.plan.length} exo{s.plan.length > 1 ? 's' : ''}
+                        {planTotalMinutes(s.plan, exercises) > 0 &&
+                          ` · ${planTotalMinutes(s.plan, exercises)} min`}
                       </span>
                     )}
                     <span className="inline-flex items-center gap-1">
