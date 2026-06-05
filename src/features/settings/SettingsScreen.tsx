@@ -162,7 +162,9 @@ export function SettingsScreen() {
             <p className="mb-3 text-xs text-[var(--uwh-text-soft)]">
               Organisation et formulaire d'adhésion (les deux derniers segments
               de l'URL HelloAsso :{' '}
-              <code>helloasso.com/associations/&lt;organisation&gt;/adhesions/&lt;formulaire&gt;</code>
+              <code>
+                helloasso.com/associations/&lt;organisation&gt;/adhesions/&lt;formulaire&gt;
+              </code>
               ). Sert à l'import des adhésions dans l'onglet Cotisations. La clé
               API confidentielle reste côté serveur (secrets de l'Edge
               Function), jamais saisie ici.
