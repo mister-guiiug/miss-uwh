@@ -15,7 +15,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const iconsDir = join(root, 'public', 'icons');
 const svg = readFileSync(join(iconsDir, 'icon.svg'));
 
-const BG = '#0f766e';
+const BG = '#1758ba';
 
 async function render(size, file, { maskable = false, opaque = false } = {}) {
   // Maskable : on réduit le glyphe pour respecter la "safe zone" (~80%).
