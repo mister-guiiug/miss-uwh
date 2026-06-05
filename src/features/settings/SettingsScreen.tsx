@@ -5,6 +5,7 @@ import {
   Download,
   FileSpreadsheet,
   LogOut,
+  Plug,
   Printer,
   Repeat,
   RotateCw,
@@ -41,6 +42,7 @@ export function SettingsScreen() {
   const data = useAppStore(s => s.data);
   const season = useAppStore(selectActiveSeason);
   const showCompensated = useAppStore(s => s.data.settings.showCompensated);
+  const helloAsso = useAppStore(s => s.data.settings.helloAsso);
   const updateClub = useAppStore(s => s.updateClub);
   const updateSettings = useAppStore(s => s.updateSettings);
   const replaceData = useAppStore(s => s.replaceData);
@@ -148,6 +150,55 @@ export function SettingsScreen() {
               </div>
             </Card>
           )}
+
+          {/* Intégration HelloAsso */}
+          <Card>
+            <div className="mb-1 flex items-center gap-2">
+              <Plug size={16} className="text-primary" aria-hidden="true" />
+              <h3 className="font-display font-bold">Intégration HelloAsso</h3>
+            </div>
+            <p className="mb-3 text-xs text-[var(--uwh-text-soft)]">
+              Organisation et formulaire d'adhésion (les deux derniers segments
+              de l'URL HelloAsso :{' '}
+              <code>helloasso.com/associations/&lt;organisation&gt;/adhesions/&lt;formulaire&gt;</code>
+              ). Sert à l'import des adhésions dans l'onglet Cotisations. La clé
+              API confidentielle reste côté serveur (secrets de l'Edge
+              Function), jamais saisie ici.
+            </p>
+            <div className="flex flex-col gap-3">
+              <TextField
+                label="Organisation (slug)"
+                placeholder="mon-club"
+                value={helloAsso?.orgSlug ?? ''}
+                onChange={e =>
+                  updateSettings({
+                    helloAsso: { ...helloAsso, orgSlug: e.target.value },
+                  })
+                }
+              />
+              <TextField
+                label="Formulaire d'adhésion (slug)"
+                placeholder="adhesion-2025-2026"
+                value={helloAsso?.formSlug ?? ''}
+                onChange={e =>
+                  updateSettings({
+                    helloAsso: { ...helloAsso, formSlug: e.target.value },
+                  })
+                }
+              />
+              <TextField
+                label="Type de formulaire"
+                hint="Optionnel — « Membership » par défaut (formulaire d'adhésion)."
+                placeholder="Membership"
+                value={helloAsso?.formType ?? ''}
+                onChange={e =>
+                  updateSettings({
+                    helloAsso: { ...helloAsso, formType: e.target.value },
+                  })
+                }
+              />
+            </div>
+          </Card>
         </>
       )}
 

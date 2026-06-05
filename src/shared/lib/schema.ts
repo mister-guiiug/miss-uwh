@@ -227,10 +227,20 @@ const clubSchema = z.object({
   treasurer: z.string().optional(),
 });
 
+const helloAssoSchema = z
+  .object({
+    orgSlug: z.string().optional(),
+    formSlug: z.string().optional(),
+    formType: z.string().optional(),
+  })
+  .optional()
+  .catch(undefined);
+
 const settingsSchema = z.object({
   theme: z.enum(['light', 'dark']).catch('light'),
   decimals: z.number().int().min(0).max(3).catch(2),
   showCompensated: z.boolean().catch(true),
+  helloAsso: helloAssoSchema,
 });
 
 export const appDataSchema = z.object({
