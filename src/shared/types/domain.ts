@@ -230,6 +230,8 @@ export interface Adherent {
   /** Cotisation due/réglée. */
   amount: number;
   paid: boolean;
+  /** Identifiant HelloAsso (déduplication des imports d'adhésions). */
+  helloassoId?: string;
   notes?: string;
 }
 

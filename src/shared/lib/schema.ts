@@ -49,6 +49,7 @@ const adherentSchema = z.object({
   status: z.enum(MEMBER_STATUSES).catch('actif'),
   amount: z.number().nonnegative().catch(0),
   paid: z.boolean().catch(false),
+  helloassoId: z.string().optional(),
   notes: z.string().optional(),
 });
 
