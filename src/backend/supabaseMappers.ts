@@ -33,6 +33,7 @@ import type {
   Season,
   SeasonStatus,
   Sens,
+  SessionPlanItem,
   Strategy,
   StrategyPhase,
   TrainingSession,
@@ -449,6 +450,7 @@ export interface TrainingSessionRow {
   team_group: string | null;
   coach_id: string | null;
   focus: string | null;
+  plan: SessionPlanItem[] | null;
   attendance: string[] | null;
 }
 
@@ -461,6 +463,7 @@ export function rowToTrainingSession(row: TrainingSessionRow): TrainingSession {
     group: orUndef(row.team_group),
     coachId: orUndef(row.coach_id),
     focus: orUndef(row.focus),
+    plan: row.plan ?? [],
     attendance: row.attendance ?? [],
   };
 }
@@ -476,6 +479,7 @@ export function trainingSessionToUpsertRow(
     team_group: s.group ?? null,
     coach_id: s.coachId ?? null,
     focus: s.focus ?? null,
+    plan: s.plan ?? [],
     attendance: s.attendance ?? [],
   };
 }
