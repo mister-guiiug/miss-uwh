@@ -10,6 +10,7 @@ import {
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { VirtualList } from '../../shared/components/VirtualList.tsx';
 import { expiryStatus, worstExpiry } from '../../shared/lib/expiry.ts';
 import { MemberSheet } from './MemberSheet.tsx';
 
@@ -97,36 +98,39 @@ export function MembersScreen({ roleFilter }: { roleFilter?: MemberRole }) {
           Ajoutez les adhérents de la saison {season.label}.
         </EmptyState>
       ) : (
-        <ul className="flex flex-col gap-1.5">
-          {rows.map(a => (
-            <li key={a.id}>
-              <button
-                onClick={() => setEditing(a)}
-                className="flex w-full items-center gap-3 rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface)] p-3 text-left active:scale-[0.99]"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {a.firstName} {a.lastName}
-                    {a.status === 'inactif' && (
-                      <span className="ml-1 text-xs font-normal text-[var(--uwh-text-soft)]">
-                        (inactif)
-                      </span>
-                    )}
-                  </p>
-                  <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1 text-xs text-[var(--uwh-text-soft)]">
-                    <span className="rounded bg-[var(--uwh-surface-2)] px-1.5 py-0.5 font-semibold">
-                      {CAT_LABELS[a.category]}
+        <VirtualList
+          items={rows}
+          getKey={a => a.id}
+          estimateRowHeight={62}
+          ariaLabel={`Liste des ${noun}s`}
+        >
+          {a => (
+            <button
+              onClick={() => setEditing(a)}
+              className="flex w-full items-center gap-3 rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface)] p-3 text-left active:scale-[0.99]"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">
+                  {a.firstName} {a.lastName}
+                  {a.status === 'inactif' && (
+                    <span className="ml-1 text-xs font-normal text-[var(--uwh-text-soft)]">
+                      (inactif)
                     </span>
-                    {(a.roles ?? []).map(r => (
-                      <span key={r}>· {MEMBER_ROLE_LABELS[r]}</span>
-                    ))}
-                  </p>
-                </div>
-                <MemberBadges a={a} />
-              </button>
-            </li>
-          ))}
-        </ul>
+                  )}
+                </p>
+                <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1 text-xs text-[var(--uwh-text-soft)]">
+                  <span className="rounded bg-[var(--uwh-surface-2)] px-1.5 py-0.5 font-semibold">
+                    {CAT_LABELS[a.category]}
+                  </span>
+                  {(a.roles ?? []).map(r => (
+                    <span key={r}>· {MEMBER_ROLE_LABELS[r]}</span>
+                  ))}
+                </p>
+              </div>
+              <MemberBadges a={a} />
+            </button>
+          )}
+        </VirtualList>
       )}
 
       {creating && (
