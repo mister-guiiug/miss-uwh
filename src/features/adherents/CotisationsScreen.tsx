@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Check, Coins, X } from 'lucide-react';
+import { Check, Coins, Download, X } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { formatEuro } from '../../shared/lib/format.ts';
 import type { Adherent } from '../../shared/types/domain.ts';
+import { IS_SUPABASE } from '../../backend/config.ts';
+import { importFromHelloAsso } from '../../backend/helloasso.ts';
 import { Badge } from '../../shared/components/badges.tsx';
+import { Button } from '../../shared/components/Button.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
 import { CotisationSheet } from './CotisationSheet.tsx';
 
@@ -13,6 +16,25 @@ export function CotisationsScreen() {
   const all = useAppStore(s => s.data.adherents);
   const updateAdherent = useAppStore(s => s.updateAdherent);
   const [editing, setEditing] = useState<Adherent | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string>();
+
+  async function runHelloAsso() {
+    setImporting(true);
+    setImportMsg(undefined);
+    try {
+      const r = await importFromHelloAsso(season.id);
+      setImportMsg(
+        `HelloAsso : ${r.imported} ajout(s), ${r.updated} mise(s) à jour` +
+          (r.skipped ? `, ${r.skipped} ignoré(s)` : '') +
+          '.'
+      );
+    } catch (e) {
+      setImportMsg(e instanceof Error ? e.message : 'Import impossible.');
+    } finally {
+      setImporting(false);
+    }
+  }
 
   const rows = useMemo(
     () =>
@@ -52,6 +74,22 @@ export function CotisationsScreen() {
           <strong>{formatEuro(summary.total)}</strong>
         </p>
       </div>
+
+      {IS_SUPABASE && (
+        <div className="flex flex-col gap-1.5">
+          <Button
+            variant="secondary"
+            disabled={importing}
+            onClick={() => void runHelloAsso()}
+          >
+            <Download size={16} aria-hidden="true" />
+            {importing ? 'Import en cours…' : 'Importer depuis HelloAsso'}
+          </Button>
+          {importMsg && (
+            <p className="text-xs text-[var(--uwh-text-soft)]">{importMsg}</p>
+          )}
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <EmptyState Icon={Coins} title="Aucune cotisation">
