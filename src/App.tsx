@@ -17,7 +17,6 @@ import { LensGuard } from './shared/components/LensGuard.tsx';
 import { UpdatePrompt } from './pwa/UpdatePrompt.tsx';
 import { Onboarding } from './features/onboarding/Onboarding.tsx';
 import { HomeLauncher } from './features/home/HomeLauncher.tsx';
-import { PlaceholderScreen } from './features/home/PlaceholderScreen.tsx';
 import { MembersScreen } from './features/adherents/MembersScreen.tsx';
 import { FamillesScreen } from './features/adherents/FamillesScreen.tsx';
 import { CotisationsScreen } from './features/adherents/CotisationsScreen.tsx';
@@ -26,6 +25,9 @@ import { AnnoncesScreen } from './features/vieclub/AnnoncesScreen.tsx';
 import { TournamentsScreen } from './features/tournois/TournamentsScreen.tsx';
 import { SeancesScreen } from './features/entrainements/SeancesScreen.tsx';
 import { ExercicesScreen } from './features/entrainements/ExercicesScreen.tsx';
+import { StrategiesScreen } from './features/entrainements/StrategiesScreen.tsx';
+import { ArbitrageScreen } from './features/entrainements/ArbitrageScreen.tsx';
+import { GalerieScreen } from './features/vieclub/GalerieScreen.tsx';
 import { useActiveLens } from './shared/hooks/useActiveLens.ts';
 import { lensById } from './shared/lib/lenses.ts';
 import { BilanScreen } from './features/bilan/BilanScreen.tsx';
@@ -147,19 +149,8 @@ function Inner() {
           >
             <Route index element={<SeancesScreen />} />
             <Route path="exercices" element={<ExercicesScreen />} />
-            <Route
-              path="strategie"
-              element={
-                <PlaceholderScreen
-                  title="Stratégie"
-                  note="Systèmes de jeu / compositions — prochain lot."
-                />
-              }
-            />
-            <Route
-              path="arbitrage"
-              element={<PlaceholderScreen title="Arbitrage" />}
-            />
+            <Route path="strategie" element={<StrategiesScreen />} />
+            <Route path="arbitrage" element={<ArbitrageScreen />} />
           </Route>
 
           {/* 🎉 Vie du club (scaffold) */}
@@ -174,10 +165,7 @@ function Inner() {
             <Route index element={<EvenementsScreen />} />
             <Route path="tournois" element={<TournamentsScreen />} />
             <Route path="annonces" element={<AnnoncesScreen />} />
-            <Route
-              path="galerie"
-              element={<PlaceholderScreen title="Galerie" />}
-            />
+            <Route path="galerie" element={<GalerieScreen />} />
           </Route>
 
           {/* Routes globales (hors lens) */}

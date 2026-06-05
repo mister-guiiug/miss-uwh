@@ -19,6 +19,7 @@ import {
   PAYMENT_METHODS,
   SEASON_STATUS,
   SENS,
+  STRATEGY_PHASES,
   TOURNAMENT_STATUSES,
 } from '../types/domain.ts';
 
@@ -107,6 +108,33 @@ const exerciseSchema = z.object({
   description: z.string().optional(),
   durationMin: z.number().optional(),
   level: z.string().optional(),
+});
+
+const strategySchema = z.object({
+  id: z.string(),
+  seasonId: z.string(),
+  name: z.string(),
+  phase: z.enum(STRATEGY_PHASES).catch('attaque'),
+  description: z.string().optional(),
+  diagramUrl: z.string().optional(),
+});
+
+const refereeSchema = z.object({
+  id: z.string(),
+  seasonId: z.string(),
+  name: z.string(),
+  level: z.string().optional(),
+  certifications: z.string().optional(),
+  active: z.boolean().catch(true),
+});
+
+const photoAlbumSchema = z.object({
+  id: z.string(),
+  seasonId: z.string(),
+  title: z.string(),
+  url: z.string(),
+  date: z.string().optional(),
+  coverUrl: z.string().optional(),
 });
 
 const attachmentSchema = z.object({
@@ -221,6 +249,9 @@ export const appDataSchema = z.object({
   tournaments: z.array(tournamentSchema).catch([]),
   trainingSessions: z.array(trainingSessionSchema).catch([]),
   exercises: z.array(exerciseSchema).catch([]),
+  strategies: z.array(strategySchema).catch([]),
+  referees: z.array(refereeSchema).catch([]),
+  photoAlbums: z.array(photoAlbumSchema).catch([]),
   audit: z.array(auditSchema).catch([]),
   settings: settingsSchema,
   onboarded: z.boolean(),

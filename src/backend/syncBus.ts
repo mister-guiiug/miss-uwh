@@ -16,8 +16,11 @@ import type {
   Exercise,
   Guardian,
   JournalEntry,
+  PhotoAlbum,
   RecurringTemplate,
+  Referee,
   Season,
+  Strategy,
   TrainingSession,
   Tournament,
 } from '../shared/types/domain.ts';
@@ -46,6 +49,12 @@ export type RemoteOp =
   | { kind: 'session.delete'; id: string }
   | { kind: 'exercise.upsert'; exercise: Exercise }
   | { kind: 'exercise.delete'; id: string }
+  | { kind: 'strategy.upsert'; strategy: Strategy }
+  | { kind: 'strategy.delete'; id: string }
+  | { kind: 'referee.upsert'; referee: Referee }
+  | { kind: 'referee.delete'; id: string }
+  | { kind: 'album.upsert'; album: PhotoAlbum }
+  | { kind: 'album.delete'; id: string }
   | { kind: 'category.upsert'; category: Category }
   | { kind: 'category.delete'; code: string };
 

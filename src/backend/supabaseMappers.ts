@@ -27,10 +27,14 @@ import type {
   MemberRole,
   MemberStatus,
   PaymentMethod,
+  PhotoAlbum,
   RecurringTemplate,
+  Referee,
   Season,
   SeasonStatus,
   Sens,
+  Strategy,
+  StrategyPhase,
   TrainingSession,
   Tournament,
   TournamentStatus,
@@ -499,6 +503,102 @@ export function exerciseToUpsertRow(e: Exercise): ExerciseRow {
     description: e.description ?? null,
     duration_min: e.durationMin ?? null,
     level: e.level ?? null,
+  };
+}
+
+// ── Stratégies ───────────────────────────────────────────────────────
+export interface StrategyRow {
+  id: string;
+  season_id: string;
+  name: string;
+  phase: StrategyPhase;
+  description: string | null;
+  diagram_url: string | null;
+}
+
+export function rowToStrategy(row: StrategyRow): Strategy {
+  return {
+    id: row.id,
+    seasonId: row.season_id,
+    name: row.name,
+    phase: row.phase,
+    description: orUndef(row.description),
+    diagramUrl: orUndef(row.diagram_url),
+  };
+}
+
+export function strategyToUpsertRow(s: Strategy): StrategyRow {
+  return {
+    id: s.id,
+    season_id: s.seasonId,
+    name: s.name,
+    phase: s.phase,
+    description: s.description ?? null,
+    diagram_url: s.diagramUrl ?? null,
+  };
+}
+
+// ── Arbitres ─────────────────────────────────────────────────────────
+export interface RefereeRow {
+  id: string;
+  season_id: string;
+  name: string;
+  level: string | null;
+  certifications: string | null;
+  active: boolean;
+}
+
+export function rowToReferee(row: RefereeRow): Referee {
+  return {
+    id: row.id,
+    seasonId: row.season_id,
+    name: row.name,
+    level: orUndef(row.level),
+    certifications: orUndef(row.certifications),
+    active: row.active,
+  };
+}
+
+export function refereeToUpsertRow(r: Referee): RefereeRow {
+  return {
+    id: r.id,
+    season_id: r.seasonId,
+    name: r.name,
+    level: r.level ?? null,
+    certifications: r.certifications ?? null,
+    active: r.active,
+  };
+}
+
+// ── Albums photos (Google Photos) ────────────────────────────────────
+export interface PhotoAlbumRow {
+  id: string;
+  season_id: string;
+  title: string;
+  url: string;
+  date: string | null;
+  cover_url: string | null;
+}
+
+export function rowToPhotoAlbum(row: PhotoAlbumRow): PhotoAlbum {
+  return {
+    id: row.id,
+    seasonId: row.season_id,
+    title: row.title,
+    url: row.url,
+    date: orUndef(row.date),
+    coverUrl: orUndef(row.cover_url),
+  };
+}
+
+export function photoAlbumToUpsertRow(a: PhotoAlbum): PhotoAlbumRow {
+  return {
+    id: a.id,
+    season_id: a.seasonId,
+    title: a.title,
+    url: a.url,
+    date: a.date ?? null,
+    cover_url: a.coverUrl ?? null,
   };
 }
 

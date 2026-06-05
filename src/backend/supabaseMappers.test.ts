@@ -9,7 +9,9 @@ import {
   entryToUpsertRow,
   exerciseToUpsertRow,
   guardianToUpsertRow,
+  photoAlbumToUpsertRow,
   recurringToUpsertRow,
+  refereeToUpsertRow,
   rowToAdherent,
   rowToAnnouncement,
   rowToAttachment,
@@ -17,14 +19,18 @@ import {
   rowToClubEvent,
   rowToExercise,
   rowToGuardian,
+  rowToPhotoAlbum,
   rowToRecurring,
+  rowToReferee,
   rowToSeason,
   rowToEntry,
+  rowToStrategy,
   rowToTournament,
   rowToTrainingSession,
   safeFileName,
   seasonToRow,
   seasonToUpsertRow,
+  strategyToUpsertRow,
   tournamentToUpsertRow,
   trainingSessionToUpsertRow,
   type AdherentRow,
@@ -35,8 +41,11 @@ import {
   type EntryRow,
   type ExerciseRow,
   type GuardianRow,
+  type PhotoAlbumRow,
   type RecurringRow,
+  type RefereeRow,
   type SeasonRow,
+  type StrategyRow,
   type TournamentRow,
   type TrainingSessionRow,
 } from './supabaseMappers.ts';
@@ -369,6 +378,58 @@ describe('tournois / entraînements (round-trip)', () => {
     expect(
       rowToExercise({ ...row, duration_min: null }).durationMin
     ).toBeUndefined();
+  });
+});
+
+describe('stratégie / arbitrage / galerie (round-trip)', () => {
+  it('stratégie : diagram_url null -> undefined', () => {
+    const row: StrategyRow = {
+      id: 'st1',
+      season_id: 's1',
+      name: 'Power play',
+      phase: 'attaque',
+      description: 'Supériorité numérique',
+      diagram_url: null,
+    };
+    const st = rowToStrategy(row);
+    expect(st.phase).toBe('attaque');
+    expect(st.diagramUrl).toBeUndefined();
+    expect(strategyToUpsertRow(st).diagram_url).toBeNull();
+  });
+
+  it('arbitre : active conservé, optionnels null', () => {
+    const row: RefereeRow = {
+      id: 're1',
+      season_id: 's1',
+      name: 'Marie Sifflet',
+      level: 'Régional',
+      certifications: null,
+      active: true,
+    };
+    const r = rowToReferee(row);
+    expect(r.name).toBe('Marie Sifflet');
+    expect(r.level).toBe('Régional');
+    expect(r.certifications).toBeUndefined();
+    expect(r.active).toBe(true);
+    expect(refereeToUpsertRow(r).certifications).toBeNull();
+  });
+
+  it('album : url conservée, cover/date null -> undefined', () => {
+    const row: PhotoAlbumRow = {
+      id: 'al1',
+      season_id: 's1',
+      title: 'Tournoi 2026',
+      url: 'https://photos.app.goo.gl/abc',
+      date: null,
+      cover_url: null,
+    };
+    const a = rowToPhotoAlbum(row);
+    expect(a.url).toBe('https://photos.app.goo.gl/abc');
+    expect(a.date).toBeUndefined();
+    expect(a.coverUrl).toBeUndefined();
+    const up = photoAlbumToUpsertRow(a);
+    expect(up.url).toBe('https://photos.app.goo.gl/abc');
+    expect(up.cover_url).toBeNull();
   });
 });
 
