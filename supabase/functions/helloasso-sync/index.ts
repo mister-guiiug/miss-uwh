@@ -98,9 +98,13 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Authentification HelloAsso échouée.' }, 502);
     }
     const { access_token } = await tokenRes.json();
+    if (!access_token) {
+      return json({ error: 'Authentification HelloAsso échouée.' }, 502);
+    }
 
     // 2) Participants du formulaire d'adhésion (pagination).
     type Item = {
+      id?: number | string;
       amount?: number;
       user?: { firstName?: string; lastName?: string };
       payer?: { firstName?: string; lastName?: string; email?: string };
@@ -119,9 +123,13 @@ Deno.serve(async (req: Request) => {
         break;
       }
       const data = await r.json();
-      items.push(...((data.data ?? []) as Item[]));
+      const pageItems = (data.data ?? []) as Item[];
+      items.push(...pageItems);
       const pag = data.pagination ?? {};
-      if (!pag.totalPages || page >= pag.totalPages) break;
+      // Stop dès qu'une page est vide (fallback si la pagination ne fournit
+      // pas totalPages) ou qu'on a atteint la dernière page annoncée.
+      if (pageItems.length === 0 || !pag.totalPages || page >= pag.totalPages)
+        break;
     }
 
     // 3) Upsert adhérents via le JWT utilisateur (RLS appliquée).
@@ -142,14 +150,26 @@ Deno.serve(async (req: Request) => {
       ).trim();
       const lastName = (it.user?.lastName ?? it.payer?.lastName ?? '').trim();
       const email = (it.payer?.email ?? '').trim() || null;
+      const helloassoId = it.id != null ? String(it.id) : null;
       const amount = Math.round(it.amount ?? 0) / 100; // centimes → €
       if (!firstName && !lastName) {
         skipped++;
         continue;
       }
 
+      // Déduplication : d'abord par identifiant HelloAsso (stable même si
+      // l'email change), puis repli sur l'email.
       let existingId: string | null = null;
-      if (email) {
+      if (helloassoId) {
+        const { data } = await supabase
+          .from('adherents')
+          .select('id')
+          .eq('season_id', seasonId)
+          .eq('helloasso_id', helloassoId)
+          .limit(1);
+        existingId = data?.[0]?.id ?? null;
+      }
+      if (!existingId && email) {
         const { data } = await supabase
           .from('adherents')
           .select('id')
@@ -162,7 +182,7 @@ Deno.serve(async (req: Request) => {
       if (existingId) {
         const { error } = await supabase
           .from('adherents')
-          .update({ amount, paid: true })
+          .update({ amount, paid: true, helloasso_id: helloassoId })
           .eq('id', existingId);
         if (error)
           return json({ error: `Écriture refusée : ${error.message}` }, 403);
@@ -176,6 +196,7 @@ Deno.serve(async (req: Request) => {
           amount,
           paid: true,
           status: 'actif',
+          helloasso_id: helloassoId,
         });
         if (error)
           return json({ error: `Écriture refusée : ${error.message}` }, 403);
@@ -185,6 +206,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ imported, updated, skipped, total: items.length });
   } catch (e) {
-    return json({ error: String(e) }, 500);
+    console.error('helloasso-sync:', e);
+    return json({ error: 'Erreur interne lors de l’import HelloAsso.' }, 500);
   }
 });
