@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { CalendarDays, MapPin, Plus } from 'lucide-react';
+import { CalendarDays, Download, MapPin, Plus } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import {
   CLUB_EVENT_TYPE_LABELS,
   type ClubEvent,
 } from '../../shared/types/domain.ts';
+import { IS_SUPABASE } from '../../backend/config.ts';
+import { fetchGoogleCalendar } from '../../backend/gcal.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
@@ -15,8 +17,56 @@ import { ClubEventSheet } from './ClubEventSheet.tsx';
 export function EvenementsScreen() {
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.clubEvents);
+  const addClubEvent = useAppStore(s => s.addClubEvent);
+  const icsUrl = useAppStore(s => s.data.settings.googleCalendar?.icsUrl);
   const [editing, setEditing] = useState<ClubEvent | null>(null);
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string>();
+
+  async function runGcalImport() {
+    setImporting(true);
+    setImportMsg(undefined);
+    try {
+      const events = await fetchGoogleCalendar(icsUrl ?? '');
+      // Dédoublonnage par (date + titre) sur la saison active.
+      const seen = new Set(
+        all
+          .filter(e => e.seasonId === season.id)
+          .map(e => `${e.date}|${e.title}`)
+      );
+      let imported = 0;
+      let skipped = 0;
+      for (const ev of events) {
+        const key = `${ev.date}|${ev.title}`;
+        if (seen.has(key)) {
+          skipped++;
+          continue;
+        }
+        seen.add(key);
+        addClubEvent({
+          seasonId: season.id,
+          date: ev.date,
+          title: ev.title,
+          type: 'autre',
+          location: ev.location,
+          description: ev.description,
+        });
+        imported++;
+      }
+      setImportMsg(
+        events.length === 0
+          ? 'Google Agenda : aucun événement trouvé.'
+          : `Google Agenda : ${imported} ajout(s)` +
+              (skipped ? `, ${skipped} déjà présent(s)` : '') +
+              '.'
+      );
+    } catch (e) {
+      setImportMsg(e instanceof Error ? e.message : 'Import impossible.');
+    } finally {
+      setImporting(false);
+    }
+  }
 
   const rows = useMemo(
     () =>
@@ -36,6 +86,27 @@ export function EvenementsScreen() {
           <Plus size={18} aria-hidden="true" /> Événement
         </Button>
       </div>
+
+      {IS_SUPABASE && (
+        <div className="flex flex-col gap-1.5">
+          <Button
+            variant="secondary"
+            disabled={importing || !icsUrl}
+            onClick={() => void runGcalImport()}
+          >
+            <Download size={16} aria-hidden="true" />
+            {importing ? 'Import en cours…' : 'Importer depuis Google Agenda'}
+          </Button>
+          {!icsUrl && (
+            <p className="text-xs text-[var(--uwh-text-soft)]">
+              Renseignez l'URL iCal dans Réglages → Intégration Google Agenda.
+            </p>
+          )}
+          {importMsg && (
+            <p className="text-xs text-[var(--uwh-text-soft)]">{importMsg}</p>
+          )}
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <EmptyState Icon={CalendarDays} title="Agenda vide">
