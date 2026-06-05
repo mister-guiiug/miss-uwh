@@ -10,6 +10,12 @@ dev-dist/
 # .env.production est VOLONTAIREMENT versionné : il ne contient que des valeurs
 # publiques (URL + clé anon Supabase, protégées par la RLS) pour le build Pages.
 !.env.production
+# .env.e2e : valeurs PUBLIQUES (mode local) pour le build des tests e2e.
+!.env.e2e
 coverage/
 .vite/
 supabase/.temp/
+# Playwright (e2e)
+playwright-report/
+test-results/
+/playwright/.cache/
