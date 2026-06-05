@@ -202,6 +202,7 @@ describe('adhérents (round-trip)', () => {
     status: 'actif',
     amount: '160.00',
     paid: true,
+    helloasso_id: null,
     notes: null,
   };
 

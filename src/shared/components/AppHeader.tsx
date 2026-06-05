@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Lock, Moon, Settings, Sun, Waves } from 'lucide-react';
+import { Home, Lock, Moon, Search, Settings, Sun, Waves } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Lens } from '../lib/lenses.ts';
 import { Button } from './Button.tsx';
@@ -12,9 +12,11 @@ import { Button } from './Button.tsx';
 export function AppHeader({
   title,
   lens,
+  onSearch,
 }: {
   title: string;
   lens?: Lens | null;
+  onSearch?: () => void;
 }) {
   const theme = useAppStore(s => s.data.settings.theme);
   const setTheme = useAppStore(s => s.setTheme);
@@ -47,6 +49,16 @@ export function AppHeader({
         </h1>
       </div>
       <div className="flex items-center gap-1.5">
+        {onSearch && (
+          <button
+            type="button"
+            onClick={onSearch}
+            aria-label="Recherche globale"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--uwh-text-soft)]"
+          >
+            <Search size={20} aria-hidden="true" />
+          </button>
+        )}
         <Link
           to="/finances/seasons"
           className="inline-flex items-center gap-1 rounded-full bg-[var(--uwh-surface-2)] px-3 py-1.5 text-xs font-semibold text-[var(--uwh-text-soft)]"

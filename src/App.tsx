@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import {
   HashRouter,
   Navigate,
@@ -17,6 +17,7 @@ import { LensGuard } from './shared/components/LensGuard.tsx';
 import { UpdatePrompt } from './pwa/UpdatePrompt.tsx';
 import { Onboarding } from './features/onboarding/Onboarding.tsx';
 import { HomeLauncher } from './features/home/HomeLauncher.tsx';
+import { GlobalSearch } from './features/search/GlobalSearch.tsx';
 import { MembersScreen } from './features/adherents/MembersScreen.tsx';
 import { FamillesScreen } from './features/adherents/FamillesScreen.tsx';
 import { CotisationsScreen } from './features/adherents/CotisationsScreen.tsx';
@@ -79,10 +80,16 @@ function Shell() {
   const lens = useActiveLens();
   const { pathname } = useLocation();
   const title = lens?.label ?? GLOBAL_TITLES[pathname] ?? 'Miss UWH';
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
-      <AppHeader title={title} lens={lens} />
+      <AppHeader
+        title={title}
+        lens={lens}
+        onSearch={() => setSearchOpen(true)}
+      />
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       <main className="flex-1">
         <Suspense
           fallback={
