@@ -441,12 +441,28 @@ export interface Club {
   treasurer?: string;
 }
 
+/**
+ * Paramétrage HelloAsso côté app : slugs NON secrets (organisation + formulaire
+ * d'adhésion). Les identifiants OAuth (client id/secret) restent des secrets de
+ * l'Edge Function, jamais stockés ici. Voir `supabase/functions/helloasso-sync`.
+ */
+export interface HelloAssoConfig {
+  /** Slug de l'organisation HelloAsso (ex. « mon-club »). */
+  orgSlug?: string;
+  /** Slug du formulaire d'adhésion (ex. « adhesion-2025-2026 »). */
+  formSlug?: string;
+  /** Type de formulaire HelloAsso (défaut « Membership »). */
+  formType?: string;
+}
+
 export interface Settings {
   theme: 'light' | 'dark';
   /** Nombre de décimales d'affichage (2 par défaut). */
   decimals: number;
   /** Inclure les écritures compensées dans les totaux affichés. */
   showCompensated: boolean;
+  /** Paramétrage de l'import HelloAsso (slugs non secrets). */
+  helloAsso?: HelloAssoConfig;
 }
 
 export interface AppData {

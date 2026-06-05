@@ -15,6 +15,7 @@ export function CotisationsScreen() {
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.adherents);
   const updateAdherent = useAppStore(s => s.updateAdherent);
+  const helloAsso = useAppStore(s => s.data.settings.helloAsso);
   const [editing, setEditing] = useState<Adherent | null>(null);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string>();
@@ -23,7 +24,7 @@ export function CotisationsScreen() {
     setImporting(true);
     setImportMsg(undefined);
     try {
-      const r = await importFromHelloAsso(season.id);
+      const r = await importFromHelloAsso(season.id, helloAsso);
       setImportMsg(
         `HelloAsso : ${r.imported} ajout(s), ${r.updated} mise(s) à jour` +
           (r.skipped ? `, ${r.skipped} ignoré(s)` : '') +
@@ -85,6 +86,12 @@ export function CotisationsScreen() {
             <Download size={16} aria-hidden="true" />
             {importing ? 'Import en cours…' : 'Importer depuis HelloAsso'}
           </Button>
+          {(!helloAsso?.orgSlug || !helloAsso?.formSlug) && (
+            <p className="text-xs text-[var(--uwh-text-soft)]">
+              Renseignez l'organisation et le formulaire dans Réglages →
+              Intégration HelloAsso.
+            </p>
+          )}
           {importMsg && (
             <p className="text-xs text-[var(--uwh-text-soft)]">{importMsg}</p>
           )}
