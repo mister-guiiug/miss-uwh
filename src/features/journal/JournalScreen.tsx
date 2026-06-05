@@ -20,6 +20,7 @@ import { formatDateShort } from '../../shared/lib/format.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { Money } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { VirtualList } from '../../shared/components/VirtualList.tsx';
 import { EntrySheet } from './EntrySheet.tsx';
 import { ReconcileSheet } from '../reconcile/ReconcileSheet.tsx';
 
@@ -235,11 +236,16 @@ export function JournalScreen() {
           Ajustez les filtres, ajoutez une écriture, ou importez votre Excel.
         </EmptyState>
       ) : (
-        <ul className="flex flex-col gap-1.5">
-          {rows.map(({ entry, solde }) => {
+        <VirtualList
+          items={rows}
+          getKey={({ entry }) => entry.id}
+          estimateRowHeight={64}
+          ariaLabel="Journal des écritures"
+        >
+          {({ entry, solde }) => {
             const cat = categoryByCode(entry.categoryCode);
             return (
-              <li key={entry.id} className="flex items-stretch gap-1.5">
+              <div className="flex items-stretch gap-1.5">
                 <button
                   onClick={() => setReconciled(entry.id, !entry.reconciled)}
                   disabled={season.status === 'cloturee'}
@@ -294,10 +300,10 @@ export function JournalScreen() {
                     </span>
                   </div>
                 </button>
-              </li>
+              </div>
             );
-          })}
-        </ul>
+          }}
+        </VirtualList>
       )}
 
       {creating && (
