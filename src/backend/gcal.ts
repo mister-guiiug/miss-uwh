@@ -17,7 +17,9 @@ export interface GCalEvent {
   description?: string;
 }
 
-export async function fetchGoogleCalendar(icsUrl: string): Promise<GCalEvent[]> {
+export async function fetchGoogleCalendar(
+  icsUrl: string
+): Promise<GCalEvent[]> {
   const url = icsUrl.trim();
   if (!url) throw new Error('Aucune URL iCal renseignée (Réglages).');
 
