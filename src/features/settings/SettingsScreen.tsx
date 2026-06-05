@@ -19,7 +19,6 @@ import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { BACKEND, IS_SUPABASE } from '../../backend/config.ts';
 import { useAuth } from '../../auth/useAuth.ts';
 import { MfaCard } from '../../auth/MfaCard.tsx';
-import { MembersSheet } from '../admin/MembersSheet.tsx';
 import { importData } from '../../shared/lib/storage.ts';
 import {
   exportBilanCsv,
@@ -55,7 +54,6 @@ export function SettingsScreen() {
   const [importing, setImporting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [restoreError, setRestoreError] = useState<string>();
-  const [members, setMembers] = useState(false);
   const [recurring, setRecurring] = useState(false);
   const [adherents, setAdherents] = useState(false);
 
@@ -146,9 +144,11 @@ export function SettingsScreen() {
             <Card>
               <h3 className="mb-3 font-display font-bold">Compte</h3>
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" onClick={() => setMembers(true)}>
-                  <Users size={16} aria-hidden="true" /> Membres & rôles
-                </Button>
+                <Link to="/members">
+                  <Button variant="secondary">
+                    <Users size={16} aria-hidden="true" /> Membres & rôles
+                  </Button>
+                </Link>
               </div>
             </Card>
           )}
@@ -349,7 +349,6 @@ export function SettingsScreen() {
       <ImportSheet open={importing} onClose={() => setImporting(false)} />
       <RecurringSheet open={recurring} onClose={() => setRecurring(false)} />
       <AdherentsSheet open={adherents} onClose={() => setAdherents(false)} />
-      <MembersSheet open={members} onClose={() => setMembers(false)} />
       <ConfirmDialog
         open={confirmReset}
         title="Tout réinitialiser ?"

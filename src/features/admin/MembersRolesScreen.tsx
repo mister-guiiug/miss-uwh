@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Users } from 'lucide-react';
 import { getSupabase } from '../../lib/supabase.ts';
 import type { Role } from '../../auth/useAuth.ts';
-import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
+import { EmptyState } from '../../shared/components/EmptyState.tsx';
 
 interface MemberRow {
   id: string;
@@ -26,22 +27,15 @@ const ROLES: { key: Role; label: string }[] = [
 ];
 
 /**
- * Administration des membres et de leurs rôles (mode Supabase, rôle admin).
- * Les écritures sont arbitrées par la RLS `members_admin` côté serveur.
+ * Écran d'administration des membres et de leurs rôles (mode Supabase, rôle
+ * admin). Les écritures sont arbitrées par la RLS `members_admin` côté serveur.
  */
-export function MembersSheet({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export function MembersRolesScreen() {
   const [members, setMembers] = useState<MemberRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
 
   useEffect(() => {
-    if (!open) return;
     let cancelled = false;
     void (async () => {
       setLoading(true);
@@ -58,7 +52,7 @@ export function MembersSheet({
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, []);
 
   async function toggleRole(m: MemberRow, role: Role) {
     const roles = m.roles.includes(role)
@@ -83,24 +77,30 @@ export function MembersSheet({
   }
 
   return (
-    <Sheet open={open} title="Membres & rôles" onClose={onClose}>
+    <div className="flex flex-col gap-4 p-4">
+      <p className="text-sm text-[var(--uwh-text-soft)]">
+        Activez/désactivez les comptes et attribuez les rôles. Les droits réels
+        sont appliqués côté serveur (RLS), quel que soit l'affichage.
+      </p>
+
       {error && (
-        <p role="alert" className="mb-3 text-sm text-[var(--uwh-debit)]">
+        <p role="alert" className="text-sm text-[var(--uwh-debit)]">
           {error}
         </p>
       )}
+
       {loading ? (
         <p className="text-sm text-[var(--uwh-text-soft)]">Chargement…</p>
       ) : members.length === 0 ? (
-        <p className="text-sm text-[var(--uwh-text-soft)]">
-          Aucun membre (ou accès refusé par la RLS).
-        </p>
+        <EmptyState Icon={Users} title="Aucun membre">
+          Aucun membre à afficher (accès réservé aux administrateurs).
+        </EmptyState>
       ) : (
         <ul className="flex flex-col gap-4">
           {members.map(m => (
             <li
               key={m.id}
-              className="rounded-2xl border border-[var(--uwh-border)] p-3"
+              className="rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface)] p-3"
             >
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="min-w-0">
@@ -114,6 +114,9 @@ export function MembersSheet({
                 <button
                   onClick={() => void toggleActive(m)}
                   aria-pressed={m.active}
+                  aria-label={
+                    m.active ? 'Désactiver le compte' : 'Activer le compte'
+                  }
                 >
                   <Badge tone={m.active ? 'credit' : 'neutral'}>
                     {m.active ? 'actif' : 'inactif'}
@@ -143,6 +146,6 @@ export function MembersSheet({
           ))}
         </ul>
       )}
-    </Sheet>
+    </div>
   );
 }
