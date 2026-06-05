@@ -255,6 +255,7 @@ export interface AdherentRow {
   status: MemberStatus | string | null;
   amount: number | string;
   paid: boolean;
+  helloasso_id: string | null;
   notes: string | null;
 }
 
@@ -275,6 +276,7 @@ export function rowToAdherent(row: AdherentRow): Adherent {
     status: (row.status as MemberStatus) ?? 'actif',
     amount: num(row.amount),
     paid: row.paid,
+    helloassoId: orUndef(row.helloasso_id),
     notes: orUndef(row.notes),
   };
 }
@@ -296,6 +298,7 @@ export function adherentToUpsertRow(a: Adherent): AdherentRow {
     status: a.status ?? 'actif',
     amount: a.amount,
     paid: a.paid,
+    helloasso_id: a.helloassoId ?? null,
     notes: a.notes ?? null,
   };
 }
