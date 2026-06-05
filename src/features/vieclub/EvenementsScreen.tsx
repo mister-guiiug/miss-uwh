@@ -7,6 +7,7 @@ import {
 } from '../../shared/types/domain.ts';
 import { IS_SUPABASE } from '../../backend/config.ts';
 import { fetchGoogleCalendar } from '../../backend/gcal.ts';
+import { downloadClubEventsIcs } from '../export/icalExport.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
@@ -18,6 +19,7 @@ export function EvenementsScreen() {
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.clubEvents);
   const addClubEvent = useAppStore(s => s.addClubEvent);
+  const club = useAppStore(s => s.data.club);
   const icsUrl = useAppStore(s => s.data.settings.googleCalendar?.icsUrl);
   const [editing, setEditing] = useState<ClubEvent | null>(null);
   const [creating, setCreating] = useState(false);
@@ -82,9 +84,22 @@ export function EvenementsScreen() {
         <h2 className="font-display text-lg font-bold">
           {rows.length} événement{rows.length > 1 ? 's' : ''}
         </h2>
-        <Button onClick={() => setCreating(true)}>
-          <Plus size={18} aria-hidden="true" /> Événement
-        </Button>
+        <div className="flex items-center gap-2">
+          {rows.length > 0 && (
+            <Button
+              variant="secondary"
+              aria-label="Exporter l'agenda au format iCal (.ics)"
+              onClick={() =>
+                downloadClubEventsIcs(rows, `${club.name} — ${season.label}`)
+              }
+            >
+              <Download size={18} aria-hidden="true" />
+            </Button>
+          )}
+          <Button onClick={() => setCreating(true)}>
+            <Plus size={18} aria-hidden="true" /> Événement
+          </Button>
+        </div>
       </div>
 
       {IS_SUPABASE && (
