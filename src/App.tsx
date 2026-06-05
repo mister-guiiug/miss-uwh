@@ -62,11 +62,17 @@ const SettingsScreen = lazy(() =>
     default: m.SettingsScreen,
   }))
 );
+const MembersRolesScreen = lazy(() =>
+  import('./features/admin/MembersRolesScreen.tsx').then(m => ({
+    default: m.MembersRolesScreen,
+  }))
+);
 
 /** Titres des routes GLOBALES (hors lens). Le titre d'un lens vient de sa config. */
 const GLOBAL_TITLES: Record<string, string> = {
   '/settings': 'Réglages',
   '/audit': 'Journal d’audit',
+  '/members': 'Membres & rôles',
 };
 
 function Shell() {
@@ -170,6 +176,7 @@ function Inner() {
 
           {/* Routes globales (hors lens) */}
           <Route path="settings" element={<SettingsScreen />} />
+          <Route path="members" element={<MembersRolesScreen />} />
           <Route path="audit" element={<AuditScreen />} />
 
           {/* Redirections des anciens chemins (bookmarks / raccourcis PWA) */}
