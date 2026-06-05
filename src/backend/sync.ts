@@ -217,11 +217,25 @@ function reportQueueStatus(): void {
 }
 
 let draining = false;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Programme un rejeu automatique avec backoff (échec transitoire, sans `online`). */
+function scheduleRetry(attempts: number): void {
+  if (retryTimer) clearTimeout(retryTimer);
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    void drain();
+  }, q.backoffDelay(attempts));
+}
 
 /** Vide la file vers Supabase (en série, ordre préservé). */
 export async function drain(): Promise<void> {
   if (draining) return;
   draining = true;
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
   try {
     if (q.pendingCount() > 0) setStatus('syncing');
     let item = q.peek();
@@ -234,6 +248,9 @@ export async function drain(): Promise<void> {
         const msg = e instanceof Error ? e.message : 'erreur';
         if (isTransient(msg)) {
           q.bumpAttempt(item.id, msg); // réseau : on garde, on réessaiera
+          // Rejeu auto en backoff (en plus de l'événement `online`).
+          const next = q.peek();
+          if (next && !isOffline()) scheduleRetry(next.attempts);
           break;
         }
         q.deadLetter(item.id, msg); // rejet serveur : lettre morte, on continue
@@ -373,6 +390,10 @@ export function stopSync(): void {
   setRemoteHandler(null);
   if (typeof window !== 'undefined') {
     window.removeEventListener('online', onOnline);
+  }
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
   }
   unsubscribeRealtime();
 }

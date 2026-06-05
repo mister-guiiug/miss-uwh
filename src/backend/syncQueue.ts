@@ -19,6 +19,22 @@ export interface QueueItem {
 const KEY = 'miss-uwh:syncqueue';
 const DEAD = 'miss-uwh:syncdead';
 
+/**
+ * Délai (ms) avant le prochain rejeu après un échec transitoire : backoff
+ * exponentiel plafonné + jitter (±20 %) pour éviter de marteler le réseau et de
+ * synchroniser les retries de plusieurs clients. `rand` injectable (tests).
+ */
+export function backoffDelay(
+  attempts: number,
+  base = 1000,
+  cap = 60_000,
+  rand: () => number = Math.random
+): number {
+  const exp = Math.min(cap, base * 2 ** Math.max(0, attempts - 1));
+  const jitter = exp * 0.2 * (rand() * 2 - 1);
+  return Math.max(0, Math.round(exp + jitter));
+}
+
 function read(key: string): QueueItem[] {
   try {
     const raw = localStorage.getItem(key);
