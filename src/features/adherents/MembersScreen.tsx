@@ -10,6 +10,7 @@ import {
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { expiryStatus, worstExpiry } from '../../shared/lib/expiry.ts';
 import { MemberSheet } from './MemberSheet.tsx';
 
 const CAT_LABELS: Record<AdherentCategory, string> = {
@@ -18,6 +19,22 @@ const CAT_LABELS: Record<AdherentCategory, string> = {
   jeune: 'Jeune',
   enfant: 'Enfant',
 };
+
+/** Pastilles d'alerte d'un membre : cotisation due + échéances licence/CM. */
+function MemberBadges({ a }: { a: Adherent }) {
+  const exp = worstExpiry(
+    expiryStatus(a.licenceExpiry),
+    expiryStatus(a.medicalCertExpiry)
+  );
+  if (a.paid && exp !== 'expired' && exp !== 'soon') return null;
+  return (
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      {!a.paid && <Badge tone="warn">cotisation due</Badge>}
+      {exp === 'expired' && <Badge tone="debit">papiers expirés</Badge>}
+      {exp === 'soon' && <Badge tone="warn">à renouveler</Badge>}
+    </div>
+  );
+}
 
 /**
  * Registre des personnes du club (espace Adhérents). Réutilisé pour « Membres »
@@ -105,11 +122,7 @@ export function MembersScreen({ roleFilter }: { roleFilter?: MemberRole }) {
                     ))}
                   </p>
                 </div>
-                {!a.paid && (
-                  <Badge tone="warn" className="shrink-0">
-                    cotisation due
-                  </Badge>
-                )}
+                <MemberBadges a={a} />
               </button>
             </li>
           ))}

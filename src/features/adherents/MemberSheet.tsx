@@ -55,6 +55,12 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
     member?.roles ?? (defaultRole ? [defaultRole] : [])
   );
   const [licenceNumber, setLicence] = useState(member?.licenceNumber ?? '');
+  const [licenceExpiry, setLicenceExpiry] = useState(
+    member?.licenceExpiry ?? ''
+  );
+  const [medicalCertExpiry, setMedicalCertExpiry] = useState(
+    member?.medicalCertExpiry ?? ''
+  );
   const [email, setEmail] = useState(member?.email ?? '');
   const [phone, setPhone] = useState(member?.phone ?? '');
   const [status, setStatus] = useState<MemberStatus>(member?.status ?? 'actif');
@@ -81,6 +87,8 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
       category,
       roles,
       licenceNumber: licenceNumber.trim() || undefined,
+      licenceExpiry: licenceExpiry || undefined,
+      medicalCertExpiry: medicalCertExpiry || undefined,
       email: email.trim() || undefined,
       phone: phone.trim() || undefined,
       status,
@@ -192,6 +200,20 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
               </option>
             ))}
           </SelectField>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <TextField
+            label="Licence — expire le"
+            type="date"
+            value={licenceExpiry}
+            onChange={e => setLicenceExpiry(e.target.value)}
+          />
+          <TextField
+            label="Certificat médical — expire le"
+            type="date"
+            value={medicalCertExpiry}
+            onChange={e => setMedicalCertExpiry(e.target.value)}
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <TextField

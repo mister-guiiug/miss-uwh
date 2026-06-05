@@ -248,6 +248,8 @@ export interface AdherentRow {
   category: AdherentCategory;
   member_roles: MemberRole[] | null;
   licence_number: string | null;
+  licence_expiry: string | null;
+  medical_cert_expiry: string | null;
   email: string | null;
   phone: string | null;
   status: MemberStatus | string | null;
@@ -266,6 +268,8 @@ export function rowToAdherent(row: AdherentRow): Adherent {
     category: row.category,
     roles: row.member_roles ?? [],
     licenceNumber: orUndef(row.licence_number),
+    licenceExpiry: orUndef(row.licence_expiry),
+    medicalCertExpiry: orUndef(row.medical_cert_expiry),
     email: orUndef(row.email),
     phone: orUndef(row.phone),
     status: (row.status as MemberStatus) ?? 'actif',
@@ -285,6 +289,8 @@ export function adherentToUpsertRow(a: Adherent): AdherentRow {
     category: a.category,
     member_roles: a.roles ?? [],
     licence_number: a.licenceNumber ?? null,
+    licence_expiry: a.licenceExpiry ?? null,
+    medical_cert_expiry: a.medicalCertExpiry ?? null,
     email: a.email ?? null,
     phone: a.phone ?? null,
     status: a.status ?? 'actif',

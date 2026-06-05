@@ -219,6 +219,10 @@ export interface Adherent {
   /** Rôles dans le club (joueur, encadrant, arbitre, dirigeant). */
   roles?: MemberRole[];
   licenceNumber?: string;
+  /** Expiration de la licence (ISO `yyyy-mm-dd`) — suivi des renouvellements. */
+  licenceExpiry?: string;
+  /** Expiration du certificat médical (ISO `yyyy-mm-dd`) — obligatoire en sport. */
+  medicalCertExpiry?: string;
   email?: string;
   phone?: string;
   /** Adhérent actif sur la saison ou archivé. */

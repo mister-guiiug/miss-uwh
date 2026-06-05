@@ -195,6 +195,8 @@ describe('adhérents (round-trip)', () => {
     category: 'jeune',
     member_roles: ['joueur', 'encadrant'],
     licence_number: null,
+    licence_expiry: '2026-09-30',
+    medical_cert_expiry: null,
     email: 'jean@example.org',
     phone: null,
     status: 'actif',
@@ -217,6 +219,8 @@ describe('adhérents (round-trip)', () => {
     expect(a.amount).toBe(160);
     expect(a.paid).toBe(true);
     expect(a.licenceNumber).toBeUndefined();
+    expect(a.licenceExpiry).toBe('2026-09-30');
+    expect(a.medicalCertExpiry).toBeUndefined();
     expect(a.notes).toBeUndefined();
   });
 
@@ -231,6 +235,8 @@ describe('adhérents (round-trip)', () => {
     expect(up.phone).toBeNull();
     expect(up.status).toBe('actif');
     expect(up.licence_number).toBeNull();
+    expect(up.licence_expiry).toBe('2026-09-30');
+    expect(up.medical_cert_expiry).toBeNull();
     expect(up.notes).toBeNull();
     expect(up.paid).toBe(true);
   });

@@ -42,6 +42,8 @@ const adherentSchema = z.object({
   category: z.enum(ADHERENT_CATEGORIES).catch('adulte'),
   roles: z.array(z.enum(MEMBER_ROLES)).catch([]),
   licenceNumber: z.string().optional(),
+  licenceExpiry: z.string().optional(),
+  medicalCertExpiry: z.string().optional(),
   email: z.string().optional(),
   phone: z.string().optional(),
   status: z.enum(MEMBER_STATUSES).catch('actif'),
