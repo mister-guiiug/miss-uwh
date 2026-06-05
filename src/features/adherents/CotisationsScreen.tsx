@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Check, Coins, Download, Mail, X } from 'lucide-react';
+import { Check, Coins, Download, FileText, Mail, X } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { formatEuro } from '../../shared/lib/format.ts';
 import type { Adherent } from '../../shared/types/domain.ts';
 import { IS_SUPABASE } from '../../backend/config.ts';
 import { importFromHelloAsso } from '../../backend/helloasso.ts';
+import { printAttestations } from '../export/attestation.ts';
 import { Badge } from '../../shared/components/badges.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
@@ -67,6 +68,31 @@ export function CotisationsScreen() {
     [rows]
   );
 
+  const paidMembers = useMemo(
+    () =>
+      rows
+        .filter(a => a.paid)
+        .map(a => ({
+          name: `${a.firstName} ${a.lastName}`.trim(),
+          amount: a.amount ?? 0,
+        })),
+    [rows]
+  );
+
+  function printRecus() {
+    printAttestations({
+      clubName: club.name,
+      treasurer: club.treasurer,
+      seasonLabel: season.label,
+      dateLabel: new Date().toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }),
+      members: paidMembers,
+    });
+  }
+
   function relancerImpayes() {
     if (unpaidEmails.length === 0) return;
     const subject = `Rappel de cotisation — ${club.name} (${season.label})`;
@@ -115,6 +141,13 @@ export function CotisationsScreen() {
             </p>
           )}
         </div>
+      )}
+
+      {summary.paidCount > 0 && (
+        <Button variant="secondary" onClick={printRecus}>
+          <FileText size={16} aria-hidden="true" /> Attestations des cotisations
+          payées ({summary.paidCount})
+        </Button>
       )}
 
       {IS_SUPABASE && (
