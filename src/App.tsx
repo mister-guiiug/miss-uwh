@@ -14,6 +14,8 @@ import { SupabaseSync } from './backend/SupabaseSync.tsx';
 import { AppHeader } from './shared/components/AppHeader.tsx';
 import { LensNav } from './shared/components/LensNav.tsx';
 import { LensGuard } from './shared/components/LensGuard.tsx';
+import { ErrorBoundary } from './shared/components/ErrorBoundary.tsx';
+import { ToastViewport } from './shared/components/ToastViewport.tsx';
 import { UpdatePrompt } from './pwa/UpdatePrompt.tsx';
 import { Onboarding } from './features/onboarding/Onboarding.tsx';
 import { HomeLauncher } from './features/home/HomeLauncher.tsx';
@@ -102,15 +104,19 @@ function Shell() {
         alerts={alerts}
       />
       <main className="flex-1">
-        <Suspense
-          fallback={
-            <p className="p-8 text-center text-[var(--uwh-text-soft)]">
-              Chargement…
-            </p>
-          }
-        >
-          <Outlet />
-        </Suspense>
+        {/* Boundary par route, re-montée à chaque navigation (key=pathname) :
+            un crash d'écran n'emporte ni l'en-tête ni la navigation. */}
+        <ErrorBoundary level="route" key={pathname}>
+          <Suspense
+            fallback={
+              <p className="p-8 text-center text-[var(--uwh-text-soft)]">
+                Chargement…
+              </p>
+            }
+          >
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
       {lens && <LensNav lens={lens} />}
       <UpdatePrompt />
@@ -224,11 +230,15 @@ function Inner() {
 
 export function App() {
   return (
-    <AuthProvider>
-      <AuthGate>
-        <SupabaseSync />
-        <Inner />
-      </AuthGate>
-    </AuthProvider>
+    <ErrorBoundary level="app">
+      <AuthProvider>
+        <AuthGate>
+          <SupabaseSync />
+          <Inner />
+        </AuthGate>
+      </AuthProvider>
+      {/* Hors AuthGate : les toasts s'affichent aussi au login / à l'amorçage. */}
+      <ToastViewport />
+    </ErrorBoundary>
   );
 }
