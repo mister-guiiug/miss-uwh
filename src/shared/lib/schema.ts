@@ -92,6 +92,12 @@ const tournamentSchema = z.object({
   notes: z.string().optional(),
 });
 
+const sessionPlanItemSchema = z.object({
+  exerciseId: z.string(),
+  durationMin: z.number().optional(),
+  notes: z.string().optional(),
+});
+
 const trainingSessionSchema = z.object({
   id: z.string(),
   seasonId: z.string(),
@@ -100,6 +106,7 @@ const trainingSessionSchema = z.object({
   group: z.string().optional(),
   coachId: z.string().optional(),
   focus: z.string().optional(),
+  plan: z.array(sessionPlanItemSchema).catch([]),
   attendance: z.array(z.string()).catch([]),
 });
 

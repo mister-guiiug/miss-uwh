@@ -353,15 +353,19 @@ describe('tournois / entraînements (round-trip)', () => {
       team_group: 'Compét',
       coach_id: 'a1',
       focus: 'Passes',
+      plan: [{ exerciseId: 'ex1', durationMin: 15 }],
       attendance: ['a1', 'a2'],
     };
     const s = rowToTrainingSession(row);
     expect(s.group).toBe('Compét');
     expect(s.coachId).toBe('a1');
+    expect(s.plan).toEqual([{ exerciseId: 'ex1', durationMin: 15 }]);
     expect(s.attendance).toEqual(['a1', 'a2']);
     const up = trainingSessionToUpsertRow(s);
     expect(up.team_group).toBe('Compét');
     expect(up.coach_id).toBe('a1');
+    expect(up.plan).toEqual([{ exerciseId: 'ex1', durationMin: 15 }]);
+    expect(rowToTrainingSession({ ...row, plan: null }).plan).toEqual([]);
     expect(
       rowToTrainingSession({ ...row, attendance: null }).attendance
     ).toEqual([]);
