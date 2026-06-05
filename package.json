@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "type-check": "tsc -b",
     "icons": "node scripts/generate-pwa-icons.mjs",
     "supabase:push": "supabase db push",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "@mister-guiiug/dev-wpa-config": "^1.4.0",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
