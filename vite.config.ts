@@ -66,8 +66,8 @@ export default defineConfig(({ command }) => {
           short_name: 'Miss UWH',
           description:
             'Bilan comptable saisonnier d’un club de Hockey Subaquatique : journal, recettes/dépenses par catégorie, clôture de saison, justificatifs.',
-          theme_color: '#0f766e',
-          background_color: '#f0fbfa',
+          theme_color: '#1758ba',
+          background_color: '#f3f6fc',
           display: 'standalone',
           orientation: 'portrait',
           scope: basePath,
