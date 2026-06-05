@@ -14,8 +14,10 @@
 import type { AppData } from '../types/domain.ts';
 import { appDataSchema } from './schema.ts';
 import { createInitialData, SCHEMA_VERSION } from './seed.ts';
+import { notifyError } from './toasts.ts';
 
-const STORAGE_KEY = 'miss-uwh:data';
+/** Clé localStorage du snapshot complet (réutilisée par l'export de secours). */
+export const STORAGE_KEY = 'miss-uwh:data';
 
 /** Migrations indexées par version *source*. Chacune monte d'un cran. */
 const migrations: Record<number, (data: unknown) => unknown> = {
@@ -45,6 +47,9 @@ export function loadData(): AppData {
         '[miss-uwh] données invalides, réinitialisation',
         parsed.error
       );
+      notifyError(
+        'Données locales illisibles : l’application a démarré sur une base vierge. Vos anciennes données restent sur l’appareil tant que vous n’enregistrez pas.'
+      );
       return createInitialData();
     }
     return parsed.data as AppData;
@@ -59,6 +64,9 @@ export function saveData(data: AppData): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
     console.error('[miss-uwh] écriture du stockage impossible', err);
+    notifyError(
+      'Sauvegarde locale impossible (stockage plein ou indisponible). Exportez vos données pour ne rien perdre.'
+    );
   }
 }
 
