@@ -455,6 +455,16 @@ export interface HelloAssoConfig {
   formType?: string;
 }
 
+/**
+ * Paramétrage Google Agenda : URL iCal PUBLIQUE (.ics) d'un calendrier, lue par
+ * l'Edge Function `gcal-import` pour alimenter l'agenda de la vie du club. URL
+ * non secrète (calendrier public/partagé), donc stockée côté app.
+ */
+export interface GoogleCalendarConfig {
+  /** Adresse publique au format iCal (…calendar.google.com/calendar/ical/…/basic.ics). */
+  icsUrl?: string;
+}
+
 export interface Settings {
   theme: 'light' | 'dark';
   /** Nombre de décimales d'affichage (2 par défaut). */
@@ -463,6 +473,8 @@ export interface Settings {
   showCompensated: boolean;
   /** Paramétrage de l'import HelloAsso (slugs non secrets). */
   helloAsso?: HelloAssoConfig;
+  /** Paramétrage de l'import Google Agenda (URL iCal publique). */
+  googleCalendar?: GoogleCalendarConfig;
 }
 
 export interface AppData {

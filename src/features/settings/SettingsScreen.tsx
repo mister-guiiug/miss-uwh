@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  CalendarDays,
   Database,
   Download,
   FileSpreadsheet,
@@ -43,6 +44,7 @@ export function SettingsScreen() {
   const season = useAppStore(selectActiveSeason);
   const showCompensated = useAppStore(s => s.data.settings.showCompensated);
   const helloAsso = useAppStore(s => s.data.settings.helloAsso);
+  const googleCalendar = useAppStore(s => s.data.settings.googleCalendar);
   const updateClub = useAppStore(s => s.updateClub);
   const updateSettings = useAppStore(s => s.updateSettings);
   const replaceData = useAppStore(s => s.replaceData);
@@ -198,6 +200,44 @@ export function SettingsScreen() {
                 }
               />
             </div>
+          </Card>
+
+          {/* Intégration Google Agenda */}
+          <Card>
+            <div className="mb-1 flex items-center gap-2">
+              <CalendarDays
+                size={16}
+                className="text-primary"
+                aria-hidden="true"
+              />
+              <h3 className="font-display font-bold">
+                Intégration Google Agenda
+              </h3>
+            </div>
+            <p className="mb-3 text-xs text-[var(--uwh-text-soft)]">
+              Adresse iCal publique d'un calendrier Google, pour importer ses
+              événements dans Vie du club → Événements. Dans Google Agenda :{' '}
+              <em>
+                Paramètres du calendrier → Intégrer le calendrier → Adresse
+                publique au format iCal
+              </em>{' '}
+              (le calendrier doit être public).
+            </p>
+            <TextField
+              label="URL iCal (.ics)"
+              type="url"
+              inputMode="url"
+              placeholder="https://calendar.google.com/calendar/ical/…/public/basic.ics"
+              value={googleCalendar?.icsUrl ?? ''}
+              onChange={e =>
+                updateSettings({
+                  googleCalendar: {
+                    ...googleCalendar,
+                    icsUrl: e.target.value,
+                  },
+                })
+              }
+            />
           </Card>
         </>
       )}

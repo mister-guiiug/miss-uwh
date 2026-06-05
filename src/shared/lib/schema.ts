@@ -236,11 +236,19 @@ const helloAssoSchema = z
   .optional()
   .catch(undefined);
 
+const googleCalendarSchema = z
+  .object({
+    icsUrl: z.string().optional(),
+  })
+  .optional()
+  .catch(undefined);
+
 const settingsSchema = z.object({
   theme: z.enum(['light', 'dark']).catch('light'),
   decimals: z.number().int().min(0).max(3).catch(2),
   showCompensated: z.boolean().catch(true),
   helloAsso: helloAssoSchema,
+  googleCalendar: googleCalendarSchema,
 });
 
 export const appDataSchema = z.object({
