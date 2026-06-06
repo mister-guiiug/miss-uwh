@@ -5,6 +5,7 @@
  */
 import { getSupabase } from '../lib/supabase.ts';
 import type { HelloAssoConfig } from '../shared/types/domain.ts';
+import { unwrapInvoke } from './functionError.ts';
 
 export interface HelloAssoResult {
   imported: number;
@@ -25,34 +26,14 @@ export async function importFromHelloAsso(
   const orgSlug = config?.orgSlug?.trim();
   const formSlug = config?.formSlug?.trim();
   const formType = config?.formType?.trim();
-  const { data, error } = await getSupabase().functions.invoke(
-    'helloasso-sync',
-    {
-      body: {
-        seasonId,
-        ...(orgSlug ? { orgSlug } : {}),
-        ...(formSlug ? { formSlug } : {}),
-        ...(formType ? { formType } : {}),
-      },
-    }
-  );
-  if (error) {
-    // Pour un statut non-2xx, supabase-js renvoie un message générique ;
-    // le vrai message métier est dans le corps de la réponse (error.context).
-    let message = error.message;
-    const ctx = (error as { context?: Response }).context;
-    if (ctx && typeof ctx.json === 'function') {
-      try {
-        const body = (await ctx.json()) as { error?: unknown };
-        if (typeof body?.error === 'string') message = body.error;
-      } catch {
-        /* on garde le message générique */
-      }
-    }
-    throw new Error(message);
-  }
-  if (data && typeof data === 'object' && 'error' in data) {
-    throw new Error(String((data as { error: unknown }).error));
-  }
+  const result = await getSupabase().functions.invoke('helloasso-sync', {
+    body: {
+      seasonId,
+      ...(orgSlug ? { orgSlug } : {}),
+      ...(formSlug ? { formSlug } : {}),
+      ...(formType ? { formType } : {}),
+    },
+  });
+  const data = await unwrapInvoke(result);
   return data as HelloAssoResult;
 }
