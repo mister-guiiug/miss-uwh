@@ -47,7 +47,7 @@
     "typescript": "~6.0.2",
     "vite": "^7.0.0",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.8"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
