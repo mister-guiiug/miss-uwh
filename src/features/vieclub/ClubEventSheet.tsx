@@ -15,6 +15,11 @@ import {
   TextField,
 } from '../../shared/components/Field.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+import { useZodForm } from '../../shared/hooks/useZodForm.ts';
+import {
+  clubEventFormSchema,
+  type ClubEventFormValues,
+} from '../../shared/lib/formSchemas.ts';
 
 interface Props {
   open: boolean;
@@ -28,32 +33,29 @@ export function ClubEventSheet({ open, event, onClose }: Props) {
   const updateClubEvent = useAppStore(s => s.updateClubEvent);
   const deleteClubEvent = useAppStore(s => s.deleteClubEvent);
 
-  const [date, setDate] = useState(
-    event?.date ?? new Date().toISOString().slice(0, 10)
+  const initial: ClubEventFormValues = {
+    date: event?.date ?? new Date().toISOString().slice(0, 10),
+    title: event?.title ?? '',
+    type: event?.type ?? 'reunion',
+    location: event?.location ?? '',
+    description: event?.description ?? '',
+  };
+  const { values, errors, setValue, submit } = useZodForm(
+    clubEventFormSchema,
+    initial
   );
-  const [title, setTitle] = useState(event?.title ?? '');
-  const [type, setType] = useState<ClubEventType>(event?.type ?? 'reunion');
-  const [location, setLocation] = useState(event?.location ?? '');
-  const [description, setDescription] = useState(event?.description ?? '');
-  const [submitted, setSubmitted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const titleError = submitted && !title.trim() ? 'Titre requis.' : undefined;
-
   function save() {
-    setSubmitted(true);
-    if (!title.trim()) return;
-    const input: Omit<ClubEvent, 'id'> = {
-      seasonId: event?.seasonId ?? season.id,
-      date,
-      title: title.trim(),
-      type,
-      location: location.trim() || undefined,
-      description: description.trim() || undefined,
-    };
-    if (event) updateClubEvent(event.id, input);
-    else addClubEvent(input);
-    onClose();
+    submit(parsed => {
+      const input: Omit<ClubEvent, 'id'> = {
+        seasonId: event?.seasonId ?? season.id,
+        ...parsed,
+      };
+      if (event) updateClubEvent(event.id, input);
+      else addClubEvent(input);
+      onClose();
+    });
   }
 
   return (
@@ -81,22 +83,23 @@ export function ClubEventSheet({ open, event, onClose }: Props) {
       <div className="flex flex-col gap-4">
         <TextField
           label="Titre"
-          value={title}
-          error={titleError}
-          onChange={e => setTitle(e.target.value)}
+          value={values.title}
+          error={errors.title}
+          onChange={e => setValue('title', e.target.value)}
           placeholder="Ex. Assemblée générale"
         />
         <div className="grid grid-cols-2 gap-3">
           <TextField
             label="Date"
             type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
+            value={values.date}
+            error={errors.date}
+            onChange={e => setValue('date', e.target.value)}
           />
           <SelectField
             label="Type"
-            value={type}
-            onChange={e => setType(e.target.value as ClubEventType)}
+            value={values.type}
+            onChange={e => setValue('type', e.target.value as ClubEventType)}
           >
             {CLUB_EVENT_TYPES.map(t => (
               <option key={t} value={t}>
@@ -107,13 +110,13 @@ export function ClubEventSheet({ open, event, onClose }: Props) {
         </div>
         <TextField
           label="Lieu (optionnel)"
-          value={location}
-          onChange={e => setLocation(e.target.value)}
+          value={values.location}
+          onChange={e => setValue('location', e.target.value)}
         />
         <TextAreaField
           label="Description (optionnel)"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
+          value={values.description}
+          onChange={e => setValue('description', e.target.value)}
         />
       </div>
 
