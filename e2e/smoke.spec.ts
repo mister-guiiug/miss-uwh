@@ -27,9 +27,17 @@ test('@critical ouverture de l’espace Finances depuis le lanceur', async ({
   await page.getByLabel('Nom du club').fill('Club E2E');
   await page.getByRole('button', { name: 'Commencer' }).click();
 
+  // Attendre que le lanceur soit monté (évite un clic pendant la transition
+  // onboarding → routeur, source de flakiness en exécution parallèle).
+  await expect(page.getByRole('heading', { name: 'Finances' })).toBeVisible();
+
   // Le lanceur expose les espaces sous forme de liens ; on ouvre Finances.
   await page.getByRole('link', { name: /Finances/ }).click();
   await expect(page).toHaveURL(/#\/finances$/);
-  // La barre de navigation du lens Finances est montée (onglet Journal).
-  await expect(page.getByRole('link', { name: 'Journal' })).toBeVisible();
+  // La barre de navigation du lens Finances est montée (onglet « Journal »).
+  // `exact` : sinon « Journal » matche aussi « Voir le journal » et « Journal
+  // d'audit » → violation du mode strict de Playwright.
+  await expect(
+    page.getByRole('link', { name: 'Journal', exact: true })
+  ).toBeVisible();
 });
