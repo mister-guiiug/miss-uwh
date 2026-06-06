@@ -27,6 +27,10 @@ test('@critical ouverture de l’espace Finances depuis le lanceur', async ({
   await page.getByLabel('Nom du club').fill('Club E2E');
   await page.getByRole('button', { name: 'Commencer' }).click();
 
+  // Attendre que le lanceur soit monté (évite un clic pendant la transition
+  // onboarding → routeur, source de flakiness en exécution parallèle).
+  await expect(page.getByRole('heading', { name: 'Finances' })).toBeVisible();
+
   // Le lanceur expose les espaces sous forme de liens ; on ouvre Finances.
   await page.getByRole('link', { name: /Finances/ }).click();
   await expect(page).toHaveURL(/#\/finances$/);
