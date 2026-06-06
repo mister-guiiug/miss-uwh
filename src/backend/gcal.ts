@@ -6,6 +6,7 @@
  * fait côté client (local-first). Cf. `supabase/functions/gcal-import/`.
  */
 import { getSupabase } from '../lib/supabase.ts';
+import { unwrapInvoke } from './functionError.ts';
 
 export interface GCalEvent {
   /** Identifiant iCal (UID) — sert au dédoublonnage si présent. */
@@ -23,27 +24,10 @@ export async function fetchGoogleCalendar(
   const url = icsUrl.trim();
   if (!url) throw new Error('Aucune URL iCal renseignée (Réglages).');
 
-  const { data, error } = await getSupabase().functions.invoke('gcal-import', {
+  const result = await getSupabase().functions.invoke('gcal-import', {
     body: { icsUrl: url },
   });
-  if (error) {
-    // Statut non-2xx : supabase-js renvoie un message générique ; le vrai
-    // message métier est dans le corps de la réponse (error.context).
-    let message = error.message;
-    const ctx = (error as { context?: Response }).context;
-    if (ctx && typeof ctx.json === 'function') {
-      try {
-        const body = (await ctx.json()) as { error?: unknown };
-        if (typeof body?.error === 'string') message = body.error;
-      } catch {
-        /* on garde le message générique */
-      }
-    }
-    throw new Error(message);
-  }
-  if (data && typeof data === 'object' && 'error' in data) {
-    throw new Error(String((data as { error: unknown }).error));
-  }
+  const data = await unwrapInvoke(result);
   return ((data as { events?: GCalEvent[] })?.events ?? []).filter(
     e => e.date && e.title
   );

@@ -1,0 +1,21 @@
+# Veille de dépendances (sans bloquer le CI) : Dependabot ouvre des PR groupées
+# pour les mises à jour npm et les actions GitHub. Préféré à `npm audit` en CI,
+# qui échoue de façon intempestive sur des avis transitifs sans rapport.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Regroupe les mises à jour mineures/patch en une seule PR (moins de bruit).
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

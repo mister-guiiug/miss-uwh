@@ -15,23 +15,68 @@ interface SheetProps {
   footer?: ReactNode;
 }
 
+/** Éléments réellement focusables (ordre du DOM) à l'intérieur d'un conteneur. */
+function focusablesIn(root: HTMLElement): HTMLElement[] {
+  return Array.from(
+    root.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), ' +
+        'select:not([disabled]), textarea:not([disabled]), ' +
+        '[tabindex]:not([tabindex="-1"])'
+    )
+  );
+}
+
 /**
  * Feuille modale (bottom sheet mobile). Accessible : role dialog + aria-modal,
- * fermeture par Échap, focus déplacé à l'ouverture, scroll de fond verrouillé.
+ * fermeture par Échap, **focus piégé** dans la feuille (Tab cyclique) et
+ * **restauré** sur le déclencheur à la fermeture, scroll de fond verrouillé.
  * En-tête figé, corps défilant, pied d'actions optionnel épinglé.
  */
 export function Sheet({ open, title, onClose, children, footer }: SheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Gestion du focus (déps [open] uniquement → ne se relance pas à chaque
+  // changement d'identité d'`onClose`, donc ne « vole » jamais le focus en
+  // cours de saisie). Mémorise le déclencheur et le restaure à la fermeture.
+  useEffect(() => {
+    if (!open) return;
+    const panel = panelRef.current;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    panel?.focus();
+    return () => previouslyFocused?.focus?.();
+  }, [open]);
+
+  // Échap, piège de focus (Tab) et verrou du scroll de fond.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const items = focusablesIn(panel);
+      if (items.length === 0) {
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
+      const first = items[0]!;
+      const last = items[items.length - 1]!;
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === panel)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    panelRef.current?.focus();
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prevOverflow;
