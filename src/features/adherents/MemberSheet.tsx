@@ -19,6 +19,11 @@ import {
   TextField,
 } from '../../shared/components/Field.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+import { useZodForm } from '../../shared/hooks/useZodForm.ts';
+import {
+  memberFormSchema,
+  type MemberFormValues,
+} from '../../shared/lib/formSchemas.ts';
 
 const CAT_LABELS: Record<AdherentCategory, string> = {
   adulte: 'Adulte',
@@ -45,60 +50,45 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
   const updateAdherent = useAppStore(s => s.updateAdherent);
   const deleteAdherent = useAppStore(s => s.deleteAdherent);
 
-  const [firstName, setFirstName] = useState(member?.firstName ?? '');
-  const [lastName, setLastName] = useState(member?.lastName ?? '');
-  const [birthDate, setBirthDate] = useState(member?.birthDate ?? '');
-  const [category, setCategory] = useState<AdherentCategory>(
-    member?.category ?? 'adulte'
+  const initial: MemberFormValues = {
+    firstName: member?.firstName ?? '',
+    lastName: member?.lastName ?? '',
+    birthDate: member?.birthDate ?? '',
+    category: member?.category ?? 'adulte',
+    roles: member?.roles ?? (defaultRole ? [defaultRole] : []),
+    licenceNumber: member?.licenceNumber ?? '',
+    licenceExpiry: member?.licenceExpiry ?? '',
+    medicalCertExpiry: member?.medicalCertExpiry ?? '',
+    email: member?.email ?? '',
+    phone: member?.phone ?? '',
+    status: member?.status ?? 'actif',
+    notes: member?.notes ?? '',
+  };
+  const { values, errors, setValue, submit } = useZodForm(
+    memberFormSchema,
+    initial
   );
-  const [roles, setRoles] = useState<MemberRole[]>(
-    member?.roles ?? (defaultRole ? [defaultRole] : [])
-  );
-  const [licenceNumber, setLicence] = useState(member?.licenceNumber ?? '');
-  const [licenceExpiry, setLicenceExpiry] = useState(
-    member?.licenceExpiry ?? ''
-  );
-  const [medicalCertExpiry, setMedicalCertExpiry] = useState(
-    member?.medicalCertExpiry ?? ''
-  );
-  const [email, setEmail] = useState(member?.email ?? '');
-  const [phone, setPhone] = useState(member?.phone ?? '');
-  const [status, setStatus] = useState<MemberStatus>(member?.status ?? 'actif');
-  const [notes, setNotes] = useState(member?.notes ?? '');
-  const [submitted, setSubmitted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const nameMissing = !firstName.trim() && !lastName.trim();
-  const nameError =
-    submitted && nameMissing ? 'Indiquez au moins un nom.' : undefined;
-
   function toggleRole(r: MemberRole) {
-    setRoles(rs => (rs.includes(r) ? rs.filter(x => x !== r) : [...rs, r]));
+    const next = values.roles.includes(r)
+      ? values.roles.filter(x => x !== r)
+      : [...values.roles, r];
+    setValue('roles', next);
   }
 
   function save() {
-    setSubmitted(true);
-    if (nameMissing) return;
-    const input: Omit<Adherent, 'id'> = {
-      seasonId: member?.seasonId ?? season.id,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      birthDate: birthDate || undefined,
-      category,
-      roles,
-      licenceNumber: licenceNumber.trim() || undefined,
-      licenceExpiry: licenceExpiry || undefined,
-      medicalCertExpiry: medicalCertExpiry || undefined,
-      email: email.trim() || undefined,
-      phone: phone.trim() || undefined,
-      status,
-      amount: member?.amount ?? 0,
-      paid: member?.paid ?? false,
-      notes: notes.trim() || undefined,
-    };
-    if (member) updateAdherent(member.id, input);
-    else addAdherent(input);
-    onClose();
+    submit(parsed => {
+      const input: Omit<Adherent, 'id'> = {
+        seasonId: member?.seasonId ?? season.id,
+        amount: member?.amount ?? 0,
+        paid: member?.paid ?? false,
+        ...parsed,
+      };
+      if (member) updateAdherent(member.id, input);
+      else addAdherent(input);
+      onClose();
+    });
   }
 
   return (
@@ -127,27 +117,29 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
         <div className="grid grid-cols-2 gap-3">
           <TextField
             label="Prénom"
-            value={firstName}
-            error={nameError}
-            onChange={e => setFirstName(e.target.value)}
+            value={values.firstName}
+            error={errors.firstName}
+            onChange={e => setValue('firstName', e.target.value)}
           />
           <TextField
             label="Nom"
-            value={lastName}
-            onChange={e => setLastName(e.target.value)}
+            value={values.lastName}
+            onChange={e => setValue('lastName', e.target.value)}
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <TextField
             label="Naissance"
             type="date"
-            value={birthDate}
-            onChange={e => setBirthDate(e.target.value)}
+            value={values.birthDate}
+            onChange={e => setValue('birthDate', e.target.value)}
           />
           <SelectField
             label="Catégorie"
-            value={category}
-            onChange={e => setCategory(e.target.value as AdherentCategory)}
+            value={values.category}
+            onChange={e =>
+              setValue('category', e.target.value as AdherentCategory)
+            }
           >
             {ADHERENT_CATEGORIES.map(c => (
               <option key={c} value={c}>
@@ -163,7 +155,7 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
           </legend>
           <div className="flex flex-wrap gap-2">
             {MEMBER_ROLES.map(r => {
-              const on = roles.includes(r);
+              const on = values.roles.includes(r);
               return (
                 <button
                   key={r}
@@ -186,13 +178,13 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
         <div className="grid grid-cols-2 gap-3">
           <TextField
             label="N° licence"
-            value={licenceNumber}
-            onChange={e => setLicence(e.target.value)}
+            value={values.licenceNumber}
+            onChange={e => setValue('licenceNumber', e.target.value)}
           />
           <SelectField
             label="Statut"
-            value={status}
-            onChange={e => setStatus(e.target.value as MemberStatus)}
+            value={values.status}
+            onChange={e => setValue('status', e.target.value as MemberStatus)}
           >
             {MEMBER_STATUSES.map(s => (
               <option key={s} value={s}>
@@ -205,34 +197,35 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
           <TextField
             label="Licence — expire le"
             type="date"
-            value={licenceExpiry}
-            onChange={e => setLicenceExpiry(e.target.value)}
+            value={values.licenceExpiry}
+            onChange={e => setValue('licenceExpiry', e.target.value)}
           />
           <TextField
             label="Certificat médical — expire le"
             type="date"
-            value={medicalCertExpiry}
-            onChange={e => setMedicalCertExpiry(e.target.value)}
+            value={values.medicalCertExpiry}
+            onChange={e => setValue('medicalCertExpiry', e.target.value)}
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <TextField
             label="Email"
             type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
+            value={values.email}
+            error={errors.email}
+            onChange={e => setValue('email', e.target.value)}
           />
           <TextField
             label="Téléphone"
             inputMode="tel"
-            value={phone}
-            onChange={e => setPhone(e.target.value)}
+            value={values.phone}
+            onChange={e => setValue('phone', e.target.value)}
           />
         </div>
         <TextAreaField
           label="Notes (optionnel)"
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
+          value={values.notes}
+          onChange={e => setValue('notes', e.target.value)}
         />
       </div>
 
