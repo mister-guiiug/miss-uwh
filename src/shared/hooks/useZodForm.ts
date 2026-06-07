@@ -22,7 +22,9 @@ export interface ZodForm<TValues, TParsed> {
 }
 
 export function useZodForm<TValues extends Record<string, unknown>, TParsed>(
-  schema: z.ZodType<TParsed, z.ZodTypeDef, TValues>,
+  // Zod 4 : `ZodType<Output, Input>` (le paramètre `ZodTypeDef` du milieu a
+  // été supprimé par rapport à Zod 3).
+  schema: z.ZodType<TParsed, TValues>,
   initial: TValues
 ): ZodForm<TValues, TParsed> {
   const [values, setValues] = useState<TValues>(initial);

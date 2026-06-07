@@ -12,7 +12,10 @@ const { version } = JSON.parse(readFileSync('./package.json', 'utf-8')) as {
 
 // Déployé sur GitHub Pages : https://mister-guiiug.github.io/miss-uwh/
 export default defineConfig(({ command }) => {
-  const basePath = command === 'build' ? '/miss-uwh/' : '/';
+  // Honore VITE_BASE_PATH (deploy → /miss-uwh/, Lighthouse CI → /) ; sinon
+  // /miss-uwh/ au build, / en dev.
+  const basePath =
+    process.env.VITE_BASE_PATH ?? (command === 'build' ? '/miss-uwh/' : '/');
 
   return {
     base: basePath,
