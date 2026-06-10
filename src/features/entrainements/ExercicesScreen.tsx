@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Clock, Dumbbell, Plus } from 'lucide-react';
+import { Clock, Dumbbell, Plus, Sparkles } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import {
   EXERCISE_CATEGORY_LABELS,
@@ -9,6 +9,7 @@ import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
 import { ExerciceSheet } from './ExerciceSheet.tsx';
+import { AiGenerateSheet } from './AiGenerateSheet.tsx';
 
 /** Bibliothèque d'exercices (drills) réutilisables en séance. */
 export function ExercicesScreen() {
@@ -16,6 +17,7 @@ export function ExercicesScreen() {
   const all = useAppStore(s => s.data.exercises);
   const [editing, setEditing] = useState<Exercise | null>(null);
   const [creating, setCreating] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const rows = useMemo(
     () =>
@@ -31,9 +33,14 @@ export function ExercicesScreen() {
         <h2 className="font-display text-lg font-bold">
           {rows.length} exercice{rows.length > 1 ? 's' : ''}
         </h2>
-        <Button onClick={() => setCreating(true)}>
-          <Plus size={18} aria-hidden="true" /> Exercice
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => setGenerating(true)}>
+            <Sparkles size={18} aria-hidden="true" /> IA
+          </Button>
+          <Button onClick={() => setCreating(true)}>
+            <Plus size={18} aria-hidden="true" /> Exercice
+          </Button>
+        </div>
       </div>
 
       {rows.length === 0 ? (
@@ -67,6 +74,8 @@ export function ExercicesScreen() {
           ))}
         </ul>
       )}
+
+      <AiGenerateSheet open={generating} onClose={() => setGenerating(false)} />
 
       {creating && (
         <ExerciceSheet

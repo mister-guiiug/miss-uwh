@@ -12,6 +12,7 @@
  */
 import type {
   Adherent,
+  AiClubConfig,
   Announcement,
   Attachment,
   AuditEvent,
@@ -34,6 +35,7 @@ import { getSupabase } from '../lib/supabase.ts';
 import { getCurrentClubId } from './clubContext.ts';
 import {
   adherentToUpsertRow,
+  aiConfigToUpsertRow,
   announcementToUpsertRow,
   clubEventToUpsertRow,
   customCategoryToUpsertRow,
@@ -45,6 +47,7 @@ import {
   recurringToUpsertRow,
   refereeToUpsertRow,
   rowToAdherent,
+  rowToAiClubConfig,
   rowToAnnouncement,
   rowToAttachment,
   rowToAudit,
@@ -67,6 +70,7 @@ import {
   tournamentToUpsertRow,
   trainingSessionToUpsertRow,
   type AdherentRow,
+  type AiConfigRow,
   type AnnouncementRow,
   type AttachmentRow,
   type AuditRow,
@@ -100,6 +104,23 @@ export async function fetchClub(): Promise<(Club & { id: string }) | null> {
     await getSupabase().from('clubs').select('*').limit(1)
   ) as ClubRow[];
   return rows[0] ? rowToClub(rows[0]) : null;
+}
+
+export async function fetchAiConfig(): Promise<AiClubConfig | null> {
+  const rows = unwrap(
+    await getSupabase().from('ai_config').select('*').limit(1)
+  ) as AiConfigRow[];
+  return rows[0] ? rowToAiClubConfig(rows[0]) : null;
+}
+
+export async function upsertAiConfig(config: AiClubConfig): Promise<void> {
+  const clubId = getCurrentClubId();
+  if (!clubId) throw new Error('Club courant inconnu (config IA en attente).');
+  unwrap(
+    await getSupabase()
+      .from('ai_config')
+      .upsert(aiConfigToUpsertRow(config, clubId), { onConflict: 'club_id' })
+  );
 }
 
 export async function fetchSeasons(): Promise<Season[]> {

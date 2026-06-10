@@ -1,5 +1,6 @@
+import type { AiClubConfig } from '../../shared/types/domain.ts';
 import type { MetaActions, StoreSlice } from '../types.ts';
-import { commitAudited, commitPlain } from '../storeHelpers.ts';
+import { commitAudited, commitPlain, remote } from '../storeHelpers.ts';
 
 /** Onboarding, identité du club, thème et réglages. */
 export const createMetaSlice: StoreSlice<MetaActions> = set => ({
@@ -51,4 +52,36 @@ export const createMetaSlice: StoreSlice<MetaActions> = set => ({
         }
       ),
     })),
+
+  // Réglages IA LOCAUX (clé, modèle, skills variables) : jamais synchronisés
+  // ni audités — préférence d'appareil, comme le thème.
+  updateAiSettings: patch =>
+    set(s => ({
+      data: commitPlain({
+        ...s.data,
+        settings: {
+          ...s.data.settings,
+          ai: { provider: 'anthropic', ...s.data.settings.ai, ...patch },
+        },
+      }),
+    })),
+
+  // Skills COMMUNS du club (synchronisés) : audités + poussés vers le serveur
+  // pour être partagés par tous (« partie fixe pour tous »).
+  updateAiClubConfig: sharedSkills =>
+    set(s => {
+      const config: AiClubConfig = { sharedSkills, updatedAt: Date.now() };
+      remote({ kind: 'aiconfig.upsert', config });
+      return {
+        data: commitAudited(
+          { ...s.data, aiConfig: config },
+          {
+            action: 'aiconfig.update',
+            category: 'metier',
+            target: 'aiconfig',
+            summary: 'Mise à jour des instructions IA communes du club.',
+          }
+        ),
+      };
+    }),
 });

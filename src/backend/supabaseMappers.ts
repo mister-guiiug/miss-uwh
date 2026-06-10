@@ -7,6 +7,7 @@
 import type {
   Adherent,
   AdherentCategory,
+  AiClubConfig,
   Announcement,
   Attachment,
   AuditCategory,
@@ -659,6 +660,27 @@ export function rowToClub(row: ClubRow): Club & { id: string } {
     name: row.name,
     ffessmAffiliation: orUndef(row.affiliation),
   };
+}
+
+// ── Config IA commune du club (table single-row par club) ────────────
+export interface AiConfigRow {
+  club_id: string;
+  shared_skills: string;
+  updated_at: string | null;
+}
+
+export function rowToAiClubConfig(row: AiConfigRow): AiClubConfig {
+  return {
+    sharedSkills: row.shared_skills ?? '',
+    updatedAt: row.updated_at ? Date.parse(row.updated_at) : undefined,
+  };
+}
+
+export function aiConfigToUpsertRow(
+  config: AiClubConfig,
+  clubId: string
+): { club_id: string; shared_skills: string } {
+  return { club_id: clubId, shared_skills: config.sharedSkills };
 }
 
 // ── Audit (tables audit_metier / audit_securite) ─────────────────────

@@ -9,6 +9,7 @@
  */
 import type {
   Adherent,
+  AiClubConfig,
   Announcement,
   Category,
   ClubEvent,
@@ -56,7 +57,8 @@ export type RemoteOp =
   | { kind: 'album.upsert'; album: PhotoAlbum }
   | { kind: 'album.delete'; id: string }
   | { kind: 'category.upsert'; category: Category }
-  | { kind: 'category.delete'; code: string };
+  | { kind: 'category.delete'; code: string }
+  | { kind: 'aiconfig.upsert'; config: AiClubConfig };
 
 type Handler = (op: RemoteOp) => void;
 
@@ -139,5 +141,7 @@ export function describeRemoteOp(op: RemoteOp): string {
       return `Catégorie « ${op.category.label} »`;
     case 'category.delete':
       return `Suppression de la catégorie ${op.code}`;
+    case 'aiconfig.upsert':
+      return 'Instructions IA communes du club';
   }
 }

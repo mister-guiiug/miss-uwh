@@ -89,6 +89,7 @@ export async function pullAll(): Promise<void> {
       strategies,
       referees,
       photoAlbums,
+      aiConfig,
     ] = await Promise.all([
       repo.fetchClub(),
       repo.fetchSeasons(),
@@ -108,6 +109,7 @@ export async function pullAll(): Promise<void> {
       repo.fetchStrategies(),
       repo.fetchReferees(),
       repo.fetchPhotoAlbums(),
+      repo.fetchAiConfig(),
     ]);
 
     if (club) setCurrentClubId(club.id);
@@ -151,6 +153,9 @@ export async function pullAll(): Promise<void> {
       strategies,
       referees,
       photoAlbums,
+      // Config IA commune (« partie fixe pour tous ») : le serveur fait foi ;
+      // à défaut, on conserve la valeur locale (mode hors-ligne / 1re synchro).
+      aiConfig: aiConfig ?? prev.aiConfig,
       audit,
       settings: prev.settings, // préférence d'appareil : reste locale
       onboarded: true,
@@ -234,6 +239,8 @@ async function applyOp(op: RemoteOp): Promise<void> {
       return repo.upsertCustomCategory(op.category);
     case 'category.delete':
       return repo.deleteCustomCategory(op.code);
+    case 'aiconfig.upsert':
+      return repo.upsertAiConfig(op.config);
   }
 }
 
@@ -410,6 +417,11 @@ function subscribeRealtime(): void {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'categories' },
+      scheduleReconcilePull
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'ai_config' },
       scheduleReconcilePull
     )
     .subscribe();

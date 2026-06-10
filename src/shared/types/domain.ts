@@ -483,6 +483,35 @@ export interface GoogleCalendarConfig {
   icsUrl?: string;
 }
 
+export const AI_PROVIDERS = ['anthropic', 'openai'] as const;
+export type AiProvider = (typeof AI_PROVIDERS)[number];
+
+export const AI_PROVIDER_LABELS: Record<AiProvider, string> = {
+  anthropic: 'Claude (Anthropic)',
+  openai: 'OpenAI-compatible',
+};
+
+/**
+ * Réglages IA — LOCAUX à l'appareil (jamais synchronisés). C'est la « partie
+ * variable par utilisateur » : la clé API personnelle (stockée uniquement sur
+ * ce téléphone) et les préférences propres à l'entraîneur. La « partie fixe
+ * pour tous » vit dans [[AiClubConfig]] (synchronisée).
+ */
+export interface AiSettings {
+  provider: AiProvider;
+  /**
+   * Clé API personnelle. ⚠️ Stockée en clair dans le localStorage de CET
+   * appareil uniquement — jamais envoyée au serveur ni synchronisée.
+   */
+  apiKey?: string;
+  /** Modèle (ex. « claude-opus-4-8 », « gpt-4o »). Vide = défaut du fournisseur. */
+  model?: string;
+  /** Endpoint pour un fournisseur OpenAI-compatible (OpenRouter, Mistral, Groq…). */
+  baseUrl?: string;
+  /** Instructions personnelles de l'entraîneur (partie variable par utilisateur). */
+  userSkills?: string;
+}
+
 export interface Settings {
   theme: 'light' | 'dark';
   /** Nombre de décimales d'affichage (2 par défaut). */
@@ -493,6 +522,22 @@ export interface Settings {
   helloAsso?: HelloAssoConfig;
   /** Paramétrage de l'import Google Agenda (URL iCal publique). */
   googleCalendar?: GoogleCalendarConfig;
+  /** Réglages IA locaux à l'appareil (clé personnelle, skills variables). */
+  ai?: AiSettings;
+}
+
+/**
+ * Config IA COMMUNE du club — SYNCHRONISÉE (mode Supabase), partagée par tous
+ * les membres. C'est la « partie fixe pour tous » : le contexte commun injecté
+ * dans chaque génération (niveau du groupe, philosophie de jeu, consignes de
+ * sécurité, terminologie). Éditable par admin / entraîneur / président.
+ * En mode local, reste sur l'appareil. Complète [[AiSettings]].
+ */
+export interface AiClubConfig {
+  /** Instructions communes ajoutées au prompt pour tous les utilisateurs. */
+  sharedSkills: string;
+  /** Horodatage logique de dernière mise à jour (ordre d'écriture du store). */
+  updatedAt?: number;
 }
 
 export interface AppData {
@@ -525,6 +570,8 @@ export interface AppData {
   referees: Referee[];
   /** Albums photos (liens Google Photos). */
   photoAlbums: PhotoAlbum[];
+  /** Config IA commune du club (synchronisée) — « partie fixe pour tous ». */
+  aiConfig?: AiClubConfig;
   audit: AuditEvent[];
   settings: Settings;
   onboarded: boolean;

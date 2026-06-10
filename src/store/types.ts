@@ -5,6 +5,7 @@
 import type { StateCreator } from 'zustand';
 import type {
   Adherent,
+  AiSettings,
   Announcement,
   AppData,
   Attachment,
@@ -83,6 +84,10 @@ export interface MetaActions {
   setTheme: (theme: 'light' | 'dark') => void;
   updateSettings: (patch: Partial<Settings>) => void;
   updateClub: (patch: Partial<Club>) => void;
+  /** Réglages IA locaux à l'appareil (clé personnelle, skills variables). */
+  updateAiSettings: (patch: Partial<AiSettings>) => void;
+  /** Skills IA communs du club (synchronisés) — « partie fixe pour tous ». */
+  updateAiClubConfig: (sharedSkills: string) => void;
 }
 
 export interface SeasonActions {

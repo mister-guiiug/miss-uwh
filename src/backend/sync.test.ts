@@ -22,9 +22,11 @@ vi.mock('./supabaseRepository.ts', () => ({
   fetchStrategies: vi.fn(),
   fetchReferees: vi.fn(),
   fetchPhotoAlbums: vi.fn(),
+  fetchAiConfig: vi.fn(),
   // Écritures (drain)
   deleteEvent: vi.fn(),
   upsertEntry: vi.fn(),
+  upsertAiConfig: vi.fn(),
 }));
 
 import * as repo from './supabaseRepository.ts';
