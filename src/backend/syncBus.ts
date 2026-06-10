@@ -69,3 +69,75 @@ export function setRemoteHandler(h: Handler | null): void {
 export function emitRemote(op: RemoteOp): void {
   handler?.(op);
 }
+
+/**
+ * Libellé lisible d'une opération (file d'attente / lettres mortes des
+ * Réglages) : l'utilisateur doit comprendre QUELLE donnée n'a pas pu être
+ * synchronisée sans connaître le vocabulaire technique.
+ */
+export function describeRemoteOp(op: RemoteOp): string {
+  switch (op.kind) {
+    case 'entry.upsert':
+      return `Écriture « ${op.entry.label} »`;
+    case 'entry.bulkUpsert':
+      return `Import de ${op.entries.length} écriture(s)`;
+    case 'season.upsert':
+      return `Saison ${op.season.label}`;
+    case 'season.close':
+      return 'Clôture de saison';
+    case 'season.reopen':
+      return 'Réouverture de saison';
+    case 'event.upsert':
+      return `Événement financier « ${op.event.name} »`;
+    case 'event.delete':
+      return 'Suppression d’un événement financier';
+    case 'recurring.upsert':
+      return `Modèle récurrent « ${op.recurring.label} »`;
+    case 'recurring.delete':
+      return 'Suppression d’un modèle récurrent';
+    case 'adherent.upsert':
+      return `Adhérent·e ${op.adherent.firstName} ${op.adherent.lastName}`;
+    case 'adherent.delete':
+      return 'Suppression d’un·e adhérent·e';
+    case 'guardian.upsert':
+      return `Responsable légal « ${op.guardian.name} »`;
+    case 'guardian.delete':
+      return 'Suppression d’un responsable légal';
+    case 'clubevent.upsert':
+      return `Événement « ${op.clubEvent.title} »`;
+    case 'clubevent.delete':
+      return 'Suppression d’un événement';
+    case 'announcement.upsert':
+      return `Annonce « ${op.announcement.title} »`;
+    case 'announcement.delete':
+      return 'Suppression d’une annonce';
+    case 'tournament.upsert':
+      return `Tournoi « ${op.tournament.name} »`;
+    case 'tournament.delete':
+      return 'Suppression d’un tournoi';
+    case 'session.upsert':
+      return `Séance du ${op.session.date}`;
+    case 'session.delete':
+      return 'Suppression d’une séance';
+    case 'exercise.upsert':
+      return `Exercice « ${op.exercise.name} »`;
+    case 'exercise.delete':
+      return 'Suppression d’un exercice';
+    case 'strategy.upsert':
+      return `Stratégie « ${op.strategy.name} »`;
+    case 'strategy.delete':
+      return 'Suppression d’une stratégie';
+    case 'referee.upsert':
+      return `Arbitre « ${op.referee.name} »`;
+    case 'referee.delete':
+      return 'Suppression d’un arbitre';
+    case 'album.upsert':
+      return `Album photo « ${op.album.title} »`;
+    case 'album.delete':
+      return 'Suppression d’un album photo';
+    case 'category.upsert':
+      return `Catégorie « ${op.category.label} »`;
+    case 'category.delete':
+      return `Suppression de la catégorie ${op.code}`;
+  }
+}

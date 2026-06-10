@@ -29,7 +29,13 @@ vi.mock('./supabaseRepository.ts', () => ({
 
 import * as repo from './supabaseRepository.ts';
 import * as q from './syncQueue.ts';
-import { drain, pullAll } from './sync.ts';
+import {
+  MAX_TRANSIENT_ATTEMPTS,
+  drain,
+  isTransient,
+  pullAll,
+  retryDeadOps,
+} from './sync.ts';
 import { useAppStore } from '../store/useAppStore.ts';
 
 const FETCHES = [
@@ -115,6 +121,67 @@ describe('drain', () => {
     expect(repo.deleteEvent).toHaveBeenCalledWith('ev1');
     expect(q.pendingCount()).toBe(2);
   });
+
+  it('échec transitoire avec ops en attente → statut « offline » (pas une erreur)', async () => {
+    vi.mocked(repo.deleteEvent).mockRejectedValue(new Error('network down'));
+    q.enqueue({ kind: 'event.delete', id: 'ev1' });
+
+    await drain();
+
+    expect(useAppStore.getState().syncStatus.state).toBe('offline');
+    expect(useAppStore.getState().syncStatus.pending).toBe(1);
+  });
+
+  it('échec « transitoire » récidivant : lettre morte au plafond de tentatives', async () => {
+    vi.mocked(repo.deleteEvent).mockRejectedValue(new Error('network down'));
+    const item = q.enqueue({ kind: 'event.delete', id: 'ev1' });
+    for (let i = 0; i < MAX_TRANSIENT_ATTEMPTS - 1; i++)
+      q.bumpAttempt(item.id, 'réseau');
+
+    await drain();
+
+    expect(q.pendingCount()).toBe(0);
+    expect(q.deadCount()).toBe(1);
+    expect(useAppStore.getState().syncStatus.state).toBe('error');
+    expect(useAppStore.getState().syncStatus.dead).toBe(1);
+  });
+});
+
+describe('retryDeadOps', () => {
+  it('rejoue les lettres mortes avec succès → file et lettres mortes vides', async () => {
+    vi.mocked(repo.deleteEvent)
+      .mockRejectedValueOnce(new Error('permission denied (RLS)'))
+      .mockResolvedValue(undefined);
+    q.enqueue({ kind: 'event.delete', id: 'ev1' });
+    await drain();
+    expect(q.deadCount()).toBe(1);
+
+    await retryDeadOps();
+
+    expect(q.deadCount()).toBe(0);
+    expect(q.pendingCount()).toBe(0);
+    expect(useAppStore.getState().syncStatus.state).toBe('ready');
+  });
+});
+
+describe('isTransient', () => {
+  it.each([
+    'Failed to fetch', // Chrome
+    'Load failed', // Safari
+    'NetworkError when attempting to fetch a resource.', // Firefox
+    'connect ETIMEDOUT', // timeout
+    'JWT expired', // jeton à rafraîchir
+    '503 Service Unavailable',
+  ])('réessayable : %s', msg => {
+    expect(isTransient(msg)).toBe(true);
+  });
+
+  it.each(['permission denied (RLS)', 'duplicate key value', 'invalid input'])(
+    'rejet serveur : %s',
+    msg => {
+      expect(isTransient(msg)).toBe(false);
+    }
+  );
 });
 
 describe('pullAll', () => {
@@ -127,11 +194,33 @@ describe('pullAll', () => {
     expect(repo.fetchEntries).toHaveBeenCalled();
   });
 
-  it('passe le statut en erreur si une lecture échoue', async () => {
+  it('passe le statut en erreur si une lecture échoue (rejet serveur)', async () => {
     vi.mocked(repo.fetchEntries).mockRejectedValue(new Error('boom'));
 
     await pullAll();
 
     expect(useAppStore.getState().syncStatus.state).toBe('error');
+  });
+
+  it('panne réseau au pull → statut « offline », pas une erreur bloquante', async () => {
+    vi.mocked(repo.fetchEntries).mockRejectedValue(
+      new Error('Failed to fetch')
+    );
+
+    await pullAll();
+
+    expect(useAppStore.getState().syncStatus.state).toBe('offline');
+  });
+
+  it('pull réussi mais lettres mortes présentes → l’erreur reste visible', async () => {
+    const item = q.enqueue({ kind: 'event.delete', id: 'ev1' });
+    q.deadLetter(item.id, 'permission denied');
+
+    await pullAll();
+
+    const status = useAppStore.getState().syncStatus;
+    expect(status.state).toBe('error');
+    expect(status.error).toContain('refusée');
+    expect(status.lastSyncAt).toBeTruthy();
   });
 });

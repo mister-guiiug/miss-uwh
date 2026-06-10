@@ -192,6 +192,30 @@ export function clearDead(): void {
   write(DEAD, []);
 }
 
+/**
+ * Replace les lettres mortes EN TÊTE de file pour un nouveau cycle d'envoi
+ * (bouton « Réessayer » des Réglages). Les compteurs de tentatives repartent à
+ * zéro. Si la même entité a depuis été modifiée (op plus récente en attente),
+ * la lettre morte est abandonnée : la file détient l'état le plus frais.
+ */
+export function requeueDead(): number {
+  const dead = read(DEAD);
+  if (dead.length === 0) return 0;
+  const pending = read(KEY);
+  const pendingKeys = new Set(
+    pending.map(i => entityKey(i.op)).filter((k): k is string => k !== null)
+  );
+  const revived = dead
+    .filter(i => {
+      const key = entityKey(i.op);
+      return key === null || !pendingKeys.has(key);
+    })
+    .map(i => ({ ...i, attempts: 0 }));
+  write(KEY, [...revived, ...pending]);
+  write(DEAD, []);
+  return revived.length;
+}
+
 export function clearAll(): void {
   write(KEY, []);
   write(DEAD, []);

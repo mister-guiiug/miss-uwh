@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CalendarDays,
-  Database,
   Download,
   FileSpreadsheet,
   LogOut,
@@ -16,7 +15,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
-import { BACKEND, IS_SUPABASE } from '../../backend/config.ts';
+import { IS_SUPABASE } from '../../backend/config.ts';
 import { useAuth } from '../../auth/useAuth.ts';
 import { MfaCard } from '../../auth/MfaCard.tsx';
 import { importData } from '../../shared/lib/storage.ts';
@@ -29,12 +28,12 @@ import { exportWorkbookXlsx } from '../export/xlsxExport.ts';
 import { ImportSheet } from '../import/ImportSheet.tsx';
 import { RecurringSheet } from '../recurring/RecurringSheet.tsx';
 import { AdherentsSheet } from '../adherents/AdherentsSheet.tsx';
+import { DatabaseStatusCard } from './DatabaseStatusCard.tsx';
 import { forceUpdate } from '../../pwa/forceUpdate.ts';
 import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { TextField } from '../../shared/components/Field.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
-import { Badge } from '../../shared/components/badges.tsx';
 import { AppFooter } from '../../shared/components/AppFooter.tsx';
 
 export function SettingsScreen() {
@@ -109,21 +108,16 @@ export function SettingsScreen() {
         </label>
       </Card>
 
+      {/* État de la base de données (mode, synchro, file d'attente, volumétrie) */}
+      <DatabaseStatusCard />
+
       {/* Backend */}
       <Card>
         <div className="mb-1 flex items-center gap-2">
-          <Database size={16} className="text-primary" aria-hidden="true" />
-          <h3 className="font-display font-bold">Stockage & sécurité</h3>
+          <ShieldCheck size={16} className="text-primary" aria-hidden="true" />
+          <h3 className="font-display font-bold">Sécurité</h3>
         </div>
-        <p className="flex items-center gap-2 text-sm text-[var(--uwh-text-soft)]">
-          Mode actuel :{' '}
-          {BACKEND === 'supabase' ? (
-            <Badge tone="credit">Supabase (multi-utilisateurs, RBAC)</Badge>
-          ) : (
-            <Badge tone="neutral">Local (cet appareil)</Badge>
-          )}
-        </p>
-        <p className="mt-2 text-xs text-[var(--uwh-text-soft)]">
+        <p className="text-xs text-[var(--uwh-text-soft)]">
           Le mode Supabase active l'authentification, le contrôle d'accès par
           rôle côté serveur (RLS), la MFA pour les rôles sensibles, l'audit
           serveur et le stockage chiffré des justificatifs. Voir le README pour

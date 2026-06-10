@@ -12,6 +12,7 @@ import {
   peek,
   pendingCount,
   queued,
+  requeueDead,
 } from './syncQueue.ts';
 
 const op = (id: string): RemoteOp => ({ kind: 'event.delete', id });
@@ -94,5 +95,46 @@ describe('syncQueue', () => {
     expect(pendingCount()).toBe(2);
     const evItem = queued().find(i => i.op.kind === 'event.upsert');
     expect((evItem!.op as { event: { name: string } }).event.name).toBe('v2');
+  });
+
+  describe('requeueDead', () => {
+    it('replace les lettres mortes en tête de file, tentatives remises à zéro', () => {
+      const it1 = enqueue(op('a'));
+      bumpAttempt(it1.id, 'réseau');
+      deadLetter(it1.id, 'refus serveur');
+      enqueue(op('b')); // arrivée APRÈS l'échec
+
+      expect(requeueDead()).toBe(1);
+
+      expect(deadCount()).toBe(0);
+      expect(pendingCount()).toBe(2);
+      expect(peek()?.op).toEqual(op('a')); // ordre d'origine préservé
+      expect(peek()?.attempts).toBe(0);
+    });
+
+    it('abandonne la lettre morte si une op plus récente attend sur la même entité', () => {
+      const ev = (name: string): RemoteOp => ({
+        kind: 'event.upsert',
+        event: { id: 'x', seasonId: 's', name, kind: 'tournoi' },
+      });
+      const old = enqueue(ev('périmée'));
+      deadLetter(old.id, 'refus');
+      enqueue(ev('fraîche')); // même entité, état plus récent
+
+      expect(requeueDead()).toBe(0);
+
+      expect(deadCount()).toBe(0);
+      expect(pendingCount()).toBe(1);
+      const item = queued()[0]!;
+      expect((item.op as { event: { name: string } }).event.name).toBe(
+        'fraîche'
+      );
+    });
+
+    it('sans lettre morte : no-op', () => {
+      enqueue(op('a'));
+      expect(requeueDead()).toBe(0);
+      expect(pendingCount()).toBe(1);
+    });
   });
 });
