@@ -98,6 +98,24 @@ function unwrap<T>(res: {
   return res.data as T;
 }
 
+/**
+ * Vrai si l'erreur PostgREST signale une table ABSENTE du schéma — migration
+ * pas (encore) appliquée, ou cache de schéma PostgREST pas encore rechargé
+ * (« Could not find the table 'public.x' in the schema cache »). Sert à dégrader
+ * proprement les tables OPTIONNELLES sans casser le pull complet.
+ */
+export function isMissingTableError(
+  error: { message?: string; code?: string } | null
+): boolean {
+  if (!error) return false;
+  return (
+    error.code === 'PGRST205' ||
+    /could not find the table|schema cache|relation .* does not exist/i.test(
+      error.message ?? ''
+    )
+  );
+}
+
 // ── Pull (hydratation) ───────────────────────────────────────────────
 export async function fetchClub(): Promise<(Club & { id: string }) | null> {
   const rows = unwrap(
@@ -107,9 +125,20 @@ export async function fetchClub(): Promise<(Club & { id: string }) | null> {
 }
 
 export async function fetchAiConfig(): Promise<AiClubConfig | null> {
-  const rows = unwrap(
-    await getSupabase().from('ai_config').select('*').limit(1)
-  ) as AiConfigRow[];
+  // Table OPTIONNELLE : si la migration 0016 n'est pas (encore) appliquée,
+  // PostgREST renvoie « Could not find the table 'public.ai_config' in the
+  // schema cache ». On dégrade alors en `null` pour NE PAS casser le pull
+  // complet — le reste des données s'hydrate normalement, et la valeur locale
+  // de aiConfig est conservée (cf. pullAll : `aiConfig ?? prev.aiConfig`).
+  const { data, error } = await getSupabase()
+    .from('ai_config')
+    .select('*')
+    .limit(1);
+  if (error) {
+    if (isMissingTableError(error)) return null;
+    throw new Error(error.message);
+  }
+  const rows = (data ?? []) as AiConfigRow[];
   return rows[0] ? rowToAiClubConfig(rows[0]) : null;
 }
 
