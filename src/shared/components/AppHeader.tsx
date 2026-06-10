@@ -39,7 +39,9 @@ export function AppHeader({
   const isLauncher = pathname === '/';
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-[var(--uwh-border)] bg-[var(--uwh-surface)]/95 px-4 py-3 backdrop-blur pt-[max(0.75rem,env(safe-area-inset-top))] no-print">
+    // Le caractère collant est porté par le wrapper dans `Shell` (App.tsx),
+    // qui regroupe en-tête + bandeau de synchro.
+    <header className="flex items-center justify-between gap-2 border-b border-[var(--uwh-border)] bg-[var(--uwh-surface)]/95 px-4 py-3 backdrop-blur pt-[max(0.75rem,env(safe-area-inset-top))] no-print">
       <div className="flex min-w-0 items-center gap-2">
         {isLauncher ? (
           <Waves

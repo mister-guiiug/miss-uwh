@@ -15,30 +15,56 @@
 import type { AppData } from '../shared/types/domain.ts';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { useAppStore } from '../store/useAppStore.ts';
+import type { SyncStatus } from '../store/types.ts';
 import { SCHEMA_VERSION, createEmptyData } from '../shared/lib/seed.ts';
+import { notifyError } from '../shared/lib/toasts.ts';
 import { getSupabase } from '../lib/supabase.ts';
 import { setCurrentClubId } from './clubContext.ts';
-import { setRemoteHandler, type RemoteOp } from './syncBus.ts';
+import {
+  describeRemoteOp,
+  setRemoteHandler,
+  type RemoteOp,
+} from './syncBus.ts';
 import * as q from './syncQueue.ts';
 import * as repo from './supabaseRepository.ts';
 
-function setStatus(
-  state: 'idle' | 'syncing' | 'ready' | 'error',
-  error?: string
-) {
-  useAppStore.getState().setSyncStatus({ state, error });
+/** Conservé entre deux mises à jour de statut (succès du dernier pull). */
+let lastSyncAt: number | undefined;
+
+function setStatus(state: SyncStatus['state'], error?: string) {
+  useAppStore.getState().setSyncStatus({
+    state,
+    error,
+    pending: q.pendingCount(),
+    dead: q.deadCount(),
+    lastSyncAt,
+  });
 }
 
 function isOffline(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine === false;
 }
 
-/** Une erreur transitoire (réseau) est réessayable ; sinon c'est un rejet serveur. */
-function isTransient(message: string): boolean {
-  return /fetch|network|timeout|offline|connexion|connection|econn|enotfound/i.test(
+/**
+ * Une erreur transitoire (réseau, service indisponible, jeton à rafraîchir) est
+ * réessayable ; sinon c'est un rejet serveur (ex. RLS) → lettre morte. Couvre
+ * les messages des principaux navigateurs : « Failed to fetch » (Chrome),
+ * « Load failed » (Safari), « NetworkError… » (Firefox).
+ */
+export function isTransient(message: string): boolean {
+  return /fetch|network|load failed|timeout|timed?\s?out|offline|connexion|connection|econn|enotfound|socket|abort|too many requests|jwt expired|token.{0,10}expired|service unavailable|bad gateway|gateway time/i.test(
     message
   );
 }
+
+/**
+ * Au-delà de ce nombre de tentatives, un échec « transitoire » est requalifié en
+ * échec durable (lettre morte) : sinon une erreur mal classée bloquerait la
+ * file pour toujours, silencieusement. L'opération reste récupérable depuis
+ * les Réglages (« Réessayer »). N'est jamais atteint hors ligne : le drain
+ * s'interrompt sans consommer de tentative quand le réseau est coupé.
+ */
+export const MAX_TRANSIENT_ATTEMPTS = 10;
 
 /** Pull complet → hydrate le store. Le serveur est la source de vérité. */
 export async function pullAll(): Promise<void> {
@@ -131,12 +157,16 @@ export async function pullAll(): Promise<void> {
     };
 
     useAppStore.getState().hydrate(data);
-    setStatus('ready');
+    lastSyncAt = Date.now();
+    // Ne pas forcer « ready » : des lettres mortes éventuelles doivent rester
+    // visibles (le statut est recalculé depuis l'état réel de la file).
+    reportQueueStatus();
   } catch (e) {
-    setStatus(
-      'error',
-      e instanceof Error ? e.message : 'Synchronisation impossible'
-    );
+    const msg = e instanceof Error ? e.message : 'Synchronisation impossible';
+    // Réseau coupé ou serveur injoignable : pas une « erreur » — les données
+    // locales restent utilisables et le pull repartira à la reconnexion.
+    if (isOffline() || isTransient(msg)) setStatus('offline');
+    else setStatus('error', msg);
   }
 }
 
@@ -210,10 +240,21 @@ async function applyOp(op: RemoteOp): Promise<void> {
 function reportQueueStatus(): void {
   const dead = q.deadCount();
   const pending = q.pendingCount();
-  if (dead > 0) setStatus('error', `${dead} opération(s) en échec`);
+  if (dead > 0)
+    setStatus('error', `${dead} opération(s) refusée(s) par le serveur`);
   else if (pending > 0)
-    setStatus('error', `Hors ligne — ${pending} en attente`);
+    // Des modifications attendent le réseau : état normal du hors ligne,
+    // PAS une erreur (elles repartiront seules à la reconnexion).
+    setStatus('offline');
   else setStatus('ready');
+}
+
+/** Signale qu'une opération vient de partir en lettre morte (toast persistant). */
+function notifyDeadLetter(op: RemoteOp): void {
+  notifyError(
+    `Synchronisation refusée par le serveur : ${describeRemoteOp(op)}. ` +
+      'Détails et nouvel essai dans Réglages → État de la base de données.'
+  );
 }
 
 let draining = false;
@@ -246,14 +287,17 @@ export async function drain(): Promise<void> {
         q.ack(item.id);
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'erreur';
-        if (isTransient(msg)) {
+        if (isTransient(msg) && item.attempts + 1 < MAX_TRANSIENT_ATTEMPTS) {
           q.bumpAttempt(item.id, msg); // réseau : on garde, on réessaiera
           // Rejeu auto en backoff (en plus de l'événement `online`).
           const next = q.peek();
           if (next && !isOffline()) scheduleRetry(next.attempts);
           break;
         }
-        q.deadLetter(item.id, msg); // rejet serveur : lettre morte, on continue
+        // Rejet serveur — ou échec « transitoire » récidivant (plafond atteint) :
+        // lettre morte, on continue avec les opérations suivantes.
+        q.deadLetter(item.id, msg);
+        notifyDeadLetter(item.op);
       }
       item = q.peek();
     }
@@ -265,7 +309,15 @@ export async function drain(): Promise<void> {
 
 async function onOnline(): Promise<void> {
   await drain();
-  if (q.pendingCount() === 0 && q.deadCount() === 0) await pullAll();
+  // Réconcilie dès que la file est vide — même si des lettres mortes
+  // subsistent : elles restent signalées (reportQueueStatus) mais ne doivent
+  // pas priver l'appareil des changements des autres utilisateurs.
+  if (q.pendingCount() === 0) await pullAll();
+}
+
+/** Coupure réseau : reflète immédiatement l'état (modifications en attente). */
+function onOffline(): void {
+  reportQueueStatus();
 }
 
 // ── Realtime : réconciliation en direct (plusieurs trésoriers) ────────
@@ -382,6 +434,7 @@ export function startSync(): void {
   });
   if (typeof window !== 'undefined') {
     window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
   }
   subscribeRealtime();
 }
@@ -390,11 +443,13 @@ export function stopSync(): void {
   setRemoteHandler(null);
   if (typeof window !== 'undefined') {
     window.removeEventListener('online', onOnline);
+    window.removeEventListener('offline', onOffline);
   }
   if (retryTimer) {
     clearTimeout(retryTimer);
     retryTimer = null;
   }
+  lastSyncAt = undefined; // appareil partagé : pas d'horodatage inter-comptes
   unsubscribeRealtime();
 }
 
@@ -408,4 +463,19 @@ export async function initialSync(): Promise<void> {
 export async function retrySync(): Promise<void> {
   await drain();
   if (q.pendingCount() === 0) await pullAll();
+}
+
+/**
+ * Réglages : redonne leur chance aux opérations refusées (lettres mortes) —
+ * utile après correction côté serveur (droits, données) — puis réconcilie.
+ */
+export async function retryDeadOps(): Promise<void> {
+  q.requeueDead();
+  await retrySync();
+}
+
+/** Réglages : abandonne définitivement les opérations refusées. */
+export function discardDeadOps(): void {
+  q.clearDead();
+  reportQueueStatus();
 }

@@ -11,6 +11,7 @@ import { useAppStore } from './store/useAppStore.ts';
 import { AuthProvider } from './auth/AuthContext.tsx';
 import { AuthGate } from './auth/AuthGate.tsx';
 import { SupabaseSync } from './backend/SupabaseSync.tsx';
+import { SyncBanner } from './backend/SyncBanner.tsx';
 import { AppHeader } from './shared/components/AppHeader.tsx';
 import { LensNav } from './shared/components/LensNav.tsx';
 import { LensGuard } from './shared/components/LensGuard.tsx';
@@ -90,13 +91,19 @@ function Shell() {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
-      <AppHeader
-        title={title}
-        lens={lens}
-        onSearch={() => setSearchOpen(true)}
-        onAlerts={() => setAlertsOpen(true)}
-        alertCount={alerts.length}
-      />
+      {/* En-tête + bandeau de synchro dans un même bloc collant : le bandeau
+          apparaît SOUS l'en-tête (dans le flux) et ne recouvre jamais rien —
+          essentiel sur mobile. */}
+      <div className="sticky top-0 z-30">
+        <AppHeader
+          title={title}
+          lens={lens}
+          onSearch={() => setSearchOpen(true)}
+          onAlerts={() => setAlertsOpen(true)}
+          alertCount={alerts.length}
+        />
+        <SyncBanner />
+      </div>
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       <NotificationCenter
         open={alertsOpen}

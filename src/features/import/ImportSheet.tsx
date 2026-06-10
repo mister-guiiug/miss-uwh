@@ -21,6 +21,20 @@ export function ImportSheet({ open, onClose }: Props) {
   const [done, setDone] = useState<number | null>(null);
   const [applyOpening, setApplyOpening] = useState(true);
 
+  const seasonClosed = season.status === 'cloturee';
+
+  // À la fermeture, on repart d'un état vierge : pas de résultat « fantôme »
+  // d'un import précédent à la prochaine ouverture (la feuille fermée ne rend
+  // rien, la remise à zéro est invisible).
+  function close() {
+    setParsed(null);
+    setBusy(false);
+    setError(undefined);
+    setDone(null);
+    setApplyOpening(true);
+    onClose();
+  }
+
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -36,6 +50,8 @@ export function ImportSheet({ open, onClose }: Props) {
       );
     } finally {
       setBusy(false);
+      // Permet de re-sélectionner le MÊME fichier (sinon onChange ne refire pas).
+      e.target.value = '';
     }
   }
 
@@ -47,8 +63,33 @@ export function ImportSheet({ open, onClose }: Props) {
     setDone(n);
   }
 
+  // Action principale TOUJOURS visible (pied épinglé du Sheet) : sur mobile,
+  // le bouton ne doit pas être perdu sous la ligne de flottaison.
+  const footer =
+    done !== null ? (
+      <Button block onClick={close}>
+        Terminer
+      </Button>
+    ) : parsed ? (
+      <div className="flex flex-col gap-1.5">
+        <Button block onClick={doImport} disabled={seasonClosed}>
+          Importer {parsed.entries.length} écriture(s)
+        </Button>
+        {seasonClosed && (
+          <p className="text-center text-xs text-[var(--uwh-warn)]">
+            Saison {season.label} clôturée — rouvrez-la pour importer.
+          </p>
+        )}
+      </div>
+    ) : undefined;
+
   return (
-    <Sheet open={open} title="Importer depuis Excel" onClose={onClose}>
+    <Sheet
+      open={open}
+      title="Importer depuis Excel"
+      onClose={close}
+      footer={footer}
+    >
       <div className="flex flex-col gap-4">
         <p className="text-sm text-[var(--uwh-text-soft)]">
           Importe la feuille <strong>« Compte »</strong> de votre classeur. Les
@@ -58,7 +99,7 @@ export function ImportSheet({ open, onClose }: Props) {
         </p>
 
         <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] p-5 text-sm font-semibold text-primary">
-          <FileSpreadsheet size={18} aria-hidden="true" />
+          <FileSpreadsheet size={18} aria-hidden="true" className="shrink-0" />
           {busy ? 'Lecture…' : 'Choisir un fichier .xlsx'}
           <input
             type="file"
@@ -78,23 +119,25 @@ export function ImportSheet({ open, onClose }: Props) {
               aria-hidden="true"
               className="mt-0.5 shrink-0"
             />
-            {error}
+            <span className="min-w-0 break-words">{error}</span>
           </p>
         )}
 
         {parsed && done === null && (
           <div className="flex flex-col gap-3 rounded-2xl bg-[var(--uwh-surface-2)] p-4 text-sm">
-            <div className="flex justify-between">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
               <span className="text-[var(--uwh-text-soft)]">Feuille lue</span>
-              <span className="font-semibold">{parsed.sheet}</span>
+              <span className="min-w-0 break-words text-right font-semibold">
+                {parsed.sheet}
+              </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
               <span className="text-[var(--uwh-text-soft)]">
                 Écritures détectées
               </span>
               <span className="font-semibold">{parsed.entries.length}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
               <span className="text-[var(--uwh-text-soft)]">
                 Reliquat détecté
               </span>
@@ -109,26 +152,25 @@ export function ImportSheet({ open, onClose }: Props) {
                 </summary>
                 <ul className="mt-1 list-disc pl-4">
                   {parsed.warnings.slice(0, 12).map((w, i) => (
-                    <li key={i}>{w}</li>
+                    <li key={i} className="break-words">
+                      {w}
+                    </li>
                   ))}
+                  {parsed.warnings.length > 12 && (
+                    <li>… et {parsed.warnings.length - 12} autre(s)</li>
+                  )}
                 </ul>
               </details>
             )}
-            <label className="flex items-center gap-2 text-xs">
+            <label className="flex items-start gap-2 text-xs">
               <input
                 type="checkbox"
+                className="mt-0.5 shrink-0"
                 checked={applyOpening}
                 onChange={e => setApplyOpening(e.target.checked)}
               />
               Appliquer le reliquat détecté comme solde d'ouverture
             </label>
-            <Button
-              block
-              onClick={doImport}
-              disabled={season.status === 'cloturee'}
-            >
-              Importer {parsed.entries.length} écriture(s)
-            </Button>
           </div>
         )}
 
@@ -137,9 +179,6 @@ export function ImportSheet({ open, onClose }: Props) {
             <p className="font-semibold text-[var(--uwh-credit)]">
               ✓ {done} écriture(s) importée(s) dans {season.label}.
             </p>
-            <Button block className="mt-3" onClick={onClose}>
-              Terminer
-            </Button>
           </div>
         )}
       </div>

@@ -112,10 +112,10 @@ export function Sheet({ open, title, onClose, children, footer }: SheetProps) {
           </Button>
         </div>
 
-        {/* Corps défilant */}
+        {/* Corps défilant (overscroll confiné : le fond ne défile pas) */}
         <div
           className={cn(
-            'flex-1 overflow-y-auto px-5 pt-5',
+            'flex-1 overflow-y-auto overscroll-contain px-5 pt-5',
             footer ? 'pb-5' : 'pb-[max(1.25rem,env(safe-area-inset-bottom))]'
           )}
         >

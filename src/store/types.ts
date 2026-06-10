@@ -25,10 +25,21 @@ import type {
   Tournament,
 } from '../shared/types/domain.ts';
 
-/** Statut de synchronisation (mode Supabase). Non persisté. */
+/**
+ * Statut de synchronisation (mode Supabase). Non persisté.
+ * `offline` = des modifications locales attendent le retour du réseau (état
+ * normal du mode hors ligne, PAS une erreur) ; `error` = pull impossible ou
+ * opérations refusées par le serveur (lettres mortes).
+ */
 export interface SyncStatus {
-  state: 'idle' | 'syncing' | 'ready' | 'error';
+  state: 'idle' | 'syncing' | 'ready' | 'offline' | 'error';
   error?: string;
+  /** Opérations locales en attente d'envoi. */
+  pending?: number;
+  /** Opérations refusées par le serveur (lettres mortes). */
+  dead?: number;
+  /** Horodatage (ms epoch) du dernier pull serveur réussi. */
+  lastSyncAt?: number;
 }
 
 /** Brouillon d'écriture : champs métier saisis, le reste est dérivé au commit. */
