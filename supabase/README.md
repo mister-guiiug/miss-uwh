@@ -10,11 +10,20 @@ sécurité est appliquée ici**, jamais par le client.
 ## Mise en place
 
 1. Créer un projet Supabase (région **eu-central-1 / Frankfurt** recommandée — RGPD).
-2. Appliquer les migrations dans l'ordre :
-   ```bash
-   supabase link --project-ref <ref>
-   supabase db push        # 0001_schema → 0002_rls → 0003_seed
-   ```
+2. Appliquer les migrations dans l'ordre (`0001_schema → 0002_rls → 0003_seed → …`) :
+   - **Automatique (recommandé)** — le workflow `.github/workflows/supabase-migrations.yml`
+     exécute `supabase db push` à chaque fusion sur `main` qui touche
+     `supabase/migrations/**` (et au déclenchement manuel). `db push` est
+     _forward-only_ : seules les migrations non encore appliquées sont jouées.
+     Définir au préalable trois secrets GitHub (Settings → Secrets and variables →
+     Actions) : `SUPABASE_ACCESS_TOKEN` (Account → Access Tokens),
+     `SUPABASE_PROJECT_ID` (Project Settings → General → Reference ID) et
+     `SUPABASE_DB_PASSWORD` (Project Settings → Database).
+   - **Manuel** (premier amorçage ou hors CI) :
+     ```bash
+     supabase link --project-ref <ref>
+     supabase db push
+     ```
 3. **Storage** : créer un bucket **privé** nommé `justificatifs`, puis ré‑exécuter le
    bloc de politiques storage de `0002_rls.sql` (il ne s'active que si le bucket
    existe).
