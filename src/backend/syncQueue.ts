@@ -113,6 +113,8 @@ export function entityKey(op: RemoteOp): string | null {
       return `category:${op.category.code}`;
     case 'category.delete':
       return `category:${op.code}`;
+    case 'aiconfig.upsert':
+      return 'aiconfig'; // singleton club : seul le dernier état compte
     case 'entry.bulkUpsert':
     case 'season.close':
     case 'season.reopen':

@@ -29,6 +29,7 @@ import { ImportSheet } from '../import/ImportSheet.tsx';
 import { RecurringSheet } from '../recurring/RecurringSheet.tsx';
 import { AdherentsSheet } from '../adherents/AdherentsSheet.tsx';
 import { DatabaseStatusCard } from './DatabaseStatusCard.tsx';
+import { AiSkillsCard } from './AiSkillsCard.tsx';
 import { forceUpdate } from '../../pwa/forceUpdate.ts';
 import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '../../shared/components/Button.tsx';
@@ -237,6 +238,9 @@ export function SettingsScreen() {
           </Card>
         </>
       )}
+
+      {/* Génération IA (skills communs + perso + clé locale) — les deux modes */}
+      <AiSkillsCard />
 
       {/* Exports */}
       <Card>
