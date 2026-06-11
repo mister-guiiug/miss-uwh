@@ -13,6 +13,7 @@
  */
 import type { AppData } from '../types/domain.ts';
 import { appDataSchema } from './schema.ts';
+import { remapNonUuidSyncIds } from './migrateIds.ts';
 import { createInitialData, SCHEMA_VERSION } from './seed.ts';
 import { notifyError } from './toasts.ts';
 
@@ -23,6 +24,14 @@ export const STORAGE_KEY = 'miss-uwh:data';
 const migrations: Record<number, (data: unknown) => unknown> = {
   // 0 -> 1 : squelette pour d'anciens états pré-versionnés.
   0: (data: unknown) => ({ ...(data as object), version: 1 }),
+  // 1 -> 2 : les entités synchronisables ont une clé primaire `uuid` côté
+  // Supabase. Réécrit les ids hérités du seed (« sea_… », « ev_… ») en UUID et
+  // propage le remappage aux clés étrangères, sinon la synchronisation échoue
+  // (« invalid input syntax for type uuid »).
+  1: (data: unknown) => ({
+    ...remapNonUuidSyncIds(data as object),
+    version: 2,
+  }),
 };
 
 function runMigrations(raw: unknown): unknown {

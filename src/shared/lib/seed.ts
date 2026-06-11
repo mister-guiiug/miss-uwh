@@ -13,9 +13,9 @@ import type {
   Season,
   Settings,
 } from '../types/domain.ts';
-import { createId } from './id.ts';
+import { createId, createUuid } from './id.ts';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'light',
@@ -38,7 +38,7 @@ type Seed = Omit<
 function mk(seasonId: string, s: Seed): JournalEntry {
   order += 1;
   return {
-    id: createId('ec'),
+    id: createUuid(),
     seasonId,
     attachments: [],
     createdAt: order,
@@ -50,7 +50,7 @@ function mk(seasonId: string, s: Seed): JournalEntry {
 
 export function createInitialData(): AppData {
   const season: Season = {
-    id: createId('sea'),
+    id: createUuid(),
     label: '2025-2026',
     startDate: '2025-05-15',
     endDate: '2026-05-15',
@@ -71,7 +71,7 @@ export function createInitialData(): AppData {
   ).map(([label, opening, totalRecettes, totalDepenses, closing]) => {
     const year = Number(label.slice(0, 4));
     return {
-      id: createId('sea'),
+      id: createUuid(),
       label,
       startDate: `${year}-05-15`,
       endDate: `${year + 1}-05-15`,
@@ -84,13 +84,13 @@ export function createInitialData(): AppData {
   });
 
   const tda: EventLedger = {
-    id: createId('ev'),
+    id: createUuid(),
     seasonId: season.id,
     name: 'Tournoi des Arvernes 2026',
     kind: 'tournoi',
   };
   const buvette: EventLedger = {
-    id: createId('ev'),
+    id: createUuid(),
     seasonId: season.id,
     name: 'Buvette TDA + CDF',
     kind: 'buvette',
@@ -357,14 +357,14 @@ export function createInitialData(): AppData {
     events: [tda, buvette],
     recurrings: [
       {
-        id: createId('rec'),
+        id: createUuid(),
         label: 'Soutien asso (prélèvement mensuel)',
         categoryCode: 'R8',
         amount: 14.67,
         method: 'prelevement',
       },
       {
-        id: createId('rec'),
+        id: createUuid(),
         label: 'Frais bancaires SG',
         categoryCode: 'D12',
         amount: 14.67,
@@ -374,7 +374,7 @@ export function createInitialData(): AppData {
     customCategories: [],
     adherents: [
       {
-        id: createId('adh'),
+        id: createUuid(),
         seasonId: sid,
         firstName: 'Adulte',
         lastName: 'Démo',
@@ -385,7 +385,7 @@ export function createInitialData(): AppData {
         paid: true,
       },
       {
-        id: createId('adh'),
+        id: createUuid(),
         seasonId: sid,
         firstName: 'Enfant',
         lastName: 'Démo',
@@ -428,7 +428,7 @@ export function createEmptyData(
   openingBalance = 0
 ): AppData {
   const season: Season = {
-    id: createId('sea'),
+    id: createUuid(),
     label: seasonLabel,
     startDate: `${seasonLabel.slice(0, 4)}-09-01`,
     endDate: `${Number(seasonLabel.slice(0, 4)) + 1}-08-31`,
