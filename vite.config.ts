@@ -2,6 +2,7 @@ import { defineConfig, type PluginOption } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { pwaSeoPlugin } from '@mister-guiiug/dev-wpa-config/vite-pwa-base';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { readFileSync } from 'node:fs';
 
@@ -50,6 +51,13 @@ export default defineConfig(({ command }) => {
     plugins: [
       react(),
       tailwindcss(),
+      // SEO partagé famille : canonical/OG via placeholders index.html +
+      // sitemap.xml/robots.txt générés au build.
+      pwaSeoPlugin({
+        siteName: 'Miss UWH',
+        basePath,
+        logoPath: '/icons/icon-192.png',
+      }),
       VitePWA({
         registerType: 'prompt',
         includeAssets: [

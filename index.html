@@ -2,6 +2,15 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Content-Security-Policy en défense en profondeur.
+      'unsafe-inline' : script anti-FOUC (+ onload des polices) + styles
+      Tailwind/vite-plugin-pwa. Tiers : Google Fonts + Supabase (https/wss).
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
@@ -11,6 +20,36 @@
       name="description"
       content="Miss UWH — bilan comptable saisonnier d’un club de Hockey Subaquatique : journal, recettes/dépenses par catégorie, clôture de saison, justificatifs."
     />
+    <link rel="canonical" href="__SEO_HOME_URL__" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Miss UWH" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:url" content="__SEO_HOME_URL__" />
+    <meta
+      property="og:title"
+      content="Miss UWH — bilan comptable Hockey Subaquatique"
+    />
+    <meta
+      property="og:description"
+      content="Bilan comptable de saison pour club de hockey subaquatique : journal, catégories, clôture, justificatifs."
+    />
+    <meta property="og:image" content="__SEO_LOGO_URL__" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="Miss UWH — bilan comptable Hockey Subaquatique"
+    />
+    <meta
+      name="twitter:description"
+      content="Bilan comptable de saison pour club de hockey subaquatique (PWA)."
+    />
+    <meta name="twitter:image" content="__SEO_LOGO_URL__" />
+
+    <!-- Analytics (GTM/GA4) injecté par pwaSeoPlugin() — vide tant qu'aucun
+         VITE_GTM_CONTAINER_ID / VITE_GA_MEASUREMENT_ID n'est configuré. -->
+    __ANALYTICS_HEAD__
     <!-- Anti-FOUC : applique le thème avant le premier rendu. -->
     <script>
       (function () {
@@ -54,6 +93,7 @@
     <title>Miss UWH — Bilan comptable Hockey Subaquatique</title>
   </head>
   <body>
+    __ANALYTICS_BODY__
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
