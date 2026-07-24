@@ -15,6 +15,7 @@ import {
   Database,
   Download,
   FileSpreadsheet,
+  LayoutGrid,
   LogOut,
   Plug,
   Printer,
@@ -51,6 +52,7 @@ import { Button } from '../../shared/components/Button.tsx';
 import { SelectField, TextField } from '../../shared/components/Field.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
 import { AppFooter } from '../../shared/components/AppFooter.tsx';
+import { FamilyApps } from '@mister-guiiug/dev-wpa-config/react';
 import { cn } from '../../shared/lib/cn.ts';
 
 /** Minuscule + sans accents, pour une recherche tolérante. */
@@ -532,6 +534,22 @@ export function SettingsScreen() {
             )}
           </Card>
         </>
+      ),
+    },
+    {
+      id: 'famille',
+      label: 'Nos apps',
+      Icon: LayoutGrid,
+      keywords:
+        'nos autres applications famille apps decouvrir gratuites miss mister',
+      node: (
+        <div className="uwh-family">
+          <FamilyApps
+            currentAppId="miss-uwh"
+            showSource={false}
+            showSponsor={false}
+          />
+        </div>
       ),
     },
   ];
