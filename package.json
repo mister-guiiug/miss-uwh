@@ -26,7 +26,8 @@
     "prepare": "husky || true"
   },
   "devDependencies": {
-    "@mister-guiiug/dev-wpa-config": "^2.1.2",
+    "@axe-core/playwright": "^4.12.1",
+    "@mister-guiiug/dev-wpa-config": "^3.3.1",
     "@playwright/test": "^1.61.0",
     "@tailwindcss/vite": "^4.3.1",
     "@testing-library/jest-dom": "^6.6.3",

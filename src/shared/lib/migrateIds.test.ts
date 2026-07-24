@@ -24,12 +24,12 @@ describe('remapNonUuidSyncIds', () => {
 
     remapNonUuidSyncIds(data);
 
-    const newId = data.seasons[0].id;
+    const newId = data.seasons[0]?.id ?? '';
     expect(isUuid(newId)).toBe(true);
     expect(data.activeSeasonId).toBe(newId);
-    expect(data.entries[0].seasonId).toBe(newId);
-    expect(data.entries[1].seasonId).toBe(newId);
-    expect(isUuid(data.entries[0].id)).toBe(true);
+    expect(data.entries[0]?.seasonId).toBe(newId);
+    expect(data.entries[1]?.seasonId).toBe(newId);
+    expect(isUuid(data.entries[0]?.id ?? '')).toBe(true);
   });
 
   it('propage le remappage des événements (eventId des écritures et tournois)', () => {
@@ -42,11 +42,11 @@ describe('remapNonUuidSyncIds', () => {
 
     remapNonUuidSyncIds(data);
 
-    const evId = data.events[0].id;
+    const evId = data.events[0]?.id ?? '';
     expect(isUuid(evId)).toBe(true);
-    expect(data.entries[0].eventId).toBe(evId);
-    expect(data.tournaments[0].eventId).toBe(evId);
-    expect(data.entries[0].seasonId).toBe(data.seasons[0].id);
+    expect(data.entries[0]?.eventId).toBe(evId);
+    expect(data.tournaments[0]?.eventId).toBe(evId);
+    expect(data.entries[0]?.seasonId).toBe(data.seasons[0]?.id);
   });
 
   it('propage le remappage des adhérents (tuteurs, coach, présences)', () => {
@@ -68,15 +68,15 @@ describe('remapNonUuidSyncIds', () => {
 
     remapNonUuidSyncIds(data);
 
-    const adhId = data.adherents[0].id;
+    const adhId = data.adherents[0]?.id ?? '';
     expect(isUuid(adhId)).toBe(true);
-    expect(data.guardians[0].memberId).toBe(adhId);
-    expect(data.trainingSessions[0].coachId).toBe(adhId);
-    expect(data.trainingSessions[0].attendance[0]).toBe(adhId);
+    expect(data.guardians[0]?.memberId).toBe(adhId);
+    expect(data.trainingSessions[0]?.coachId).toBe(adhId);
+    expect(data.trainingSessions[0]?.attendance[0]).toBe(adhId);
     // Référence pendante (aucune entité correspondante) : laissée telle quelle.
-    expect(data.trainingSessions[0].attendance[1]).toBe('inconnu');
-    expect(data.trainingSessions[0].plan[0].exerciseId).toBe(
-      data.exercises[0].id
+    expect(data.trainingSessions[0]?.attendance[1]).toBe('inconnu');
+    expect(data.trainingSessions[0]?.plan[0]?.exerciseId).toBe(
+      data.exercises[0]?.id
     );
   });
 

@@ -1,8 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { installErrorReporter } from '@mister-guiiug/dev-wpa-config/react/observability';
 import { App } from './App.tsx';
 import { useAppStore } from './store/useAppStore.ts';
 import './index.css';
+
+// Observabilité partagée : ring-buffer localStorage + listeners globaux.
+// L'ErrorBoundary maison (avec sauvegarde locale) reste en place dans App.
+installErrorReporter();
 
 // Applique le thème persisté au plus tôt (complète le script anti-FOUC).
 document.documentElement.dataset.theme =
