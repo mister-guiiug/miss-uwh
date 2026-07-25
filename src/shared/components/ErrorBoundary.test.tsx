@@ -5,8 +5,12 @@ import { I18nProvider } from '../../i18n/index.ts';
 
 // L'écran de secours consomme useI18n : on enveloppe chaque rendu dans le
 // provider i18n (sinon useI18n lève « doit être utilisé dans son I18nProvider »).
-const render = (ui: Parameters<typeof rtlRender>[0]) =>
-  rtlRender(ui, { wrapper: I18nProvider });
+const render = (ui: Parameters<typeof rtlRender>[0]) => {
+  // jsdom rapporte navigator.language=en-US : on force FR pour que les
+  // assertions sur le texte français restent valides.
+  localStorage.setItem('uwh_locale', 'fr');
+  return rtlRender(ui, { wrapper: I18nProvider });
+};
 
 function Boom(): never {
   throw new Error('rendu cassé');
