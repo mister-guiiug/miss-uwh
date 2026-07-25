@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Sheet } from './Sheet.tsx';
+import { I18nProvider } from '../../i18n/index.ts';
+
+// Sheet consomme useI18n : chaque rendu doit être enveloppé dans le provider
+// i18n (sinon useI18n lève « doit être utilisé dans son I18nProvider »).
+const render = (ui: Parameters<typeof rtlRender>[0]) =>
+  rtlRender(ui, { wrapper: I18nProvider });
 
 /** Harnais : un déclencheur + une feuille dont l'ouverture est contrôlée. */
 function Harness({ onClose = () => {} }: { onClose?: () => void }) {

@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render as rtlRender, screen } from '@testing-library/react';
 import { ErrorBoundary } from './ErrorBoundary.tsx';
+import { I18nProvider } from '../../i18n/index.ts';
+
+// L'écran de secours consomme useI18n : on enveloppe chaque rendu dans le
+// provider i18n (sinon useI18n lève « doit être utilisé dans son I18nProvider »).
+const render = (ui: Parameters<typeof rtlRender>[0]) =>
+  rtlRender(ui, { wrapper: I18nProvider });
 
 function Boom(): never {
   throw new Error('rendu cassé');
