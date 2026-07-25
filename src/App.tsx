@@ -37,6 +37,7 @@ import { GalerieScreen } from './features/vieclub/GalerieScreen.tsx';
 import { useActiveLens } from './shared/hooks/useActiveLens.ts';
 import { lensById } from './shared/lib/lenses.ts';
 import { BilanScreen } from './features/bilan/BilanScreen.tsx';
+import { useI18n, type TKey } from './i18n/index.ts';
 
 const JournalScreen = lazy(() =>
   import('./features/journal/JournalScreen.tsx').then(m => ({
@@ -74,17 +75,23 @@ const MembersRolesScreen = lazy(() =>
   }))
 );
 
-/** Titres des routes GLOBALES (hors lens). Le titre d'un lens vient de sa config. */
-const GLOBAL_TITLES: Record<string, string> = {
-  '/settings': 'Réglages',
-  '/audit': 'Journal d’audit',
-  '/members': 'Membres & rôles',
+/** Clés i18n des titres de routes GLOBALES (hors lens). Le titre d'un lens vient de sa config. */
+const GLOBAL_TITLE_KEYS: Record<string, TKey> = {
+  '/settings': 'app.titles.settings',
+  '/audit': 'app.titles.audit',
+  '/members': 'app.titles.members',
 };
 
 function Shell() {
   const lens = useActiveLens();
+  const { t } = useI18n();
   const { pathname } = useLocation();
-  const title = lens?.label ?? GLOBAL_TITLES[pathname] ?? 'Miss UWH';
+  const globalKey = GLOBAL_TITLE_KEYS[pathname];
+  const title = lens
+    ? t(lens.label as TKey)
+    : globalKey
+      ? t(globalKey)
+      : 'Miss UWH';
   const [searchOpen, setSearchOpen] = useState(false);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const alerts = useAlerts();
@@ -117,7 +124,7 @@ function Shell() {
           <Suspense
             fallback={
               <p className="p-8 text-center text-[var(--uwh-text-soft)]">
-                Chargement…
+                {t('common.loading')}
               </p>
             }
           >

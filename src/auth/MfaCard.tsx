@@ -4,11 +4,13 @@ import { Card } from '../shared/components/Card.tsx';
 import { Button } from '../shared/components/Button.tsx';
 import { TextField } from '../shared/components/Field.tsx';
 import { Badge } from '../shared/components/badges.tsx';
+import { useI18n } from '../i18n/index.ts';
 import { useAuth, type TotpEnrollment } from './useAuth.ts';
 
 /** Carte d'enrôlement TOTP (Réglages, mode Supabase). */
 export function MfaCard() {
   const { hasTotp, enrollTotp, verifyTotp, unenrollTotp } = useAuth();
+  const { t } = useI18n();
   const [enroll, setEnroll] = useState<TotpEnrollment | null>(null);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string>();
@@ -28,7 +30,7 @@ export function MfaCard() {
     setBusy(true);
     setError(undefined);
     const { error } = await verifyTotp(enroll.factorId, code.trim());
-    if (error) setError('Code invalide.');
+    if (error) setError(t('mfa.invalid'));
     else {
       setEnroll(null);
       setCode('');
@@ -41,40 +43,34 @@ export function MfaCard() {
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <ShieldCheck size={16} className="text-primary" aria-hidden="true" />
-          <h3 className="font-display font-bold">
-            Double authentification (MFA)
-          </h3>
+          <h3 className="font-display font-bold">{t('mfa.cardTitle')}</h3>
         </div>
-        {hasTotp && <Badge tone="credit">activée</Badge>}
+        {hasTotp && <Badge tone="credit">{t('mfa.enabled')}</Badge>}
       </div>
 
       {hasTotp ? (
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-[var(--uwh-text-soft)]">
-            TOTP activée pour votre compte (recommandé pour les rôles
-            sensibles).
+            {t('mfa.activeDesc')}
           </p>
           <Button variant="ghost" onClick={() => void unenrollTotp()}>
-            <ShieldOff size={16} aria-hidden="true" /> Désactiver
+            <ShieldOff size={16} aria-hidden="true" /> {t('common.disable')}
           </Button>
         </div>
       ) : enroll ? (
         <div className="flex flex-col items-center gap-3">
-          <p className="text-sm text-[var(--uwh-text-soft)]">
-            Scannez ce QR code dans votre application d'authentification, puis
-            saisissez le code à 6 chiffres.
-          </p>
+          <p className="text-sm text-[var(--uwh-text-soft)]">{t('mfa.scan')}</p>
           {/* QR fourni par Supabase (SVG data URL) */}
           <img
             src={enroll.qrCode}
-            alt="QR code TOTP"
+            alt={t('mfa.qrAlt')}
             className="h-40 w-40 rounded-lg bg-white p-1"
           />
           <code className="break-all text-xs text-[var(--uwh-text-soft)]">
             {enroll.secret}
           </code>
           <TextField
-            label="Code TOTP"
+            label={t('mfa.codeLabel')}
             inputMode="numeric"
             maxLength={6}
             value={code}
@@ -86,16 +82,16 @@ export function MfaCard() {
             disabled={busy || code.trim().length < 6}
             onClick={confirm}
           >
-            Activer
+            {t('common.enable')}
           </Button>
         </div>
       ) : (
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-[var(--uwh-text-soft)]">
-            Protégez l'accès comptable avec un second facteur (TOTP).
+            {t('mfa.protect')}
           </p>
           <Button variant="secondary" disabled={busy} onClick={start}>
-            Activer
+            {t('common.enable')}
           </Button>
         </div>
       )}

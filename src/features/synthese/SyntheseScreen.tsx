@@ -14,6 +14,7 @@ import {
   EvolutionChart,
   type EvolutionPoint,
 } from '../../shared/components/charts/EvolutionChart.tsx';
+import { useI18n } from '../../i18n/index.ts';
 
 function toSegments(lines: BilanLine[]): DonutSegment[] {
   return lines
@@ -26,6 +27,7 @@ function toSegments(lines: BilanLine[]): DonutSegment[] {
 }
 
 export function SyntheseScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const seasons = useAppStore(s => s.data.seasons);
   const entries = useAppStore(s => s.data.entries);
@@ -45,37 +47,43 @@ export function SyntheseScreen() {
   return (
     <div className="flex flex-col gap-4 p-4">
       <p className="text-sm text-[var(--uwh-text-soft)]">
-        Synthèse visuelle de la saison <strong>{season.label}</strong> et
-        évolution sur {seasons.length} saisons. Les écritures compensées sont
-        exclues des répartitions.
+        {t('finances.synthese.introBefore')}
+        <strong>{season.label}</strong>
+        {t('finances.synthese.introAfter', { n: seasons.length })}
       </p>
 
       <Card>
         <div className="mb-3 flex items-center gap-2 text-[var(--uwh-credit)]">
           <ArrowUpRight size={16} aria-hidden="true" />
-          <h3 className="font-display font-bold">Répartition des recettes</h3>
+          <h3 className="font-display font-bold">
+            {t('finances.synthese.incomeBreakdown')}
+          </h3>
         </div>
         <DonutChart
           data={recettes}
-          ariaLabel="Répartition des recettes par catégorie"
+          ariaLabel={t('finances.synthese.incomeBreakdownAria')}
         />
       </Card>
 
       <Card>
         <div className="mb-3 flex items-center gap-2 text-[var(--uwh-debit)]">
           <ArrowDownRight size={16} aria-hidden="true" />
-          <h3 className="font-display font-bold">Répartition des dépenses</h3>
+          <h3 className="font-display font-bold">
+            {t('finances.synthese.expenseBreakdown')}
+          </h3>
         </div>
         <DonutChart
           data={depenses}
-          ariaLabel="Répartition des dépenses par catégorie"
+          ariaLabel={t('finances.synthese.expenseBreakdownAria')}
         />
       </Card>
 
       <Card>
         <div className="mb-3 flex items-center gap-2 text-primary">
           <LineChart size={16} aria-hidden="true" />
-          <h3 className="font-display font-bold">Évolution multi-saisons</h3>
+          <h3 className="font-display font-bold">
+            {t('finances.synthese.evolution')}
+          </h3>
         </div>
         <EvolutionChart data={evolution} />
       </Card>

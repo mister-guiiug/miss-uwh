@@ -4,6 +4,7 @@ import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { formatDateShort, formatSignedEuro } from '../../shared/lib/format.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
+import { useI18n } from '../../i18n/index.ts';
 import {
   matchBankLines,
   parseBankCsv,
@@ -20,6 +21,7 @@ export function ReconcileSheet({ open, onClose }: Props) {
   const season = useAppStore(selectActiveSeason);
   const entries = useAppStore(s => s.data.entries);
   const setReconciled = useAppStore(s => s.setReconciled);
+  const { t } = useI18n();
   const [bank, setBank] = useState<BankLine[]>([]);
   const [result, setResult] = useState<MatchResult | null>(null);
   const [done, setDone] = useState(0);
@@ -39,7 +41,7 @@ export function ReconcileSheet({ open, onClose }: Props) {
       setBank(lines);
       setResult(matchBankLines(lines, active));
     } catch {
-      setError('Lecture du CSV impossible.');
+      setError(t('io.reconcile.readError'));
     }
     e.target.value = '';
   }
@@ -51,17 +53,17 @@ export function ReconcileSheet({ open, onClose }: Props) {
   }
 
   return (
-    <Sheet open={open} title="Rapprochement bancaire" onClose={onClose}>
+    <Sheet open={open} title={t('io.reconcile.title')} onClose={onClose}>
       <div className="flex flex-col gap-4">
         <p className="text-sm text-[var(--uwh-text-soft)]">
-          Importez le CSV de votre relevé (colonnes Date, Libellé, Débit/Crédit
-          ou Montant). Les écritures de même montant et date proche sont{' '}
-          <strong>pointées</strong> automatiquement.
+          {t('io.reconcile.introBefore')}
+          <strong>{t('io.reconcile.introStrong')}</strong>
+          {t('io.reconcile.introAfter')}
         </p>
 
         <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] p-5 text-sm font-semibold text-primary">
           <FileSpreadsheet size={18} aria-hidden="true" />
-          Choisir un relevé .csv
+          {t('io.reconcile.chooseFile')}
           <input
             type="file"
             accept=".csv,text/csv"
@@ -80,19 +82,21 @@ export function ReconcileSheet({ open, onClose }: Props) {
           <div className="flex flex-col gap-3 rounded-2xl bg-[var(--uwh-surface-2)] p-4 text-sm">
             <div className="flex justify-between">
               <span className="text-[var(--uwh-text-soft)]">
-                Lignes du relevé
+                {t('io.reconcile.statementLines')}
               </span>
               <span className="font-semibold">{bank.length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[var(--uwh-text-soft)]">Appariées</span>
+              <span className="text-[var(--uwh-text-soft)]">
+                {t('io.reconcile.matched')}
+              </span>
               <span className="font-semibold text-[var(--uwh-credit)]">
                 {result.matches.length}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-[var(--uwh-text-soft)]">
-                Sans correspondance
+                {t('io.reconcile.unmatched')}
               </span>
               <span className="font-semibold">
                 {result.unmatchedBank.length}
@@ -101,7 +105,7 @@ export function ReconcileSheet({ open, onClose }: Props) {
             {result.unmatchedBank.length > 0 && (
               <details className="text-xs text-[var(--uwh-text-soft)]">
                 <summary className="cursor-pointer font-semibold">
-                  Voir les lignes non rapprochées
+                  {t('io.reconcile.seeUnmatched')}
                 </summary>
                 <ul className="mt-1 flex flex-col gap-1">
                   {result.unmatchedBank.slice(0, 20).map(i => (
@@ -124,7 +128,7 @@ export function ReconcileSheet({ open, onClose }: Props) {
               }
               onClick={applyMatches}
             >
-              Pointer {result.matches.length} écriture(s)
+              {t('io.reconcile.matchN', { n: result.matches.length })}
             </Button>
           </div>
         )}
@@ -132,10 +136,10 @@ export function ReconcileSheet({ open, onClose }: Props) {
         {done > 0 && (
           <div className="rounded-2xl bg-[color-mix(in_srgb,var(--uwh-credit)_12%,transparent)] p-4 text-sm">
             <p className="font-semibold text-[var(--uwh-credit)]">
-              ✓ {done} écriture(s) pointée(s).
+              ✓ {t('io.reconcile.done', { n: done })}
             </p>
             <Button block className="mt-3" onClick={onClose}>
-              Terminer
+              {t('common.finish')}
             </Button>
           </div>
         )}

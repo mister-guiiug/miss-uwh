@@ -1,5 +1,6 @@
 import { Heart } from 'lucide-react';
 import { REPO_URL, SPONSOR_URL } from '../lib/links.ts';
+import { useI18n } from '../../i18n/index.ts';
 
 /** GitHub mark inline (lucide 1.x ne fournit plus les icônes de marque). */
 function GitHubMark() {
@@ -17,6 +18,7 @@ function GitHubMark() {
 }
 
 export function AppFooter() {
+  const { t } = useI18n();
   return (
     <footer className="no-print pt-1 text-center text-xs text-[var(--uwh-text-soft)]">
       <div className="flex items-center justify-center gap-4">
@@ -27,7 +29,7 @@ export function AppFooter() {
           className="inline-flex items-center gap-1.5 hover:text-primary"
         >
           <GitHubMark />
-          Code source
+          {t('app.footer.source')}
         </a>
         <a
           href={SPONSOR_URL}
@@ -36,7 +38,7 @@ export function AppFooter() {
           className="inline-flex items-center gap-1.5 hover:text-primary"
         >
           <Heart size={15} aria-hidden="true" />
-          Soutenir
+          {t('app.footer.sponsor')}
         </a>
       </div>
     </footer>

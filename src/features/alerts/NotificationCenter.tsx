@@ -2,6 +2,7 @@ import { type KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, ChevronRight, X } from 'lucide-react';
 import { Badge } from '../../shared/components/badges.tsx';
+import { useI18n } from '../../i18n/index.ts';
 import type { Alert } from './alerts.ts';
 
 /** Centre d'alertes (overlay) : liste les « à faire » dérivés, chacun cliquable. */
@@ -14,10 +15,21 @@ export function NotificationCenter({
   onClose: () => void;
   alerts: Alert[];
 }) {
+  const { t } = useI18n();
   if (!open) return null;
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') onClose();
+  };
+
+  const alertLabel = (al: Alert): string => {
+    const many = al.count > 1;
+    const params = { n: al.count };
+    if (al.kind === 'unpaid')
+      return t(many ? 'alerts.unpaidMany' : 'alerts.unpaidOne', params);
+    if (al.kind === 'expired')
+      return t(many ? 'alerts.expiredMany' : 'alerts.expiredOne', params);
+    return t(many ? 'alerts.soonMany' : 'alerts.soonOne', params);
   };
 
   return (
@@ -27,7 +39,7 @@ export function NotificationCenter({
       onKeyDown={onKeyDown}
       role="dialog"
       aria-modal="true"
-      aria-label="Alertes"
+      aria-label={t('alerts.aria')}
     >
       <div
         className="w-full max-w-md overflow-hidden rounded-2xl bg-[var(--uwh-surface)] shadow-lg"
@@ -39,11 +51,11 @@ export function NotificationCenter({
             className="text-[var(--uwh-text-soft)]"
             aria-hidden="true"
           />
-          <h2 className="flex-1 text-sm font-semibold">À faire</h2>
+          <h2 className="flex-1 text-sm font-semibold">{t('alerts.title')}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer les alertes"
+            aria-label={t('alerts.close')}
             className="text-[var(--uwh-text-soft)]"
           >
             <X size={18} aria-hidden="true" />
@@ -53,7 +65,7 @@ export function NotificationCenter({
         <div className="max-h-[60vh] overflow-y-auto p-2">
           {alerts.length === 0 ? (
             <p className="p-4 text-center text-sm text-[var(--uwh-text-soft)]">
-              Rien à signaler — tout est à jour.
+              {t('alerts.empty')}
             </p>
           ) : (
             <ul className="flex flex-col gap-1">
@@ -66,7 +78,7 @@ export function NotificationCenter({
                   >
                     <Badge tone={al.tone}>!</Badge>
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold">
-                      {al.title}
+                      {alertLabel(al)}
                     </span>
                     <ChevronRight
                       size={16}

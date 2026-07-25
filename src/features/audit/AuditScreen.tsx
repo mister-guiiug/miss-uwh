@@ -7,10 +7,12 @@ import { Button } from '../../shared/components/Button.tsx';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
 import type { AuditCategory } from '../../shared/types/domain.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 
 type Tab = 'all' | AuditCategory;
 
 export function AuditScreen() {
+  const { t } = useI18n();
   const audit = useAppStore(s => s.data.audit);
   const entries = useAppStore(s => s.data.entries);
   const season = useAppStore(selectActiveSeason);
@@ -29,16 +31,18 @@ export function AuditScreen() {
   const deleted = entries.filter(e => e.seasonId === season.id && e.deletedAt);
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'all', label: 'Tout' },
-    { key: 'metier', label: 'Métier' },
-    { key: 'securite', label: 'Sécurité' },
+    { key: 'all', label: t('finances.audit.tabAll') },
+    { key: 'metier', label: t('enums.auditCategory.metier') },
+    { key: 'securite', label: t('enums.auditCategory.securite') },
   ];
 
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex items-center gap-2">
         <ShieldCheck size={18} className="text-primary" aria-hidden="true" />
-        <h2 className="font-display text-lg font-bold">Journal d'audit</h2>
+        <h2 className="font-display text-lg font-bold">
+          {t('finances.audit.title')}
+        </h2>
       </div>
 
       <div className="flex gap-1.5">
@@ -65,7 +69,7 @@ export function AuditScreen() {
               className="text-[var(--uwh-debit)]"
               aria-hidden="true"
             />
-            Écritures supprimées ({deleted.length})
+            {t('finances.audit.deletedEntries', { n: deleted.length })}
           </div>
           <ul className="flex flex-col gap-1.5">
             {deleted.map(e => (
@@ -81,7 +85,7 @@ export function AuditScreen() {
                   />
                   <Button
                     variant="ghost"
-                    aria-label="Restaurer"
+                    aria-label={t('finances.audit.restore')}
                     onClick={() => restoreEntry(e.id)}
                     disabled={season.status === 'cloturee'}
                   >
@@ -95,9 +99,8 @@ export function AuditScreen() {
       )}
 
       {events.length === 0 ? (
-        <EmptyState Icon={ShieldCheck} title="Aucun événement d'audit">
-          Les créations, modifications, suppressions, clôtures et connexions
-          apparaîtront ici.
+        <EmptyState Icon={ShieldCheck} title={t('finances.audit.emptyTitle')}>
+          {t('finances.audit.emptyBody')}
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -111,7 +114,7 @@ export function AuditScreen() {
                   {e.action}
                 </span>
                 <Badge tone={e.category === 'securite' ? 'warn' : 'neutral'}>
-                  {e.category}
+                  {t(`enums.auditCategory.${e.category}` as TKey)}
                 </Badge>
               </div>
               <p className="mt-1 text-sm">{e.summary}</p>

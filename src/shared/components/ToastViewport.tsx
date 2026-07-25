@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
 import { useToasts, type ToastTone } from '../lib/toasts.ts';
 import { cn } from '../lib/cn.ts';
+import { useI18n } from '../../i18n/index.ts';
 
 const TONE_STYLES: Record<ToastTone, string> = {
   error:
@@ -30,6 +31,7 @@ const TONE_ICON_COLOR: Record<ToastTone, string> = {
 export function ToastViewport() {
   const toasts = useToasts(s => s.toasts);
   const dismiss = useToasts(s => s.dismiss);
+  const { t } = useI18n();
 
   if (toasts.length === 0) return null;
 
@@ -37,7 +39,7 @@ export function ToastViewport() {
     <div
       className="pointer-events-none fixed inset-x-0 bottom-0 z-50 mx-auto flex max-w-2xl flex-col gap-2 p-4"
       role="region"
-      aria-label="Notifications"
+      aria-label={t('app.toasts.region')}
     >
       {toasts.map(toast => {
         const Icon = TONE_ICON[toast.tone];
@@ -60,7 +62,7 @@ export function ToastViewport() {
             <button
               type="button"
               onClick={() => dismiss(toast.id)}
-              aria-label="Fermer la notification"
+              aria-label={t('app.toasts.dismiss')}
               className="-m-1 shrink-0 rounded-full p-1 text-[var(--uwh-text-soft)] hover:text-[var(--uwh-text)]"
             >
               <X size={16} aria-hidden="true" />

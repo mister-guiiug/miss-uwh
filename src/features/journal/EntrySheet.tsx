@@ -12,11 +12,11 @@ import {
 } from '../../shared/lib/categories.ts';
 import {
   PAYMENT_METHODS,
-  PAYMENT_METHOD_LABELS,
   type Attachment,
   type JournalEntry,
   type PaymentMethod,
 } from '../../shared/types/domain.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { IS_SUPABASE } from '../../backend/config.ts';
 import {
   removeAttachmentRemote,
@@ -42,6 +42,7 @@ interface Props {
 }
 
 export function EntrySheet({ open, entry, onClose }: Props) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   // Catégories perso incluses ; le `custom` en dépendance force le recalcul
   // lorsqu'on en ajoute/retire une (allCategories() lit un registre mutable).
@@ -162,7 +163,7 @@ export function EntrySheet({ open, entry, onClose }: Props) {
       }
     } catch (err) {
       console.error(err);
-      setAttError('Téléversement impossible (vérifiez votre connexion).');
+      setAttError(t('finances.entry.uploadFailed'));
     } finally {
       setAttBusy(false);
       e.target.value = '';
@@ -177,7 +178,7 @@ export function EntrySheet({ open, entry, onClose }: Props) {
         (att.storagePath ? await signedUrl(att.storagePath) : '');
       if (url) window.open(url, '_blank', 'noopener,noreferrer');
     } catch {
-      setAttError('Ouverture impossible.');
+      setAttError(t('finances.entry.openFailed'));
     }
   }
 
@@ -188,7 +189,7 @@ export function EntrySheet({ open, entry, onClose }: Props) {
       if (IS_SUPABASE && att.storagePath) await removeAttachmentRemote(att);
       removeAttachment(entry.id, att.id);
     } catch {
-      setAttError('Suppression impossible.');
+      setAttError(t('finances.entry.deleteFailed'));
     }
   }
 
@@ -197,40 +198,42 @@ export function EntrySheet({ open, entry, onClose }: Props) {
   return (
     <Sheet
       open={open}
-      title={entry ? 'Modifier l’écriture' : 'Nouvelle écriture'}
+      title={
+        entry ? t('finances.entry.editTitle') : t('finances.entry.newTitle')
+      }
       onClose={onClose}
       footer={
         <div className="flex gap-2">
           {entry && (
             <Button
               variant="danger"
-              aria-label="Supprimer"
+              aria-label={t('common.delete')}
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 size={18} aria-hidden="true" />
             </Button>
           )}
           <Button block onClick={save} disabled={season.status === 'cloturee'}>
-            {entry ? 'Enregistrer' : 'Ajouter'}
+            {entry ? t('common.save') : t('common.add')}
           </Button>
         </div>
       }
     >
       <div className="flex flex-col gap-4">
         <SelectField
-          label="Catégorie"
+          label={t('common.category')}
           value={categoryCode}
           error={err('categoryCode')}
           onChange={e => setCategoryCode(e.target.value)}
         >
-          <optgroup label="Recettes">
+          <optgroup label={t('finances.entry.income')}>
             {RECETTES.map(c => (
               <option key={c.code} value={c.code}>
                 {c.code} — {c.label}
               </option>
             ))}
           </optgroup>
-          <optgroup label="Dépenses">
+          <optgroup label={t('finances.entry.expenses')}>
             {DEPENSES.map(c => (
               <option key={c.code} value={c.code}>
                 {c.code} — {c.label}
@@ -240,25 +243,31 @@ export function EntrySheet({ open, entry, onClose }: Props) {
         </SelectField>
 
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-[var(--uwh-text-soft)]">Sens :</span>
+          <span className="text-[var(--uwh-text-soft)]">
+            {t('finances.entry.sensLabel')}
+          </span>
           <Badge tone={sens === 'credit' ? 'credit' : 'debit'}>
-            {sens === 'credit' ? 'Crédit (recette)' : 'Débit (dépense)'}
+            {sens === 'credit'
+              ? t('finances.entry.creditSens')
+              : t('finances.entry.debitSens')}
           </Badge>
           {cat && cat.kind !== 'exploitation' && (
-            <Badge tone="warn">{cat.kind}</Badge>
+            <Badge tone="warn">
+              {t(`enums.categoryKind.${cat.kind}` as TKey)}
+            </Badge>
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <TextField
-            label="Date"
+            label={t('common.date')}
             type="date"
             value={date}
             error={err('date')}
             onChange={e => setDate(e.target.value)}
           />
           <TextField
-            label="Montant (€)"
+            label={t('finances.entry.amount')}
             inputMode="decimal"
             value={amount}
             error={err('amount')}
@@ -267,47 +276,47 @@ export function EntrySheet({ open, entry, onClose }: Props) {
         </div>
 
         <TextField
-          label="Libellé"
+          label={t('finances.entry.label')}
           value={label}
           error={err('label')}
           onChange={e => setLabel(e.target.value)}
-          placeholder="Ex. HelloAsso inscriptions"
+          placeholder={t('finances.entry.labelPlaceholder')}
         />
 
         <div className="grid grid-cols-2 gap-3">
           <SelectField
-            label="Mode de règlement"
+            label={t('finances.entry.method')}
             value={method}
             onChange={e => setMethod(e.target.value as PaymentMethod)}
           >
             {PAYMENT_METHODS.map(m => (
               <option key={m} value={m}>
-                {PAYMENT_METHOD_LABELS[m]}
+                {t(`enums.paymentMethod.${m}` as TKey)}
               </option>
             ))}
           </SelectField>
           <TextField
-            label="N° de pièce"
+            label={t('finances.entry.pieceRef')}
             value={pieceRef}
             onChange={e => setPieceRef(e.target.value)}
-            placeholder="chq 0010739"
+            placeholder={t('finances.entry.pieceRefPlaceholder')}
           />
         </div>
 
         <TextField
-          label="Code facture (optionnel)"
+          label={t('finances.entry.invoiceCode')}
           value={invoiceCode}
           onChange={e => setInvoiceCode(e.target.value)}
-          placeholder="FA250517"
+          placeholder={t('finances.entry.invoiceCodePlaceholder')}
         />
 
         {cat?.eventCapable && events.length > 0 && (
           <SelectField
-            label="Événement (résultat net)"
+            label={t('finances.entry.event')}
             value={eventId}
             onChange={e => setEventId(e.target.value)}
           >
-            <option value="">— Aucun —</option>
+            <option value="">{t('finances.entry.eventNone')}</option>
             {events.map(ev => (
               <option key={ev.id} value={ev.id}>
                 {ev.name}
@@ -319,7 +328,7 @@ export function EntrySheet({ open, entry, onClose }: Props) {
         {cat?.components && (
           <fieldset className="rounded-2xl border border-[var(--uwh-border)] p-3">
             <legend className="px-1 text-xs font-semibold text-[var(--uwh-text-soft)]">
-              Composantes (somme = montant)
+              {t('finances.entry.components')}
             </legend>
             <div className="grid grid-cols-2 gap-2">
               {cat.components.map(key => (
@@ -347,7 +356,7 @@ export function EntrySheet({ open, entry, onClose }: Props) {
         )}
 
         <TextAreaField
-          label="Observation (optionnel)"
+          label={t('finances.entry.observation')}
           value={observation}
           onChange={e => setObservation(e.target.value)}
         />
@@ -356,10 +365,11 @@ export function EntrySheet({ open, entry, onClose }: Props) {
           <div className="rounded-2xl border border-[var(--uwh-border)] p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-sm font-semibold">
-                <Paperclip size={15} aria-hidden="true" /> Pièces justificatives
+                <Paperclip size={15} aria-hidden="true" />{' '}
+                {t('finances.entry.attachments')}
               </span>
               <label className="cursor-pointer text-xs font-semibold text-primary">
-                {attBusy ? 'Envoi…' : 'Ajouter'}
+                {attBusy ? t('finances.entry.uploading') : t('common.add')}
                 <input
                   type="file"
                   className="hidden"
@@ -370,8 +380,7 @@ export function EntrySheet({ open, entry, onClose }: Props) {
             </div>
             {attachments.length === 0 ? (
               <p className="text-xs text-[var(--uwh-text-soft)]">
-                Aucune pièce. En mode Supabase, les fichiers vont dans un bucket
-                privé (URL signée à la consultation).
+                {t('finances.entry.noAttachments')}
               </p>
             ) : (
               <ul className="flex flex-col gap-1">
@@ -383,12 +392,16 @@ export function EntrySheet({ open, entry, onClose }: Props) {
                     <span className="min-w-0 flex-1 truncate">
                       {a.name}{' '}
                       <span className="text-[var(--uwh-text-soft)]">
-                        ({Math.max(1, Math.round(a.size / 1024))} Ko)
+                        {t('finances.entry.fileSize', {
+                          size: Math.max(1, Math.round(a.size / 1024)),
+                        })}
                       </span>
                     </span>
                     <button
                       type="button"
-                      aria-label={`Voir ${a.name}`}
+                      aria-label={t('finances.entry.viewFile', {
+                        name: a.name,
+                      })}
                       className="text-primary"
                       onClick={() => void openAttachment(a)}
                     >
@@ -396,7 +409,9 @@ export function EntrySheet({ open, entry, onClose }: Props) {
                     </button>
                     <button
                       type="button"
-                      aria-label={`Supprimer ${a.name}`}
+                      aria-label={t('finances.entry.deleteFile', {
+                        name: a.name,
+                      })}
                       className="text-[var(--uwh-debit)]"
                       onClick={() => void deleteAttachment(a)}
                     >
@@ -423,17 +438,18 @@ export function EntrySheet({ open, entry, onClose }: Props) {
 
       <ConfirmDialog
         open={confirmDelete}
-        title="Supprimer cette écriture ?"
+        title={t('finances.entry.confirmDeleteTitle')}
         danger
-        confirmLabel="Supprimer"
+        confirmLabel={t('common.delete')}
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (entry) softDeleteEntry(entry.id, 'Suppression manuelle');
           onClose();
         }}
       >
-        La suppression est <strong>logique</strong> et tracée dans le journal
-        d'audit : l'écriture reste restaurable.
+        {t('finances.entry.deleteInfoBefore')}
+        <strong>{t('finances.entry.deleteInfoStrong')}</strong>
+        {t('finances.entry.deleteInfoAfter')}
       </ConfirmDialog>
     </Sheet>
   );

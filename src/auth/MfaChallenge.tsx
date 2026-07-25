@@ -3,11 +3,13 @@ import { ShieldCheck } from 'lucide-react';
 import { Card } from '../shared/components/Card.tsx';
 import { Button } from '../shared/components/Button.tsx';
 import { TextField } from '../shared/components/Field.tsx';
+import { useI18n } from '../i18n/index.ts';
 import { useAuth } from './useAuth.ts';
 
 /** Étape MFA à la connexion (élévation AAL2) pour les rôles sensibles. */
 export function MfaChallenge() {
   const { challengeTotp, signOut } = useAuth();
+  const { t } = useI18n();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -17,7 +19,7 @@ export function MfaChallenge() {
     setBusy(true);
     setError(undefined);
     const { error } = await challengeTotp(code.trim());
-    if (error) setError('Code invalide. Réessayez.');
+    if (error) setError(t('mfa.invalidRetry'));
     setBusy(false);
   }
 
@@ -26,17 +28,16 @@ export function MfaChallenge() {
       <div className="flex items-center gap-2 text-primary">
         <ShieldCheck size={28} aria-hidden="true" />
         <span className="font-display text-xl font-bold">
-          Double authentification
+          {t('mfa.challengeTitle')}
         </span>
       </div>
       <Card className="w-full">
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <p className="text-sm text-[var(--uwh-text-soft)]">
-            Saisissez le code à 6 chiffres de votre application
-            d'authentification (TOTP).
+            {t('mfa.enterCode')}
           </p>
           <TextField
-            label="Code TOTP"
+            label={t('mfa.codeLabel')}
             inputMode="numeric"
             autoComplete="one-time-code"
             maxLength={6}
@@ -46,10 +47,10 @@ export function MfaChallenge() {
             required
           />
           <Button type="submit" block disabled={busy || code.trim().length < 6}>
-            {busy ? 'Vérification…' : 'Valider'}
+            {busy ? t('mfa.verifying') : t('mfa.verify')}
           </Button>
           <Button variant="ghost" block onClick={() => void signOut()}>
-            Se déconnecter
+            {t('common.signOut')}
           </Button>
         </form>
       </Card>

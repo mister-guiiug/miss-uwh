@@ -54,6 +54,7 @@ import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
 import { AppFooter } from '../../shared/components/AppFooter.tsx';
 import { FamilyApps } from '@mister-guiiug/dev-wpa-config/react';
 import { cn } from '../../shared/lib/cn.ts';
+import { useI18n } from '../../i18n/index.ts';
 
 /** Minuscule + sans accents, pour une recherche tolérante. */
 function norm(s: string): string {
@@ -146,6 +147,7 @@ export function SettingsScreen() {
   const resetAll = useAppStore(s => s.resetAll);
 
   const { roles, signOut } = useAuth();
+  const { t, locale, setLocale, locales } = useI18n();
   const isAdmin = roles.includes('admin_technique');
 
   const [importing, setImporting] = useState(false);
@@ -168,7 +170,7 @@ export function SettingsScreen() {
       replaceData(importData(text));
       setRestoreError(undefined);
     } catch {
-      setRestoreError('Fichier de sauvegarde invalide.');
+      setRestoreError(t('settings.invalidBackup'));
     }
     e.target.value = '';
   }
@@ -176,24 +178,24 @@ export function SettingsScreen() {
   const sections: SectionDef[] = [
     {
       id: 'club',
-      label: 'Club',
+      label: t('settings.sections.club'),
       Icon: Building2,
-      keywords: 'club nom tresorier affiliation ffessm identite',
+      keywords: t('settings.keywords.club'),
       node: (
         <Card>
           <div className="flex flex-col gap-3">
             <TextField
-              label="Nom du club"
+              label={t('common.clubName')}
               value={club.name}
               onChange={e => updateClub({ name: e.target.value })}
             />
             <TextField
-              label="Trésorier·ère"
+              label={t('settings.treasurer')}
               value={club.treasurer ?? ''}
               onChange={e => updateClub({ treasurer: e.target.value })}
             />
             <TextField
-              label="Affiliation"
+              label={t('settings.affiliation')}
               value={club.ffessmAffiliation ?? ''}
               onChange={e => updateClub({ ffessmAffiliation: e.target.value })}
             />
@@ -203,23 +205,23 @@ export function SettingsScreen() {
     },
     {
       id: 'affichage',
-      label: 'Affichage',
+      label: t('settings.sections.display'),
       Icon: SlidersHorizontal,
-      keywords: 'affichage theme clair sombre decimales compensees ecritures',
+      keywords: t('settings.keywords.display'),
       node: (
         <Card>
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-3">
               <SelectField
-                label="Thème"
+                label={t('settings.theme')}
                 value={theme}
                 onChange={e => setTheme(e.target.value as 'light' | 'dark')}
               >
-                <option value="light">Clair</option>
-                <option value="dark">Sombre</option>
+                <option value="light">{t('settings.themeLight')}</option>
+                <option value="dark">{t('settings.themeDark')}</option>
               </SelectField>
               <SelectField
-                label="Décimales affichées"
+                label={t('settings.decimals')}
                 value={String(decimals)}
                 onChange={e =>
                   updateSettings({ decimals: Number(e.target.value) })
@@ -230,8 +232,33 @@ export function SettingsScreen() {
                 <option value="2">2</option>
               </SelectField>
             </div>
+            <div
+              role="group"
+              aria-label={t('settings.languageAria')}
+              className="flex items-center justify-between gap-2 py-1 text-sm"
+            >
+              <span className="font-semibold">{t('settings.language')}</span>
+              <div className="inline-flex overflow-hidden rounded-full border border-[var(--uwh-border)]">
+                {locales.map(loc => (
+                  <button
+                    key={loc}
+                    type="button"
+                    onClick={() => setLocale(loc)}
+                    aria-pressed={locale === loc}
+                    className={cn(
+                      'min-h-9 px-3 text-xs font-semibold transition-colors',
+                      locale === loc
+                        ? 'bg-primary text-white'
+                        : 'bg-[var(--uwh-surface-2)] text-[var(--uwh-text-soft)]'
+                    )}
+                  >
+                    {loc === 'fr' ? 'Français' : 'English'}
+                  </button>
+                ))}
+              </div>
+            </div>
             <label className="flex items-center justify-between gap-2 py-1 text-sm">
-              Afficher les écritures compensées
+              {t('settings.showCompensated')}
               <input
                 type="checkbox"
                 checked={showCompensated}
@@ -246,63 +273,72 @@ export function SettingsScreen() {
     },
     {
       id: 'donnees',
-      label: 'Données',
+      label: t('settings.sections.data'),
       Icon: Database,
-      keywords:
-        'donnees base synchronisation export import excel csv json sauvegarde restaurer migration recurrents adherents pdf bilan classeur',
+      keywords: t('settings.keywords.data'),
       node: (
         <>
           <DatabaseStatusCard />
           <Card>
-            <h3 className="mb-3 font-display font-bold">Export</h3>
+            <h3 className="mb-3 font-display font-bold">
+              {t('settings.exportHeading')}
+            </h3>
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="secondary"
                 onClick={() => exportJournalCsv(season, data.entries)}
               >
-                <Download size={16} aria-hidden="true" /> Journal CSV
+                <Download size={16} aria-hidden="true" />{' '}
+                {t('settings.exportJournalCsv')}
               </Button>
               <Button
                 variant="secondary"
                 onClick={() => exportBilanCsv(season, data.entries)}
               >
-                <Download size={16} aria-hidden="true" /> Bilan CSV
+                <Download size={16} aria-hidden="true" />{' '}
+                {t('settings.exportBilanCsv')}
               </Button>
               <Button
                 variant="secondary"
                 onClick={() => exportJsonBackup(data)}
               >
-                <Download size={16} aria-hidden="true" /> Sauvegarde JSON
+                <Download size={16} aria-hidden="true" />{' '}
+                {t('settings.exportJson')}
               </Button>
               <Button variant="secondary" onClick={() => window.print()}>
-                <Printer size={16} aria-hidden="true" /> Bilan PDF
+                <Printer size={16} aria-hidden="true" />{' '}
+                {t('settings.exportPdf')}
               </Button>
               <Button
                 variant="secondary"
                 className="col-span-2"
                 onClick={() => void exportWorkbookXlsx(data, season)}
               >
-                <FileSpreadsheet size={16} aria-hidden="true" /> Classeur Excel
-                multi-feuilles (.xlsx)
+                <FileSpreadsheet size={16} aria-hidden="true" />{' '}
+                {t('settings.exportXlsx')}
               </Button>
             </div>
           </Card>
           <Card>
-            <h3 className="mb-3 font-display font-bold">Import & migration</h3>
+            <h3 className="mb-3 font-display font-bold">
+              {t('settings.importMigration')}
+            </h3>
             <div className="flex flex-col gap-2">
               <Button onClick={() => setImporting(true)}>
-                <FileSpreadsheet size={16} aria-hidden="true" /> Importer un
-                Excel (.xlsx)
+                <FileSpreadsheet size={16} aria-hidden="true" />{' '}
+                {t('settings.importExcel')}
               </Button>
               <Button variant="secondary" onClick={() => setRecurring(true)}>
-                <Repeat size={16} aria-hidden="true" /> Modèles récurrents
+                <Repeat size={16} aria-hidden="true" />{' '}
+                {t('settings.recurringTemplates')}
               </Button>
               <Button variant="secondary" onClick={() => setAdherents(true)}>
-                <Users size={16} aria-hidden="true" /> Registre des adhérents
+                <Users size={16} aria-hidden="true" />{' '}
+                {t('settings.membersRegistry')}
               </Button>
               <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] px-5 py-2.5 text-[15px] font-semibold">
-                <Upload size={16} aria-hidden="true" /> Restaurer une sauvegarde
-                JSON
+                <Upload size={16} aria-hidden="true" />{' '}
+                {t('settings.restoreJson')}
                 <input
                   type="file"
                   accept="application/json"
@@ -322,10 +358,9 @@ export function SettingsScreen() {
     },
     {
       id: 'integrations',
-      label: 'Intégrations',
+      label: t('settings.sections.integrations'),
       Icon: Plug,
-      keywords:
-        'integrations helloasso google agenda ical ia generation exercices openai claude cotisations',
+      keywords: t('settings.keywords.integrations'),
       node: (
         <>
           {IS_SUPABASE && (
@@ -334,22 +369,19 @@ export function SettingsScreen() {
                 <div className="mb-1 flex items-center gap-2">
                   <Plug size={16} className="text-primary" aria-hidden="true" />
                   <h3 className="font-display font-bold">
-                    Intégration HelloAsso
+                    {t('settings.helloAssoTitle')}
                   </h3>
                 </div>
                 <p className="mb-3 text-xs text-[var(--uwh-text-soft)]">
-                  Organisation et formulaire d'adhésion (les deux derniers
-                  segments de l'URL HelloAsso :{' '}
+                  {t('settings.helloAssoDescBefore')}
                   <code>
                     helloasso.com/associations/&lt;organisation&gt;/adhesions/&lt;formulaire&gt;
                   </code>
-                  ). Sert à l'import des adhésions dans l'onglet Cotisations. La
-                  clé API confidentielle reste côté serveur (secrets de l'Edge
-                  Function), jamais saisie ici.
+                  {t('settings.helloAssoDescAfter')}
                 </p>
                 <div className="flex flex-col gap-3">
                   <TextField
-                    label="Organisation (slug)"
+                    label={t('settings.helloOrg')}
                     placeholder="mon-club"
                     value={helloAsso?.orgSlug ?? ''}
                     onChange={e =>
@@ -359,7 +391,7 @@ export function SettingsScreen() {
                     }
                   />
                   <TextField
-                    label="Formulaire d'adhésion (slug)"
+                    label={t('settings.helloForm')}
                     placeholder="adhesion-2025-2026"
                     value={helloAsso?.formSlug ?? ''}
                     onChange={e =>
@@ -369,8 +401,8 @@ export function SettingsScreen() {
                     }
                   />
                   <TextField
-                    label="Type de formulaire"
-                    hint="Optionnel — « Membership » par défaut (formulaire d'adhésion)."
+                    label={t('settings.helloFormType')}
+                    hint={t('settings.helloFormTypeHint')}
                     placeholder="Membership"
                     value={helloAsso?.formType ?? ''}
                     onChange={e =>
@@ -390,21 +422,16 @@ export function SettingsScreen() {
                     aria-hidden="true"
                   />
                   <h3 className="font-display font-bold">
-                    Intégration Google Agenda
+                    {t('settings.gcalTitle')}
                   </h3>
                 </div>
                 <p className="mb-3 text-xs text-[var(--uwh-text-soft)]">
-                  Adresse iCal publique d'un calendrier Google, pour importer
-                  ses événements dans Vie du club → Événements. Dans Google
-                  Agenda :{' '}
-                  <em>
-                    Paramètres du calendrier → Intégrer le calendrier → Adresse
-                    publique au format iCal
-                  </em>{' '}
-                  (le calendrier doit être public).
+                  {t('settings.gcalDescBefore')}
+                  <em>{t('settings.gcalDescEm')}</em>
+                  {t('settings.gcalDescAfter')}
                 </p>
                 <TextField
-                  label="URL iCal (.ics)"
+                  label={t('settings.gcalUrl')}
                   type="url"
                   inputMode="url"
                   placeholder="https://calendar.google.com/calendar/ical/…/public/basic.ics"
@@ -427,10 +454,9 @@ export function SettingsScreen() {
     },
     {
       id: 'securite',
-      label: 'Sécurité',
+      label: t('settings.sections.security'),
       Icon: ShieldCheck,
-      keywords:
-        'securite mfa audit roles membres deconnexion rls authentification compte',
+      keywords: t('settings.keywords.security'),
       node: (
         <>
           <Card>
@@ -440,24 +466,25 @@ export function SettingsScreen() {
                 className="text-primary"
                 aria-hidden="true"
               />
-              <h3 className="font-display font-bold">Sécurité & accès</h3>
+              <h3 className="font-display font-bold">
+                {t('settings.securityTitle')}
+              </h3>
             </div>
             <p className="text-xs text-[var(--uwh-text-soft)]">
-              Le mode Supabase active l'authentification, le contrôle d'accès
-              par rôle côté serveur (RLS), la MFA pour les rôles sensibles,
-              l'audit serveur et le stockage chiffré des justificatifs. Voir le
-              README pour la configuration.
+              {t('settings.securityDesc')}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Link to="/audit">
                 <Button variant="secondary">
-                  <ShieldCheck size={16} aria-hidden="true" /> Journal d'audit
+                  <ShieldCheck size={16} aria-hidden="true" />{' '}
+                  {t('app.titles.audit')}
                 </Button>
               </Link>
               {IS_SUPABASE && isAdmin && (
                 <Link to="/members">
                   <Button variant="secondary">
-                    <Users size={16} aria-hidden="true" /> Membres & rôles
+                    <Users size={16} aria-hidden="true" />{' '}
+                    {t('app.titles.members')}
                   </Button>
                 </Link>
               )}
@@ -466,7 +493,7 @@ export function SettingsScreen() {
           {IS_SUPABASE && <MfaCard />}
           {IS_SUPABASE && (
             <Button variant="secondary" block onClick={() => void signOut()}>
-              <LogOut size={16} aria-hidden="true" /> Se déconnecter
+              <LogOut size={16} aria-hidden="true" /> {t('common.signOut')}
             </Button>
           )}
         </>
@@ -474,27 +501,28 @@ export function SettingsScreen() {
     },
     {
       id: 'avance',
-      label: 'Avancé',
+      label: t('settings.sections.advanced'),
       Icon: Settings2,
-      keywords:
-        'avance application version mise a jour reinitialiser zone sensible cache',
+      keywords: t('settings.keywords.advanced'),
       node: (
         <>
           <Card>
             <div className="flex items-center justify-between gap-2">
               <div>
-                <h3 className="font-display font-bold">Application</h3>
+                <h3 className="font-display font-bold">
+                  {t('settings.application')}
+                </h3>
                 <p className="text-xs text-[var(--uwh-text-soft)]">
-                  Miss UWH v{__APP_VERSION__}
+                  {t('settings.version', { version: __APP_VERSION__ })}
                 </p>
               </div>
               <Button variant="secondary" onClick={() => void forceUpdate()}>
-                <RotateCw size={16} aria-hidden="true" /> Forcer la mise à jour
+                <RotateCw size={16} aria-hidden="true" />{' '}
+                {t('settings.forceUpdate')}
               </Button>
             </div>
             <p className="mt-2 text-xs text-[var(--uwh-text-soft)]">
-              Récupère la dernière version (vide les caches et recharge). Vos
-              données locales ne sont pas effacées.
+              {t('settings.forceUpdateDesc')}
             </p>
           </Card>
 
@@ -506,7 +534,8 @@ export function SettingsScreen() {
               className="flex w-full items-center justify-between gap-2"
             >
               <span className="flex items-center gap-2 font-display font-bold text-[var(--uwh-debit)]">
-                <AlertTriangle size={16} aria-hidden="true" /> Zone sensible
+                <AlertTriangle size={16} aria-hidden="true" />{' '}
+                {t('settings.dangerZone')}
               </span>
               <ChevronDown
                 size={18}
@@ -520,15 +549,15 @@ export function SettingsScreen() {
             {showDanger && (
               <div className="mt-3 flex flex-col gap-2">
                 <p className="text-xs text-[var(--uwh-text-soft)]">
-                  Efface toutes les écritures, saisons et l'audit local sur cet
-                  appareil. Exportez une sauvegarde JSON au préalable.
+                  {t('settings.dangerDesc')}
                 </p>
                 <Button
                   variant="danger"
                   className="self-start"
                   onClick={() => setConfirmReset(true)}
                 >
-                  <Trash2 size={16} aria-hidden="true" /> Tout réinitialiser
+                  <Trash2 size={16} aria-hidden="true" />{' '}
+                  {t('settings.resetAll')}
                 </Button>
               </div>
             )}
@@ -538,10 +567,9 @@ export function SettingsScreen() {
     },
     {
       id: 'famille',
-      label: 'Nos apps',
+      label: t('settings.sections.apps'),
       Icon: LayoutGrid,
-      keywords:
-        'nos autres applications famille apps decouvrir gratuites miss mister',
+      keywords: t('settings.keywords.apps'),
       node: (
         <div className="uwh-family">
           <FamilyApps
@@ -606,8 +634,8 @@ export function SettingsScreen() {
             type="search"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Rechercher un réglage…"
-            aria-label="Rechercher un réglage"
+            placeholder={t('settings.searchPlaceholder')}
+            aria-label={t('settings.searchAria')}
             className="min-h-11 w-full rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] pl-11 pr-4 text-[16px] focus:border-primary"
           />
         </div>
@@ -617,7 +645,7 @@ export function SettingsScreen() {
       {!q && (
         <nav
           ref={navRef}
-          aria-label="Sections des réglages"
+          aria-label={t('settings.sectionsNav')}
           style={{ top: headerTop }}
           className="no-print sticky z-20 border-b border-[var(--uwh-border)] bg-[var(--uwh-surface)]/95 backdrop-blur"
         >
@@ -661,7 +689,7 @@ export function SettingsScreen() {
         ))}
         {visible.length === 0 && (
           <p className="py-8 text-center text-sm text-[var(--uwh-text-soft)]">
-            Aucun réglage ne correspond à « {query.trim()} ».
+            {t('settings.noMatch', { query: query.trim() })}
           </p>
         )}
         <AppFooter />
@@ -672,16 +700,15 @@ export function SettingsScreen() {
       <AdherentsSheet open={adherents} onClose={() => setAdherents(false)} />
       <ConfirmDialog
         open={confirmReset}
-        title="Tout réinitialiser ?"
+        title={t('settings.resetConfirmTitle')}
         danger
-        confirmLabel="Réinitialiser"
+        confirmLabel={t('common.reset')}
         onClose={() => setConfirmReset(false)}
         onConfirm={() =>
           resetAll(club.name, season.label, season.openingBalance)
         }
       >
-        Toutes les écritures, saisons et l'audit local seront effacés sur cet
-        appareil. Pensez à exporter une sauvegarde JSON avant.
+        {t('settings.resetConfirmBody')}
       </ConfirmDialog>
     </div>
   );

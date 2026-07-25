@@ -5,10 +5,12 @@ import type { Referee } from '../../shared/types/domain.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { useI18n } from '../../i18n/index.ts';
 import { RefereeSheet } from './RefereeSheet.tsx';
 
 /** Registre des arbitres du club (niveaux, certifications). */
 export function ArbitrageScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.referees);
   const [editing, setEditing] = useState<Referee | null>(null);
@@ -26,16 +28,17 @@ export function ArbitrageScreen() {
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-lg font-bold">
-          {rows.length} arbitre{rows.length > 1 ? 's' : ''}
+          {t('entrainements.arbitrage.count', { n: rows.length })}
         </h2>
         <Button onClick={() => setCreating(true)}>
-          <Plus size={18} aria-hidden="true" /> Arbitre
+          <Plus size={18} aria-hidden="true" />{' '}
+          {t('entrainements.arbitrage.add')}
         </Button>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Flag} title="Aucun arbitre">
-          Tenez le registre des arbitres de la saison {season.label}.
+        <EmptyState Icon={Flag} title={t('entrainements.arbitrage.emptyTitle')}>
+          {t('entrainements.arbitrage.emptyBody', { season: season.label })}
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -51,7 +54,7 @@ export function ArbitrageScreen() {
                     {!r.active && (
                       <span className="font-normal text-[var(--uwh-text-soft)]">
                         {' '}
-                        (inactif)
+                        {t('entrainements.arbitrage.inactiveSuffix')}
                       </span>
                     )}
                   </p>

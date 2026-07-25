@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../lib/cn.ts';
 import { Button } from './Button.tsx';
+import { useI18n } from '../../i18n/index.ts';
 
 interface SheetProps {
   open: boolean;
@@ -34,6 +35,7 @@ function focusablesIn(root: HTMLElement): HTMLElement[] {
  */
 export function Sheet({ open, title, onClose, children, footer }: SheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const { t } = useI18n();
 
   // Gestion du focus (déps [open] uniquement → ne se relance pas à chaque
   // changement d'identité d'`onClose`, donc ne « vole » jamais le focus en
@@ -107,7 +109,11 @@ export function Sheet({ open, title, onClose, children, footer }: SheetProps) {
         {/* En-tête figé */}
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--uwh-border)] px-5 py-4">
           <h2 className="text-lg font-bold">{title}</h2>
-          <Button variant="ghost" aria-label="Fermer" onClick={onClose}>
+          <Button
+            variant="ghost"
+            aria-label={t('common.close')}
+            onClick={onClose}
+          >
             <X size={20} aria-hidden="true" />
           </Button>
         </div>

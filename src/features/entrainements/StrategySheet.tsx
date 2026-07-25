@@ -3,7 +3,6 @@ import { Trash2 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import {
   STRATEGY_PHASES,
-  STRATEGY_PHASE_LABELS,
   type Strategy,
   type StrategyPhase,
 } from '../../shared/types/domain.ts';
@@ -15,6 +14,7 @@ import {
   TextField,
 } from '../../shared/components/Field.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 
 interface Props {
   open: boolean;
@@ -23,6 +23,7 @@ interface Props {
 }
 
 export function StrategySheet({ open, strategy, onClose }: Props) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const addStrategy = useAppStore(s => s.addStrategy);
   const updateStrategy = useAppStore(s => s.updateStrategy);
@@ -37,7 +38,10 @@ export function StrategySheet({ open, strategy, onClose }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const nameError = submitted && !name.trim() ? 'Nom requis.' : undefined;
+  const nameError =
+    submitted && !name.trim()
+      ? t('entrainements.strategySheet.nameRequired')
+      : undefined;
 
   function save() {
     setSubmitted(true);
@@ -57,69 +61,73 @@ export function StrategySheet({ open, strategy, onClose }: Props) {
   return (
     <Sheet
       open={open}
-      title={strategy ? 'Modifier la stratégie' : 'Nouvelle stratégie'}
+      title={
+        strategy
+          ? t('entrainements.strategySheet.editTitle')
+          : t('entrainements.strategySheet.newTitle')
+      }
       onClose={onClose}
       footer={
         <div className="flex gap-2">
           {strategy && (
             <Button
               variant="danger"
-              aria-label="Supprimer"
+              aria-label={t('common.delete')}
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 size={18} aria-hidden="true" />
             </Button>
           )}
           <Button block onClick={save}>
-            {strategy ? 'Enregistrer' : 'Ajouter'}
+            {strategy ? t('common.save') : t('common.add')}
           </Button>
         </div>
       }
     >
       <div className="flex flex-col gap-4">
         <TextField
-          label="Nom"
+          label={t('common.name')}
           value={name}
           error={nameError}
           onChange={e => setName(e.target.value)}
-          placeholder="Ex. Pressing haut"
+          placeholder={t('entrainements.strategySheet.namePlaceholder')}
         />
         <SelectField
-          label="Phase"
+          label={t('entrainements.strategySheet.phase')}
           value={phase}
           onChange={e => setPhase(e.target.value as StrategyPhase)}
         >
           {STRATEGY_PHASES.map(p => (
             <option key={p} value={p}>
-              {STRATEGY_PHASE_LABELS[p]}
+              {t(`enums.strategyPhase.${p}` as TKey)}
             </option>
           ))}
         </SelectField>
         <TextAreaField
-          label="Description (optionnel)"
+          label={t('entrainements.strategySheet.description')}
           value={description}
           onChange={e => setDescription(e.target.value)}
         />
         <TextField
-          label="Schéma (optionnel)"
+          label={t('entrainements.strategySheet.diagram')}
           value={diagramUrl}
           onChange={e => setDiagramUrl(e.target.value)}
-          placeholder="https://… (schéma)"
+          placeholder={t('entrainements.strategySheet.diagramPlaceholder')}
         />
       </div>
 
       <ConfirmDialog
         open={confirmDelete}
-        title="Supprimer cette stratégie ?"
+        title={t('entrainements.strategySheet.deleteTitle')}
         danger
-        confirmLabel="Supprimer"
+        confirmLabel={t('common.delete')}
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (strategy) deleteStrategy(strategy.id);
           onClose();
         }}
       >
-        La stratégie sera retirée définitivement.
+        {t('entrainements.strategySheet.deleteBody')}
       </ConfirmDialog>
     </Sheet>
   );

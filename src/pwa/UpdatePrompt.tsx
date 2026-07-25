@@ -1,6 +1,7 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Sparkles } from 'lucide-react';
 import { Button } from '../shared/components/Button.tsx';
+import { useI18n } from '../i18n/index.ts';
 
 /** Bandeau PWA : nouvelle version disponible. */
 export function UpdatePrompt() {
@@ -8,6 +9,7 @@ export function UpdatePrompt() {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW();
+  const { t } = useI18n();
 
   if (!needRefresh) return null;
 
@@ -23,14 +25,14 @@ export function UpdatePrompt() {
           className="shrink-0 text-primary"
           aria-hidden="true"
         />
-        Une nouvelle version de Miss UWH est prête.
+        {t('pwa.ready')}
       </p>
       <div className="flex gap-2">
         <Button block onClick={() => updateServiceWorker(true)}>
-          Mettre à jour
+          {t('common.update')}
         </Button>
         <Button variant="secondary" block onClick={() => setNeedRefresh(false)}>
-          Plus tard
+          {t('common.later')}
         </Button>
       </div>
     </div>

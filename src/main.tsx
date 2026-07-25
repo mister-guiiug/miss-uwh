@@ -5,6 +5,7 @@ import {
   initSentry,
 } from '@mister-guiiug/dev-wpa-config/react/observability';
 import { App } from './App.tsx';
+import { I18nProvider } from './i18n/index.ts';
 import { useAppStore } from './store/useAppStore.ts';
 import './index.css';
 
@@ -25,6 +26,8 @@ if (!rootEl) throw new Error('Élément racine #root introuvable.');
 
 createRoot(rootEl).render(
   <StrictMode>
-    <App />
+    <I18nProvider>
+      <App />
+    </I18nProvider>
   </StrictMode>
 );

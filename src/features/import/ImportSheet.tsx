@@ -3,6 +3,7 @@ import { FileSpreadsheet, TriangleAlert } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
+import { useI18n } from '../../i18n/index.ts';
 import { parseWorkbookFile, type WorkbookParseResult } from './excelImport.ts';
 import { buildEntryInputs } from './buildImport.ts';
 
@@ -13,6 +14,7 @@ interface Props {
 
 export function ImportSheet({ open, onClose }: Props) {
   const season = useAppStore(selectActiveSeason);
+  const { t } = useI18n();
   const importEntries = useAppStore(s => s.importEntries);
   const setSeasonOpening = useAppStore(s => s.setSeasonOpening);
   const [parsed, setParsed] = useState<WorkbookParseResult | null>(null);
@@ -45,9 +47,7 @@ export function ImportSheet({ open, onClose }: Props) {
       setParsed(await parseWorkbookFile(file));
     } catch (err) {
       console.error(err);
-      setError(
-        'Lecture impossible. Vérifiez votre connexion (le lecteur Excel est chargé à la demande) et le format .xlsx.'
-      );
+      setError(t('io.import.readError'));
     } finally {
       setBusy(false);
       // Permet de re-sélectionner le MÊME fichier (sinon onChange ne refire pas).
@@ -68,16 +68,16 @@ export function ImportSheet({ open, onClose }: Props) {
   const footer =
     done !== null ? (
       <Button block onClick={close}>
-        Terminer
+        {t('common.finish')}
       </Button>
     ) : parsed ? (
       <div className="flex flex-col gap-1.5">
         <Button block onClick={doImport} disabled={seasonClosed}>
-          Importer {parsed.entries.length} écriture(s)
+          {t('io.import.importN', { n: parsed.entries.length })}
         </Button>
         {seasonClosed && (
           <p className="text-center text-xs text-[var(--uwh-warn)]">
-            Saison {season.label} clôturée — rouvrez-la pour importer.
+            {t('io.import.seasonClosed', { season: season.label })}
           </p>
         )}
       </div>
@@ -86,21 +86,22 @@ export function ImportSheet({ open, onClose }: Props) {
   return (
     <Sheet
       open={open}
-      title="Importer depuis Excel"
+      title={t('io.import.title')}
       onClose={close}
       footer={footer}
     >
       <div className="flex flex-col gap-4">
         <p className="text-sm text-[var(--uwh-text-soft)]">
-          Importe la feuille <strong>« Compte »</strong> de votre classeur. Les
-          écritures sont ajoutées à la saison active{' '}
-          <strong>{season.label}</strong> (les catégories sont déduites du code
-          d'ORDRE : R1…R9, D1…D13).
+          {t('io.import.introBefore')}
+          <strong>{t('io.import.introSheet')}</strong>
+          {t('io.import.introMid')}
+          <strong>{season.label}</strong>
+          {t('io.import.introAfter')}
         </p>
 
         <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] p-5 text-sm font-semibold text-primary">
           <FileSpreadsheet size={18} aria-hidden="true" className="shrink-0" />
-          {busy ? 'Lecture…' : 'Choisir un fichier .xlsx'}
+          {busy ? t('io.import.reading') : t('io.import.chooseFile')}
           <input
             type="file"
             accept=".xlsx,.xls"

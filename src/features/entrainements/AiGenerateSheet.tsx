@@ -4,13 +4,13 @@ import { Check, Clock, Sparkles, TriangleAlert } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import {
   EXERCISE_CATEGORIES,
-  EXERCISE_CATEGORY_LABELS,
   type ExerciseCategory,
 } from '../../shared/types/domain.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { SelectField, TextField } from '../../shared/components/Field.tsx';
 import { notifySuccess } from '../../shared/lib/toasts.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import {
   generateExercises,
   type GeneratedExercise,
@@ -25,6 +25,7 @@ interface Props {
 const COUNTS = [1, 2, 3, 4, 5, 6, 8, 10];
 
 export function AiGenerateSheet({ open, onClose }: Props) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const ai = useAppStore(s => s.data.settings.ai);
   const sharedSkills = useAppStore(s => s.data.aiConfig?.sharedSkills);
@@ -70,7 +71,9 @@ export function AiGenerateSheet({ open, onClose }: Props) {
       // Tout sélectionné par défaut.
       setSelected(new Set(drafts.map((_, i) => i)));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Génération impossible.');
+      setError(
+        e instanceof Error ? e.message : t('entrainements.aiGenerate.genError')
+      );
     } finally {
       setBusy(false);
     }
@@ -93,13 +96,13 @@ export function AiGenerateSheet({ open, onClose }: Props) {
       addExercise({ ...draft, seasonId: season.id });
       n += 1;
     });
-    notifySuccess(`${n} exercice(s) ajouté(s) à la bibliothèque.`);
+    notifySuccess(t('entrainements.aiGenerate.addedToast', { n }));
     close();
   }
 
   const footer = !hasKey ? (
     <Link to="/settings" onClick={close}>
-      <Button block>Configurer la génération IA</Button>
+      <Button block>{t('entrainements.aiGenerate.configure')}</Button>
     </Link>
   ) : results ? (
     <Button
@@ -107,19 +110,22 @@ export function AiGenerateSheet({ open, onClose }: Props) {
       onClick={saveSelected}
       disabled={selected.size === 0 || seasonClosed}
     >
-      <Check size={18} aria-hidden="true" /> Ajouter {selected.size} exercice(s)
+      <Check size={18} aria-hidden="true" />{' '}
+      {t('entrainements.aiGenerate.addSelected', { n: selected.size })}
     </Button>
   ) : (
     <Button block onClick={() => void onGenerate()} disabled={busy}>
       <Sparkles size={18} aria-hidden="true" />
-      {busy ? 'Génération…' : 'Générer'}
+      {busy
+        ? t('entrainements.aiGenerate.generating')
+        : t('entrainements.aiGenerate.generate')}
     </Button>
   );
 
   return (
     <Sheet
       open={open}
-      title="Générer des exercices (IA)"
+      title={t('entrainements.aiGenerate.title')}
       onClose={close}
       footer={footer}
     >
@@ -131,24 +137,21 @@ export function AiGenerateSheet({ open, onClose }: Props) {
               aria-hidden="true"
               className="mt-0.5 shrink-0 text-primary"
             />
-            Configurez votre clé API personnelle dans Réglages → Génération IA
-            pour proposer des exercices générés par IA. La clé reste sur cet
-            appareil.
+            {t('entrainements.aiGenerate.noKeyBody')}
           </p>
         ) : (
           <>
             <p className="text-sm text-[var(--uwh-text-soft)]">
-              Les exercices proposés sont ajoutés à la saison{' '}
-              <strong>{season.label}</strong> après votre validation. Le
-              contexte commun du club et vos préférences (Réglages) sont pris en
-              compte.
+              {t('entrainements.aiGenerate.introBefore')}
+              <strong>{season.label}</strong>
+              {t('entrainements.aiGenerate.introAfter')}
             </p>
 
             {results === null && (
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <SelectField
-                    label="Nombre"
+                    label={t('entrainements.aiGenerate.count')}
                     value={String(count)}
                     onChange={e => setCount(Number(e.target.value))}
                   >
@@ -159,31 +162,33 @@ export function AiGenerateSheet({ open, onClose }: Props) {
                     ))}
                   </SelectField>
                   <SelectField
-                    label="Catégorie"
+                    label={t('common.category')}
                     value={category}
                     onChange={e =>
                       setCategory(e.target.value as ExerciseCategory | 'any')
                     }
                   >
-                    <option value="any">Variées</option>
+                    <option value="any">
+                      {t('entrainements.aiGenerate.anyCategory')}
+                    </option>
                     {EXERCISE_CATEGORIES.map(c => (
                       <option key={c} value={c}>
-                        {EXERCISE_CATEGORY_LABELS[c]}
+                        {t(`enums.exerciseCategory.${c}` as TKey)}
                       </option>
                     ))}
                   </SelectField>
                 </div>
                 <TextField
-                  label="Niveau / public (optionnel)"
+                  label={t('entrainements.aiGenerate.level')}
                   value={level}
                   onChange={e => setLevel(e.target.value)}
-                  placeholder="Ex. Débutants, N1, jeunes"
+                  placeholder={t('entrainements.aiGenerate.levelPlaceholder')}
                 />
                 <TextField
-                  label="Thème / objectif (optionnel)"
+                  label={t('entrainements.aiGenerate.theme')}
                   value={theme}
                   onChange={e => setTheme(e.target.value)}
-                  placeholder="Ex. Travail de la passe en infériorité"
+                  placeholder={t('entrainements.aiGenerate.themePlaceholder')}
                 />
               </>
             )}
@@ -205,11 +210,15 @@ export function AiGenerateSheet({ open, onClose }: Props) {
             {results && (
               <div className="flex flex-col gap-2">
                 <p className="text-sm font-semibold">
-                  {results.length} proposition(s) — cochez celles à conserver :
+                  {t('entrainements.aiGenerate.resultsHeader', {
+                    n: results.length,
+                  })}
                 </p>
                 {seasonClosed && (
                   <p className="text-xs text-[var(--uwh-warn)]">
-                    Saison {season.label} clôturée — rouvrez-la pour ajouter.
+                    {t('entrainements.aiGenerate.seasonClosed', {
+                      season: season.label,
+                    })}
                   </p>
                 )}
                 <ul className="flex flex-col gap-2">
@@ -245,7 +254,9 @@ export function AiGenerateSheet({ open, onClose }: Props) {
                             </span>
                             <span className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-[var(--uwh-text-soft)]">
                               <span className="rounded-full bg-[var(--uwh-surface-2)] px-2 py-0.5 font-semibold text-primary">
-                                {EXERCISE_CATEGORY_LABELS[ex.category]}
+                                {t(
+                                  `enums.exerciseCategory.${ex.category}` as TKey
+                                )}
                               </span>
                               {ex.durationMin != null && (
                                 <span className="inline-flex items-center gap-1">
@@ -271,7 +282,7 @@ export function AiGenerateSheet({ open, onClose }: Props) {
                   onClick={reset}
                   className="mt-1 self-start text-sm font-semibold text-primary"
                 >
-                  ↻ Régénérer
+                  {t('entrainements.aiGenerate.regenerate')}
                 </button>
               </div>
             )}

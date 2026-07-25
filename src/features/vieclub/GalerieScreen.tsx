@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Images, Pencil, Plus } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { PhotoAlbum } from '../../shared/types/domain.ts';
+import { useI18n } from '../../i18n/index.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { Card } from '../../shared/components/Card.tsx';
@@ -10,6 +11,7 @@ import { PhotoAlbumSheet } from './PhotoAlbumSheet.tsx';
 
 /** Galerie : albums Google Photos partagés de la saison. */
 export function GalerieScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.photoAlbums);
   const [editing, setEditing] = useState<PhotoAlbum | null>(null);
@@ -27,16 +29,16 @@ export function GalerieScreen() {
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-lg font-bold">
-          {rows.length} album{rows.length > 1 ? 's' : ''}
+          {t('vieclub.galerie.count', { n: rows.length })}
         </h2>
         <Button onClick={() => setCreating(true)}>
-          <Plus size={18} aria-hidden="true" /> Album
+          <Plus size={18} aria-hidden="true" /> {t('vieclub.galerie.addButton')}
         </Button>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Images} title="Aucun album">
-          Reliez vos albums Google Photos partagés.
+        <EmptyState Icon={Images} title={t('vieclub.galerie.emptyTitle')}>
+          {t('vieclub.galerie.emptyBody')}
         </EmptyState>
       ) : (
         <div className="grid grid-cols-2 gap-3">
@@ -51,7 +53,7 @@ export function GalerieScreen() {
               <Card className="relative flex h-full flex-col gap-2 p-3">
                 <button
                   type="button"
-                  aria-label="Modifier"
+                  aria-label={t('common.edit')}
                   onClick={e => {
                     e.preventDefault();
                     e.stopPropagation();

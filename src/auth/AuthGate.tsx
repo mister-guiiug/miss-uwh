@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { IS_SUPABASE } from '../backend/config.ts';
+import { useI18n } from '../i18n/index.ts';
 import { useAuth } from './useAuth.ts';
 import { LoginPage } from './LoginPage.tsx';
 import { MfaChallenge } from './MfaChallenge.tsx';
@@ -11,12 +12,13 @@ import { MfaChallenge } from './MfaChallenge.tsx';
  */
 export function AuthGate({ children }: { children: ReactNode }) {
   const { session, loading, needsMfa } = useAuth();
+  const { t } = useI18n();
 
   if (!IS_SUPABASE) return <>{children}</>;
   if (loading)
     return (
       <p className="p-10 text-center text-[var(--uwh-text-soft)]">
-        Chargement…
+        {t('common.loading')}
       </p>
     );
   if (!session) return <LoginPage />;

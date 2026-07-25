@@ -1,12 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Search, UserPlus, Users } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
-import {
-  MEMBER_ROLE_LABELS,
-  type Adherent,
-  type AdherentCategory,
-  type MemberRole,
-} from '../../shared/types/domain.ts';
+import { type Adherent, type MemberRole } from '../../shared/types/domain.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
@@ -14,15 +10,9 @@ import { VirtualList } from '../../shared/components/VirtualList.tsx';
 import { expiryStatus, worstExpiry } from '../../shared/lib/expiry.ts';
 import { MemberSheet } from './MemberSheet.tsx';
 
-const CAT_LABELS: Record<AdherentCategory, string> = {
-  adulte: 'Adulte',
-  adulte_reduit: 'Adulte réduit',
-  jeune: 'Jeune',
-  enfant: 'Enfant',
-};
-
 /** Pastilles d'alerte d'un membre : cotisation due + échéances licence/CM. */
 function MemberBadges({ a }: { a: Adherent }) {
+  const { t } = useI18n();
   const exp = worstExpiry(
     expiryStatus(a.licenceExpiry),
     expiryStatus(a.medicalCertExpiry)
@@ -30,9 +20,13 @@ function MemberBadges({ a }: { a: Adherent }) {
   if (a.paid && exp !== 'expired' && exp !== 'soon') return null;
   return (
     <div className="flex shrink-0 flex-col items-end gap-1">
-      {!a.paid && <Badge tone="warn">cotisation due</Badge>}
-      {exp === 'expired' && <Badge tone="debit">papiers expirés</Badge>}
-      {exp === 'soon' && <Badge tone="warn">à renouveler</Badge>}
+      {!a.paid && <Badge tone="warn">{t('adherents.members.dueBadge')}</Badge>}
+      {exp === 'expired' && (
+        <Badge tone="debit">{t('adherents.members.expiredBadge')}</Badge>
+      )}
+      {exp === 'soon' && (
+        <Badge tone="warn">{t('adherents.members.renewBadge')}</Badge>
+      )}
     </div>
   );
 }
@@ -42,6 +36,7 @@ function MemberBadges({ a }: { a: Adherent }) {
  * (tous) et « Encadrement » (filtré sur le rôle encadrant) via `roleFilter`.
  */
 export function MembersScreen({ roleFilter }: { roleFilter?: MemberRole }) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.adherents);
   const [query, setQuery] = useState('');
@@ -64,17 +59,17 @@ export function MembersScreen({ roleFilter }: { roleFilter?: MemberRole }) {
       );
   }, [all, season.id, roleFilter, query]);
 
-  const noun = roleFilter === 'encadrant' ? 'encadrant' : 'membre';
-
   return (
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-lg font-bold">
-          {rows.length} {noun}
-          {rows.length > 1 ? 's' : ''}
+          {roleFilter === 'encadrant'
+            ? t('adherents.members.countCoaches', { n: rows.length })
+            : t('adherents.members.countMembers', { n: rows.length })}
         </h2>
         <Button onClick={() => setCreating(true)}>
-          <UserPlus size={18} aria-hidden="true" /> Membre
+          <UserPlus size={18} aria-hidden="true" />{' '}
+          {t('adherents.members.addButton')}
         </Button>
       </div>
 
@@ -87,22 +82,33 @@ export function MembersScreen({ roleFilter }: { roleFilter?: MemberRole }) {
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Rechercher un nom…"
-          aria-label="Rechercher un membre"
+          placeholder={t('adherents.members.searchPlaceholder')}
+          aria-label={t('adherents.members.searchAria')}
           className="min-h-10 w-full rounded-full border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] pl-9 pr-3 text-sm"
         />
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Users} title={`Aucun ${noun}`}>
-          Ajoutez les adhérents de la saison {season.label}.
+        <EmptyState
+          Icon={Users}
+          title={
+            roleFilter === 'encadrant'
+              ? t('adherents.members.emptyCoaches')
+              : t('adherents.members.emptyMembers')
+          }
+        >
+          {t('adherents.members.emptyHint', { season: season.label })}
         </EmptyState>
       ) : (
         <VirtualList
           items={rows}
           getKey={a => a.id}
           estimateRowHeight={62}
-          ariaLabel={`Liste des ${noun}s`}
+          ariaLabel={
+            roleFilter === 'encadrant'
+              ? t('adherents.members.listCoaches')
+              : t('adherents.members.listMembers')
+          }
         >
           {a => (
             <button
@@ -114,16 +120,16 @@ export function MembersScreen({ roleFilter }: { roleFilter?: MemberRole }) {
                   {a.firstName} {a.lastName}
                   {a.status === 'inactif' && (
                     <span className="ml-1 text-xs font-normal text-[var(--uwh-text-soft)]">
-                      (inactif)
+                      {t('adherents.members.inactiveTag')}
                     </span>
                   )}
                 </p>
                 <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1 text-xs text-[var(--uwh-text-soft)]">
                   <span className="rounded bg-[var(--uwh-surface-2)] px-1.5 py-0.5 font-semibold">
-                    {CAT_LABELS[a.category]}
+                    {t(`enums.adherentCategory.${a.category}` as TKey)}
                   </span>
                   {(a.roles ?? []).map(r => (
-                    <span key={r}>· {MEMBER_ROLE_LABELS[r]}</span>
+                    <span key={r}>· {t(`enums.memberRole.${r}` as TKey)}</span>
                   ))}
                 </p>
               </div>

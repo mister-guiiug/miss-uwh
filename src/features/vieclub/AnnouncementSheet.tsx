@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Announcement } from '../../shared/types/domain.ts';
+import { useI18n } from '../../i18n/index.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { TextAreaField, TextField } from '../../shared/components/Field.tsx';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function AnnouncementSheet({ open, announcement, onClose }: Props) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const addAnnouncement = useAppStore(s => s.addAnnouncement);
   const updateAnnouncement = useAppStore(s => s.updateAnnouncement);
@@ -28,7 +30,10 @@ export function AnnouncementSheet({ open, announcement, onClose }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const titleError = submitted && !title.trim() ? 'Titre requis.' : undefined;
+  const titleError =
+    submitted && !title.trim()
+      ? t('vieclub.announcementSheet.titleRequired')
+      : undefined;
 
   function save() {
     setSubmitted(true);
@@ -48,46 +53,52 @@ export function AnnouncementSheet({ open, announcement, onClose }: Props) {
   return (
     <Sheet
       open={open}
-      title={announcement ? "Modifier l'annonce" : 'Nouvelle annonce'}
+      title={
+        announcement
+          ? t('vieclub.announcementSheet.editTitle')
+          : t('vieclub.announcementSheet.newTitle')
+      }
       onClose={onClose}
       footer={
         <div className="flex gap-2">
           {announcement && (
             <Button
               variant="danger"
-              aria-label="Supprimer"
+              aria-label={t('common.delete')}
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 size={18} aria-hidden="true" />
             </Button>
           )}
           <Button block onClick={save}>
-            {announcement ? 'Enregistrer' : 'Publier'}
+            {announcement
+              ? t('common.save')
+              : t('vieclub.announcementSheet.publish')}
           </Button>
         </div>
       }
     >
       <div className="flex flex-col gap-4">
         <TextField
-          label="Titre"
+          label={t('common.title')}
           value={title}
           error={titleError}
           onChange={e => setTitle(e.target.value)}
-          placeholder="Ex. Reprise des entraînements"
+          placeholder={t('vieclub.announcementSheet.titlePlaceholder')}
         />
         <TextField
-          label="Date"
+          label={t('common.date')}
           type="date"
           value={date}
           onChange={e => setDate(e.target.value)}
         />
         <TextAreaField
-          label="Message"
+          label={t('vieclub.announcementSheet.message')}
           value={body}
           onChange={e => setBody(e.target.value)}
         />
         <label className="flex items-center justify-between gap-2 text-sm font-semibold">
-          Épingler en haut
+          {t('vieclub.announcementSheet.pinToTop')}
           <input
             type="checkbox"
             checked={pinned}
@@ -98,16 +109,16 @@ export function AnnouncementSheet({ open, announcement, onClose }: Props) {
 
       <ConfirmDialog
         open={confirmDelete}
-        title="Supprimer cette annonce ?"
+        title={t('vieclub.announcementSheet.confirmDeleteTitle')}
         danger
-        confirmLabel="Supprimer"
+        confirmLabel={t('common.delete')}
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (announcement) deleteAnnouncement(announcement.id);
           onClose();
         }}
       >
-        L'annonce sera retirée définitivement.
+        {t('vieclub.announcementSheet.confirmDeleteBody')}
       </ConfirmDialog>
     </Sheet>
   );

@@ -12,7 +12,7 @@ import { join } from 'node:path';
 const ASSETS_DIR = 'dist/assets';
 // Budget TOTAL gzip du JS (kB). À ajuster sciemment : +budget = +code livré.
 // Référence ~208 kB (juin 2026) ; ~10 % de marge pour les évolutions normales.
-const TOTAL_GZIP_BUDGET_KB = 230;
+const TOTAL_GZIP_BUDGET_KB = 245; // +15 kB : catalogue i18n FR+EN (2 locales)
 
 const gzipKB = buf => gzipSync(buf).length / 1024;
 

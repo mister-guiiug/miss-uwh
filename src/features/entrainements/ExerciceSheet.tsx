@@ -3,7 +3,6 @@ import { Trash2 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import {
   EXERCISE_CATEGORIES,
-  EXERCISE_CATEGORY_LABELS,
   type Exercise,
   type ExerciseCategory,
 } from '../../shared/types/domain.ts';
@@ -15,6 +14,7 @@ import {
   TextField,
 } from '../../shared/components/Field.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 
 interface Props {
   open: boolean;
@@ -23,6 +23,7 @@ interface Props {
 }
 
 export function ExerciceSheet({ open, exercise, onClose }: Props) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const addExercise = useAppStore(s => s.addExercise);
   const updateExercise = useAppStore(s => s.updateExercise);
@@ -40,7 +41,10 @@ export function ExerciceSheet({ open, exercise, onClose }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const nameError = submitted && !name.trim() ? 'Nom requis.' : undefined;
+  const nameError =
+    submitted && !name.trim()
+      ? t('entrainements.exerciceSheet.nameRequired')
+      : undefined;
 
   function save() {
     setSubmitted(true);
@@ -62,59 +66,63 @@ export function ExerciceSheet({ open, exercise, onClose }: Props) {
   return (
     <Sheet
       open={open}
-      title={exercise ? "Modifier l'exercice" : 'Nouvel exercice'}
+      title={
+        exercise
+          ? t('entrainements.exerciceSheet.editTitle')
+          : t('entrainements.exerciceSheet.newTitle')
+      }
       onClose={onClose}
       footer={
         <div className="flex gap-2">
           {exercise && (
             <Button
               variant="danger"
-              aria-label="Supprimer"
+              aria-label={t('common.delete')}
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 size={18} aria-hidden="true" />
             </Button>
           )}
           <Button block onClick={save}>
-            {exercise ? 'Enregistrer' : 'Ajouter'}
+            {exercise ? t('common.save') : t('common.add')}
           </Button>
         </div>
       }
     >
       <div className="flex flex-col gap-4">
         <TextField
-          label="Nom"
+          label={t('common.name')}
           value={name}
           error={nameError}
           onChange={e => setName(e.target.value)}
-          placeholder="Ex. Passes en triangle"
+          placeholder={t('entrainements.exerciceSheet.namePlaceholder')}
         />
         <div className="grid grid-cols-2 gap-3">
           <SelectField
-            label="Catégorie"
+            label={t('common.category')}
             value={category}
             onChange={e => setCategory(e.target.value as ExerciseCategory)}
           >
             {EXERCISE_CATEGORIES.map(c => (
               <option key={c} value={c}>
-                {EXERCISE_CATEGORY_LABELS[c]}
+                {t(`enums.exerciseCategory.${c}` as TKey)}
               </option>
             ))}
           </SelectField>
           <TextField
-            label="Durée (min)"
+            label={t('entrainements.exerciceSheet.duration')}
             inputMode="numeric"
             value={durationMin}
             onChange={e => setDurationMin(e.target.value)}
           />
         </div>
         <TextField
-          label="Niveau (optionnel)"
+          label={t('entrainements.exerciceSheet.level')}
           value={level}
           onChange={e => setLevel(e.target.value)}
         />
         <TextAreaField
-          label="Description (optionnel)"
+          label={t('entrainements.exerciceSheet.description')}
           value={description}
           onChange={e => setDescription(e.target.value)}
         />
@@ -122,16 +130,16 @@ export function ExerciceSheet({ open, exercise, onClose }: Props) {
 
       <ConfirmDialog
         open={confirmDelete}
-        title="Supprimer cet exercice ?"
+        title={t('entrainements.exerciceSheet.deleteTitle')}
         danger
-        confirmLabel="Supprimer"
+        confirmLabel={t('common.delete')}
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (exercise) deleteExercise(exercise.id);
           onClose();
         }}
       >
-        L'exercice sera retiré de la bibliothèque.
+        {t('entrainements.exerciceSheet.deleteBody')}
       </ConfirmDialog>
     </Sheet>
   );

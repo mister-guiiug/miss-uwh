@@ -4,6 +4,7 @@ import { useAppStore } from '../../store/useAppStore.ts';
 import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { TextField } from '../../shared/components/Field.tsx';
+import { useI18n } from '../../i18n/index.ts';
 
 /** Première installation : nom du club, saison de départ, reliquat d'ouverture. */
 export function Onboarding() {
@@ -12,6 +13,7 @@ export function Onboarding() {
   const season = useAppStore(s =>
     s.data.seasons.find(x => x.id === s.data.activeSeasonId)
   );
+  const { t } = useI18n();
   const [name, setName] = useState(club.name);
   const [label, setLabel] = useState(season?.label ?? '2025-2026');
   const [opening, setOpening] = useState(String(season?.openingBalance ?? 0));
@@ -19,7 +21,7 @@ export function Onboarding() {
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setupClub(
-      { ...club, name: name.trim() || 'Mon club' },
+      { ...club, name: name.trim() || t('onboarding.defaultClub') },
       label.trim() || '2025-2026',
       Number(opening.replace(',', '.')) || 0
     );
@@ -33,41 +35,39 @@ export function Onboarding() {
         </div>
         <h1 className="font-display text-2xl font-bold">Miss UWH</h1>
         <p className="mt-1 text-sm text-[var(--uwh-text-soft)]">
-          Le bilan comptable de votre club de Hockey Subaquatique, saison après
-          saison.
+          {t('onboarding.subtitle')}
         </p>
       </div>
       <Card>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <TextField
-            label="Nom du club"
+            label={t('common.clubName')}
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder="Clermont Hockey Sub"
+            placeholder={t('onboarding.clubNamePlaceholder')}
             required
           />
           <TextField
-            label="Saison de départ"
+            label={t('onboarding.startSeason')}
             value={label}
             onChange={e => setLabel(e.target.value)}
-            placeholder="2025-2026"
+            placeholder={t('onboarding.seasonPlaceholder')}
             required
           />
           <TextField
-            label="Reliquat d'ouverture (€)"
+            label={t('onboarding.opening')}
             inputMode="decimal"
             value={opening}
             onChange={e => setOpening(e.target.value)}
-            hint="Solde reporté de l'exercice précédent."
+            hint={t('onboarding.openingHint')}
           />
           <Button type="submit" block>
-            Commencer
+            {t('onboarding.start')}
           </Button>
         </form>
       </Card>
       <p className="text-center text-xs text-[var(--uwh-text-soft)]">
-        Données stockées localement sur cet appareil. Vous pourrez activer un
-        compte sécurisé (Supabase) plus tard dans les réglages.
+        {t('onboarding.localNote')}
       </p>
     </div>
   );

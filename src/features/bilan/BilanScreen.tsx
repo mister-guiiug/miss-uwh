@@ -19,6 +19,7 @@ import { Button } from '../../shared/components/Button.tsx';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 import { EventsSheet } from '../events/EventsSheet.tsx';
 import type { BilanLine } from '../../shared/lib/engine.ts';
+import { useI18n } from '../../i18n/index.ts';
 
 function Kpi({
   label,
@@ -57,6 +58,7 @@ function LinesTable({
   lines: BilanLine[];
   hideCompensated: boolean;
 }) {
+  const { t } = useI18n();
   const shown = lines.filter(
     l =>
       (l.count > 0 || l.total !== 0) &&
@@ -65,7 +67,7 @@ function LinesTable({
   if (shown.length === 0)
     return (
       <p className="px-1 py-3 text-sm text-[var(--uwh-text-soft)]">
-        Aucune écriture pour l'instant.
+        {t('finances.bilan.noEntries')}
       </p>
     );
   return (
@@ -84,11 +86,13 @@ function LinesTable({
             </p>
             <div className="mt-0.5 flex gap-1.5">
               <span className="text-xs text-[var(--uwh-text-soft)]">
-                {l.count} écriture{l.count > 1 ? 's' : ''}
+                {t('finances.bilan.entryCount', { n: l.count })}
               </span>
-              {l.kind === 'compensee' && <Badge tone="warn">compensée</Badge>}
+              {l.kind === 'compensee' && (
+                <Badge tone="warn">{t('finances.bilan.compensated')}</Badge>
+              )}
               {l.kind === 'regularisation' && (
-                <Badge tone="neutral">régul.</Badge>
+                <Badge tone="neutral">{t('finances.bilan.adjustment')}</Badge>
               )}
             </div>
           </div>
@@ -100,6 +104,7 @@ function LinesTable({
 }
 
 export function BilanScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const club = useAppStore(s => s.data.club);
   const showCompensated = useAppStore(s => s.data.settings.showCompensated);
@@ -113,10 +118,11 @@ export function BilanScreen() {
         <div>
           <h2 className="font-display text-xl font-bold">{club.name}</h2>
           <p className="flex items-center gap-1.5 text-sm text-[var(--uwh-text-soft)]">
-            Saison {season.label}
+            {t('finances.bilan.season', { season: season.label })}
             {season.status === 'cloturee' && (
               <Badge tone="warn">
-                <Lock size={11} aria-hidden="true" /> clôturée
+                <Lock size={11} aria-hidden="true" />{' '}
+                {t('finances.bilan.closed')}
               </Badge>
             )}
           </p>
@@ -124,7 +130,7 @@ export function BilanScreen() {
         <Button
           variant="secondary"
           onClick={() => window.print()}
-          aria-label="Imprimer / PDF"
+          aria-label={t('finances.bilan.printAria')}
         >
           <Printer size={18} aria-hidden="true" />
           PDF
@@ -133,24 +139,24 @@ export function BilanScreen() {
 
       <div className="grid grid-cols-2 gap-3">
         <Kpi
-          label="Total recettes"
+          label={t('finances.bilan.totalIncome')}
           value={bilan.totalRecettes}
           Icon={ArrowUpRight}
         />
         <Kpi
-          label="Total dépenses"
+          label={t('finances.bilan.totalExpenses')}
           value={bilan.totalDepenses}
           Icon={ArrowDownRight}
         />
         <Kpi
-          label="Solde créditeur"
+          label={t('finances.bilan.creditBalance')}
           value={bilan.soldeCrediteur}
           Icon={Scale}
           signed
           accent
         />
         <Kpi
-          label="Résultat d'exploitation"
+          label={t('finances.bilan.operatingResult')}
           value={bilan.resultatExploitation}
           Icon={TrendingUp}
           signed
@@ -160,11 +166,15 @@ export function BilanScreen() {
       <Card className="print-block">
         <div className="mb-1 flex items-center gap-2">
           <Wallet size={16} className="text-primary" aria-hidden="true" />
-          <h3 className="font-display font-bold">Trésorerie</h3>
+          <h3 className="font-display font-bold">
+            {t('finances.bilan.treasury')}
+          </h3>
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="text-[var(--uwh-text-soft)]">
-            Reliquat d'ouverture {bilan.reliquat.toLocaleString('fr-FR')} €
+            {t('finances.bilan.openingBalance', {
+              value: bilan.reliquat.toLocaleString('fr-FR'),
+            })}
           </span>
           <Money value={bilan.tresorerie} />
         </div>
@@ -173,11 +183,13 @@ export function BilanScreen() {
       <Card className="print-block">
         <div className="mb-2 flex items-center gap-2 text-[var(--uwh-credit)]">
           <ArrowUpRight size={16} aria-hidden="true" />
-          <h3 className="font-display font-bold">Recettes</h3>
+          <h3 className="font-display font-bold">
+            {t('finances.bilan.income')}
+          </h3>
         </div>
         <LinesTable lines={bilan.recettes} hideCompensated={hideCompensated} />
         <div className="mt-2 flex items-center justify-between border-t border-[var(--uwh-border)] pt-2 text-sm font-bold">
-          <span>Total recettes (hors reliquat)</span>
+          <span>{t('finances.bilan.totalIncomeExclCarry')}</span>
           <Money value={bilan.totalRecettesHorsReliquat} />
         </div>
       </Card>
@@ -185,11 +197,13 @@ export function BilanScreen() {
       <Card className="print-block">
         <div className="mb-2 flex items-center gap-2 text-[var(--uwh-debit)]">
           <ArrowDownRight size={16} aria-hidden="true" />
-          <h3 className="font-display font-bold">Dépenses</h3>
+          <h3 className="font-display font-bold">
+            {t('finances.bilan.expenses')}
+          </h3>
         </div>
         <LinesTable lines={bilan.depenses} hideCompensated={hideCompensated} />
         <div className="mt-2 flex items-center justify-between border-t border-[var(--uwh-border)] pt-2 text-sm font-bold">
-          <span>Total dépenses</span>
+          <span>{t('finances.bilan.totalExpenses')}</span>
           <Money value={bilan.totalDepenses} />
         </div>
       </Card>
@@ -203,14 +217,17 @@ export function BilanScreen() {
                 className="text-[var(--color-puck)]"
                 aria-hidden="true"
               />
-              <h3 className="font-display font-bold">Résultat par événement</h3>
+              <h3 className="font-display font-bold">
+                {t('finances.bilan.resultByEvent')}
+              </h3>
             </div>
             <Button
               variant="ghost"
-              aria-label="Gérer les événements"
+              aria-label={t('finances.bilan.manageEventsAria')}
               onClick={() => setManageEvents(true)}
             >
-              <Settings2 size={16} aria-hidden="true" /> Gérer
+              <Settings2 size={16} aria-hidden="true" />{' '}
+              {t('finances.bilan.manage')}
             </Button>
           </div>
           <ul className="divide-y divide-[var(--uwh-border)]">
@@ -238,10 +255,10 @@ export function BilanScreen() {
       {events.length === 0 && (
         <Card className="no-print flex items-center justify-between gap-2">
           <span className="text-sm text-[var(--uwh-text-soft)]">
-            Suivez vos événements (TDA, buvette, stage…) et leur résultat net.
+            {t('finances.bilan.eventsHint')}
           </span>
           <Button variant="secondary" onClick={() => setManageEvents(true)}>
-            <Trophy size={16} aria-hidden="true" /> Événements
+            <Trophy size={16} aria-hidden="true" /> {t('finances.bilan.events')}
           </Button>
         </Card>
       )}
@@ -249,12 +266,13 @@ export function BilanScreen() {
       <div className="flex gap-2 no-print">
         <Link to="/finances/journal" className="flex-1">
           <Button variant="secondary" block>
-            <Calculator size={18} aria-hidden="true" /> Voir le journal
+            <Calculator size={18} aria-hidden="true" />{' '}
+            {t('finances.bilan.viewLedger')}
           </Button>
         </Link>
         <Link to="/audit" className="flex-1">
           <Button variant="ghost" block>
-            Journal d'audit
+            {t('finances.bilan.auditLog')}
           </Button>
         </Link>
       </div>

@@ -12,6 +12,7 @@ import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { SelectField, TextField } from '../../shared/components/Field.tsx';
 import { notifySuccess } from '../../shared/lib/toasts.ts';
+import { useI18n } from '../../i18n/index.ts';
 
 /** Rôles autorisés à éditer la config commune (miroir de la RLS ai_config). */
 const SHARED_EDITORS = [
@@ -21,11 +22,6 @@ const SHARED_EDITORS = [
   'entraineur',
   'president',
 ] as const;
-
-const MODEL_PLACEHOLDER: Record<AiProvider, string> = {
-  anthropic: 'claude-opus-4-8 (défaut)',
-  openai: 'gpt-4o',
-};
 
 /**
  * Réglages → « Génération IA ». Deux niveaux :
@@ -40,6 +36,7 @@ export function AiSkillsCard() {
   const updateAiSettings = useAppStore(s => s.updateAiSettings);
   const updateAiClubConfig = useAppStore(s => s.updateAiClubConfig);
   const { roles } = useAuth();
+  const { t } = useI18n();
 
   const provider: AiProvider = ai?.provider ?? 'anthropic';
   const [showKey, setShowKey] = useState(false);
@@ -54,17 +51,13 @@ export function AiSkillsCard() {
     <Card>
       <div className="mb-1 flex items-center gap-2">
         <Sparkles size={16} className="text-primary" aria-hidden="true" />
-        <h3 className="font-display font-bold">Génération IA</h3>
+        <h3 className="font-display font-bold">{t('ai.title')}</h3>
       </div>
-      <p className="mb-3 text-xs text-[var(--uwh-text-soft)]">
-        Génère des exercices d'entraînement par IA (onglet Entraînements →
-        Exercices → « IA »). Votre clé est utilisée directement depuis cet
-        appareil.
-      </p>
+      <p className="mb-3 text-xs text-[var(--uwh-text-soft)]">{t('ai.desc')}</p>
 
       <div className="flex flex-col gap-3">
         <SelectField
-          label="Fournisseur"
+          label={t('ai.provider')}
           value={provider}
           onChange={e =>
             updateAiSettings({ provider: e.target.value as AiProvider })
@@ -79,7 +72,7 @@ export function AiSkillsCard() {
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold" htmlFor="ai-key">
-            Clé API (cet appareil)
+            {t('ai.apiKey')}
           </label>
           <div className="flex gap-2">
             <input
@@ -94,30 +87,33 @@ export function AiSkillsCard() {
             />
             <Button
               variant="secondary"
-              aria-label={showKey ? 'Masquer la clé' : 'Afficher la clé'}
+              aria-label={showKey ? t('ai.hideKey') : t('ai.showKey')}
               onClick={() => setShowKey(v => !v)}
             >
               {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
             </Button>
           </div>
           <p className="text-xs text-[var(--uwh-text-soft)]">
-            ⚠️ Stockée uniquement sur cet appareil (non synchronisée, non
-            partagée). Ne s'affiche jamais aux autres membres.
+            {t('ai.keyNote')}
           </p>
         </div>
 
         <TextField
-          label="Modèle"
+          label={t('ai.model')}
           value={ai?.model ?? ''}
           onChange={e => updateAiSettings({ model: e.target.value })}
-          placeholder={MODEL_PLACEHOLDER[provider]}
+          placeholder={
+            provider === 'anthropic'
+              ? t('ai.modelPlaceholderAnthropic')
+              : 'gpt-4o'
+          }
         />
 
         <TextField
           label={
             provider === 'openai'
-              ? 'URL de l’API (endpoint)'
-              : 'URL de l’API (optionnel)'
+              ? t('ai.apiUrlEndpoint')
+              : t('ai.apiUrlOptional')
           }
           type="url"
           inputMode="url"
@@ -129,26 +125,23 @@ export function AiSkillsCard() {
               : 'https://api.anthropic.com'
           }
           hint={
-            provider === 'openai'
-              ? 'OpenAI, OpenRouter, Mistral, Groq… (compatible /chat/completions).'
-              : 'Laisser vide pour l’API Anthropic officielle.'
+            provider === 'openai' ? t('ai.hintOpenai') : t('ai.hintAnthropic')
           }
         />
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold" htmlFor="ai-user-skills">
-            Vos instructions (cet appareil)
+            {t('ai.userSkills')}
           </label>
           <textarea
             id="ai-user-skills"
             value={ai?.userSkills ?? ''}
             onChange={e => updateAiSettings({ userSkills: e.target.value })}
-            placeholder="Ex. Je privilégie les exercices ludiques pour les jeunes."
+            placeholder={t('ai.userSkillsPlaceholder')}
             className="min-h-20 w-full rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] px-4 py-2 text-[16px] focus:border-primary"
           />
           <p className="text-xs text-[var(--uwh-text-soft)]">
-            Préférences personnelles (partie variable), ajoutées à vos
-            générations uniquement.
+            {t('ai.userSkillsNote')}
           </p>
         </div>
 
@@ -157,7 +150,7 @@ export function AiSkillsCard() {
           <div className="flex items-center gap-1.5">
             <Users size={14} className="text-primary" aria-hidden="true" />
             <label className="text-sm font-semibold" htmlFor="ai-shared-skills">
-              Contexte commun du club
+              {t('ai.sharedTitle')}
             </label>
           </div>
           <textarea
@@ -165,13 +158,11 @@ export function AiSkillsCard() {
             value={draftShared}
             disabled={!canEditShared}
             onChange={e => setDraftShared(e.target.value)}
-            placeholder="Ex. Club de niveau régional. Insister sur l'apnée sécurisée et le jeu collectif. Terminologie FFESSM."
+            placeholder={t('ai.sharedPlaceholder')}
             className="min-h-24 w-full rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface)] px-4 py-2 text-[16px] focus:border-primary disabled:opacity-60"
           />
           <p className="text-xs text-[var(--uwh-text-soft)]">
-            {canEditShared
-              ? 'Partagé avec tout le club (partie fixe). Injecté dans toutes les générations.'
-              : 'Défini par un·e responsable (admin / entraîneur / président). Lecture seule.'}
+            {canEditShared ? t('ai.sharedEditable') : t('ai.sharedReadonly')}
           </p>
           {canEditShared && (
             <Button
@@ -180,10 +171,10 @@ export function AiSkillsCard() {
               disabled={!sharedDirty}
               onClick={() => {
                 updateAiClubConfig(draftShared.trim());
-                notifySuccess('Contexte commun du club enregistré.');
+                notifySuccess(t('ai.savedToast'));
               }}
             >
-              <Save size={16} aria-hidden="true" /> Enregistrer pour tous
+              <Save size={16} aria-hidden="true" /> {t('ai.saveForAll')}
             </Button>
           )}
         </div>

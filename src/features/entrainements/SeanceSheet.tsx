@@ -9,6 +9,7 @@ import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { SelectField, TextField } from '../../shared/components/Field.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+import { useI18n } from '../../i18n/index.ts';
 import { planTotalMinutes } from './sessionPlan.ts';
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function SeanceSheet({ open, session, onClose }: Props) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const adherents = useAppStore(s => s.data.adherents);
   const allExercises = useAppStore(s => s.data.exercises);
@@ -101,21 +103,25 @@ export function SeanceSheet({ open, session, onClose }: Props) {
   return (
     <Sheet
       open={open}
-      title={session ? 'Modifier la séance' : 'Nouvelle séance'}
+      title={
+        session
+          ? t('entrainements.seanceSheet.editTitle')
+          : t('entrainements.seanceSheet.newTitle')
+      }
       onClose={onClose}
       footer={
         <div className="flex gap-2">
           {session && (
             <Button
               variant="danger"
-              aria-label="Supprimer"
+              aria-label={t('common.delete')}
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 size={18} aria-hidden="true" />
             </Button>
           )}
           <Button block onClick={save}>
-            {session ? 'Enregistrer' : 'Ajouter'}
+            {session ? t('common.save') : t('common.add')}
           </Button>
         </div>
       }
@@ -123,30 +129,32 @@ export function SeanceSheet({ open, session, onClose }: Props) {
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
           <TextField
-            label="Date"
+            label={t('common.date')}
             type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
           />
           <TextField
-            label="Lieu (optionnel)"
+            label={t('entrainements.seanceSheet.location')}
             value={location}
             onChange={e => setLocation(e.target.value)}
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <TextField
-            label="Groupe (optionnel)"
+            label={t('entrainements.seanceSheet.group')}
             value={group}
             onChange={e => setGroup(e.target.value)}
-            placeholder="Compét / Loisir / Jeunes"
+            placeholder={t('entrainements.seanceSheet.groupPlaceholder')}
           />
           <SelectField
-            label="Encadrant"
+            label={t('entrainements.seanceSheet.coach')}
             value={coachId}
             onChange={e => setCoachId(e.target.value)}
           >
-            <option value="">— Aucun —</option>
+            <option value="">
+              {t('entrainements.seanceSheet.noneOption')}
+            </option>
             {coaches.map(c => (
               <option key={c.id} value={c.id}>
                 {c.firstName} {c.lastName}
@@ -155,18 +163,19 @@ export function SeanceSheet({ open, session, onClose }: Props) {
           </SelectField>
         </div>
         <TextField
-          label="Thème (optionnel)"
+          label={t('entrainements.seanceSheet.focus')}
           value={focus}
           onChange={e => setFocus(e.target.value)}
         />
 
         <fieldset className="rounded-2xl border border-[var(--uwh-border)] p-3">
           <legend className="px-1 text-xs font-semibold text-[var(--uwh-text-soft)]">
-            Plan de séance{planTotal > 0 ? ` · ${planTotal} min` : ''}
+            {t('entrainements.seanceSheet.plan')}
+            {planTotal > 0 ? ` · ${planTotal} min` : ''}
           </legend>
           {exercises.length === 0 ? (
             <p className="text-xs text-[var(--uwh-text-soft)]">
-              Créez d'abord des exercices dans l'onglet Exercices.
+              {t('entrainements.seanceSheet.noExercises')}
             </p>
           ) : (
             <div className="flex flex-col gap-2">
@@ -181,13 +190,17 @@ export function SeanceSheet({ open, session, onClose }: Props) {
                       >
                         <div className="flex items-center gap-1.5">
                           <span className="min-w-0 flex-1 truncate text-sm font-semibold">
-                            {i + 1}. {ex?.name ?? 'Exercice supprimé'}
+                            {i + 1}.{' '}
+                            {ex?.name ??
+                              t('entrainements.seanceSheet.deletedExercise')}
                           </span>
                           <input
                             type="number"
                             min={0}
                             inputMode="numeric"
-                            aria-label="Durée en minutes"
+                            aria-label={t(
+                              'entrainements.seanceSheet.durationAria'
+                            )}
                             value={it.durationMin ?? ''}
                             placeholder={`${ex?.durationMin ?? 0}`}
                             onChange={e => {
@@ -203,7 +216,7 @@ export function SeanceSheet({ open, session, onClose }: Props) {
                           </span>
                           <button
                             type="button"
-                            aria-label="Monter"
+                            aria-label={t('entrainements.seanceSheet.moveUp')}
                             disabled={i === 0}
                             onClick={() => movePlan(i, -1)}
                             className="text-[var(--uwh-text-soft)] disabled:opacity-30"
@@ -212,7 +225,7 @@ export function SeanceSheet({ open, session, onClose }: Props) {
                           </button>
                           <button
                             type="button"
-                            aria-label="Descendre"
+                            aria-label={t('entrainements.seanceSheet.moveDown')}
                             disabled={i === plan.length - 1}
                             onClick={() => movePlan(i, 1)}
                             className="text-[var(--uwh-text-soft)] disabled:opacity-30"
@@ -221,7 +234,9 @@ export function SeanceSheet({ open, session, onClose }: Props) {
                           </button>
                           <button
                             type="button"
-                            aria-label="Retirer du plan"
+                            aria-label={t(
+                              'entrainements.seanceSheet.removeFromPlan'
+                            )}
                             onClick={() => removeFromPlan(i)}
                             className="text-[var(--uwh-debit)]"
                           >
@@ -233,8 +248,10 @@ export function SeanceSheet({ open, session, onClose }: Props) {
                           onChange={e =>
                             patchPlan(i, { notes: e.target.value })
                           }
-                          placeholder="Consigne / variante (optionnel)"
-                          aria-label="Consigne de l'exercice"
+                          placeholder={t(
+                            'entrainements.seanceSheet.notePlaceholder'
+                          )}
+                          aria-label={t('entrainements.seanceSheet.noteAria')}
                           className="mt-1.5 w-full rounded-lg bg-[var(--uwh-surface-2)] px-2 py-1 text-xs"
                         />
                       </li>
@@ -244,13 +261,15 @@ export function SeanceSheet({ open, session, onClose }: Props) {
               )}
               <select
                 value=""
-                aria-label="Ajouter un exercice au plan"
+                aria-label={t('entrainements.seanceSheet.addExerciseAria')}
                 onChange={e => {
                   if (e.target.value) addToPlan(e.target.value);
                 }}
                 className="min-h-10 rounded-xl border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] px-3 text-sm"
               >
-                <option value="">+ Ajouter un exercice…</option>
+                <option value="">
+                  {t('entrainements.seanceSheet.addExerciseOption')}
+                </option>
                 {exercises.map(ex => (
                   <option key={ex.id} value={ex.id}>
                     {ex.name}
@@ -264,7 +283,7 @@ export function SeanceSheet({ open, session, onClose }: Props) {
 
         <fieldset className="rounded-2xl border border-[var(--uwh-border)] p-3">
           <legend className="px-1 text-xs font-semibold text-[var(--uwh-text-soft)]">
-            Présences
+            {t('entrainements.seanceSheet.attendance')}
           </legend>
           <div className="flex flex-wrap gap-2">
             {members.map(m => {
@@ -291,16 +310,16 @@ export function SeanceSheet({ open, session, onClose }: Props) {
 
       <ConfirmDialog
         open={confirmDelete}
-        title="Supprimer cette séance ?"
+        title={t('entrainements.seanceSheet.deleteTitle')}
         danger
-        confirmLabel="Supprimer"
+        confirmLabel={t('common.delete')}
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (session) deleteTrainingSession(session.id);
           onClose();
         }}
       >
-        La séance sera retirée du planning.
+        {t('entrainements.seanceSheet.deleteBody')}
       </ConfirmDialog>
     </Sheet>
   );

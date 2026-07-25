@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Megaphone, Pin, Plus } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Announcement } from '../../shared/types/domain.ts';
+import { useI18n } from '../../i18n/index.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
@@ -9,6 +10,7 @@ import { AnnouncementSheet } from './AnnouncementSheet.tsx';
 
 /** Annonces / actualités / convocations du club (épinglées en tête). */
 export function AnnoncesScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.announcements);
   const [editing, setEditing] = useState<Announcement | null>(null);
@@ -31,16 +33,17 @@ export function AnnoncesScreen() {
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-lg font-bold">
-          {rows.length} annonce{rows.length > 1 ? 's' : ''}
+          {t('vieclub.annonces.count', { n: rows.length })}
         </h2>
         <Button onClick={() => setCreating(true)}>
-          <Plus size={18} aria-hidden="true" /> Annonce
+          <Plus size={18} aria-hidden="true" />{' '}
+          {t('vieclub.annonces.addButton')}
         </Button>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Megaphone} title="Aucune annonce">
-          Publiez actualités et convocations pour les adhérents.
+        <EmptyState Icon={Megaphone} title={t('vieclub.annonces.emptyTitle')}>
+          {t('vieclub.annonces.emptyBody')}
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-1.5">

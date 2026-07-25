@@ -6,11 +6,13 @@ import { formatDateShort } from '../../shared/lib/format.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { useI18n } from '../../i18n/index.ts';
 import { SeanceSheet } from './SeanceSheet.tsx';
 import { planTotalMinutes } from './sessionPlan.ts';
 
 /** Planning des séances d'entraînement et suivi des présences. */
 export function SeancesScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.trainingSessions);
   const exercises = useAppStore(s => s.data.exercises);
@@ -29,17 +31,19 @@ export function SeancesScreen() {
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-lg font-bold">
-          {rows.length} séance{rows.length > 1 ? 's' : ''}
+          {t('entrainements.seances.count', { n: rows.length })}
         </h2>
         <Button onClick={() => setCreating(true)}>
-          <Plus size={18} aria-hidden="true" /> Séance
+          <Plus size={18} aria-hidden="true" /> {t('entrainements.seances.add')}
         </Button>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={CalendarClock} title="Aucune séance">
-          Planifiez les entraînements et leurs présences pour la saison{' '}
-          {season.label}.
+        <EmptyState
+          Icon={CalendarClock}
+          title={t('entrainements.seances.emptyTitle')}
+        >
+          {t('entrainements.seances.emptyBody', { season: season.label })}
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -64,15 +68,18 @@ export function SeancesScreen() {
                     {s.plan && s.plan.length > 0 && (
                       <span className="inline-flex items-center gap-1">
                         <ListChecks size={11} aria-hidden="true" />
-                        {s.plan.length} exo{s.plan.length > 1 ? 's' : ''}
+                        {t('entrainements.seances.drills', {
+                          n: s.plan.length,
+                        })}
                         {planTotalMinutes(s.plan, exercises) > 0 &&
                           ` · ${planTotalMinutes(s.plan, exercises)} min`}
                       </span>
                     )}
                     <span className="inline-flex items-center gap-1">
                       <Users size={11} aria-hidden="true" />
-                      {s.attendance.length} présent
-                      {s.attendance.length > 1 ? 's' : ''}
+                      {t('entrainements.seances.attendees', {
+                        n: s.attendance.length,
+                      })}
                     </span>
                   </p>
                 </div>

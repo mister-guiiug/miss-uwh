@@ -15,8 +15,10 @@ import { Sheet } from '../../shared/components/Sheet.tsx';
 import { TextField } from '../../shared/components/Field.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
 import { Badge, Money } from '../../shared/components/badges.tsx';
+import { useI18n } from '../../i18n/index.ts';
 
 export function SeasonsScreen() {
+  const { t } = useI18n();
   const seasons = useAppStore(s => s.data.seasons);
   const entries = useAppStore(s => s.data.entries);
   const activeId = useAppStore(s => s.data.activeSeasonId);
@@ -38,9 +40,12 @@ export function SeasonsScreen() {
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-lg font-bold">Saisons</h2>
+        <h2 className="font-display text-lg font-bold">
+          {t('finances.seasons.title')}
+        </h2>
         <Button onClick={() => setCreating(true)}>
-          <CalendarPlus size={18} aria-hidden="true" /> Nouvelle
+          <CalendarPlus size={18} aria-hidden="true" />{' '}
+          {t('finances.seasons.new')}
         </Button>
       </div>
 
@@ -56,20 +61,31 @@ export function SeasonsScreen() {
                   {season.label}
                   {closed ? (
                     <Badge tone="warn">
-                      <Lock size={11} aria-hidden="true" /> clôturée
+                      <Lock size={11} aria-hidden="true" />{' '}
+                      {t('finances.seasons.closed')}
                     </Badge>
                   ) : (
-                    <Badge tone="credit">ouverte</Badge>
+                    <Badge tone="credit">{t('finances.seasons.open')}</Badge>
                   )}
-                  {isActive && <Badge tone="primary">active</Badge>}
+                  {isActive && (
+                    <Badge tone="primary">{t('finances.seasons.active')}</Badge>
+                  )}
                 </p>
                 <p className="mt-0.5 text-xs text-[var(--uwh-text-soft)]">
-                  Reliquat {season.openingBalance.toLocaleString('fr-FR')} € ·{' '}
-                  {season.reopenReason && `rouverte : ${season.reopenReason}`}
+                  {t('finances.seasons.carryOver', {
+                    value: season.openingBalance.toLocaleString('fr-FR'),
+                  })}{' '}
+                  ·{' '}
+                  {season.reopenReason &&
+                    t('finances.seasons.reopenedReason', {
+                      reason: season.reopenReason,
+                    })}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-[var(--uwh-text-soft)]">Solde</p>
+                <p className="text-xs text-[var(--uwh-text-soft)]">
+                  {t('finances.seasons.balance')}
+                </p>
                 <Money value={bilan.soldeCrediteur} signed />
               </div>
             </div>
@@ -80,16 +96,19 @@ export function SeasonsScreen() {
                   variant="secondary"
                   onClick={() => setActiveSeason(season.id)}
                 >
-                  <Check size={16} aria-hidden="true" /> Activer
+                  <Check size={16} aria-hidden="true" />{' '}
+                  {t('finances.seasons.activate')}
                 </Button>
               )}
               {!closed ? (
                 <Button variant="secondary" onClick={() => setClosing(season)}>
-                  <Lock size={16} aria-hidden="true" /> Clôturer
+                  <Lock size={16} aria-hidden="true" />{' '}
+                  {t('finances.seasons.close')}
                 </Button>
               ) : (
                 <Button variant="ghost" onClick={() => setReopening(season)}>
-                  <LockOpen size={16} aria-hidden="true" /> Rouvrir
+                  <LockOpen size={16} aria-hidden="true" />{' '}
+                  {t('finances.seasons.reopen')}
                 </Button>
               )}
             </div>
@@ -106,7 +125,7 @@ export function SeasonsScreen() {
                       className="inline-flex items-center gap-1 rounded-full bg-[var(--uwh-surface-2)] px-2.5 py-1 text-xs font-semibold text-[var(--uwh-text-soft)]"
                     >
                       <ArrowRightLeft size={12} aria-hidden="true" />
-                      Reporter vers {target.label}
+                      {t('finances.seasons.carryTo', { target: target.label })}
                     </button>
                   ))}
               </div>
@@ -117,18 +136,18 @@ export function SeasonsScreen() {
 
       <Sheet
         open={creating}
-        title="Nouvelle saison"
+        title={t('finances.seasons.newTitle')}
         onClose={() => setCreating(false)}
       >
         <div className="flex flex-col gap-4">
           <TextField
-            label="Libellé"
+            label={t('finances.seasons.label')}
             value={newLabel}
             onChange={e => setNewLabel(e.target.value)}
-            placeholder="2026-2027"
+            placeholder={t('finances.seasons.labelPlaceholder')}
           />
           <TextField
-            label="Reliquat d'ouverture (€)"
+            label={t('finances.seasons.opening')}
             inputMode="decimal"
             value={newOpening}
             onChange={e => setNewOpening(e.target.value)}
@@ -146,39 +165,41 @@ export function SeasonsScreen() {
               setCreating(false);
             }}
           >
-            Créer et activer
+            {t('finances.seasons.createActivate')}
           </Button>
         </div>
       </Sheet>
 
       <ConfirmDialog
         open={!!closing}
-        title={`Clôturer la saison ${closing?.label} ?`}
-        confirmLabel="Clôturer et verrouiller"
+        title={t('finances.seasons.closeConfirmTitle', {
+          label: closing?.label ?? '',
+        })}
+        confirmLabel={t('finances.seasons.closeConfirmLabel')}
         onClose={() => setClosing(null)}
         onConfirm={() => closing && closeSeason(closing.id)}
       >
-        Le journal sera <strong>verrouillé</strong> : plus aucune saisie,
-        modification ou suppression. Le solde de clôture sera figé et la clôture
-        tracée dans le journal d'audit. Une réouverture exceptionnelle reste
-        possible (avec motif).
+        {t('finances.seasons.closeInfoBefore')}
+        <strong>{t('finances.seasons.closeInfoStrong')}</strong>
+        {t('finances.seasons.closeInfoAfter')}
       </ConfirmDialog>
 
       <Sheet
         open={!!reopening}
-        title={`Rouvrir la saison ${reopening?.label}`}
+        title={t('finances.seasons.reopenTitle', {
+          label: reopening?.label ?? '',
+        })}
         onClose={() => setReopening(null)}
       >
         <div className="flex flex-col gap-4">
           <p className="text-sm text-[var(--uwh-text-soft)]">
-            La réouverture est exceptionnelle et tracée (audit sécurité).
-            Indiquez un motif.
+            {t('finances.seasons.reopenInfo')}
           </p>
           <TextField
-            label="Motif de réouverture"
+            label={t('finances.seasons.reopenReasonLabel')}
             value={reopenReason}
             onChange={e => setReopenReason(e.target.value)}
-            placeholder="Correction d'une écriture omise"
+            placeholder={t('finances.seasons.reopenReasonPlaceholder')}
           />
           <Button
             block
@@ -189,7 +210,7 @@ export function SeasonsScreen() {
               setReopening(null);
             }}
           >
-            Rouvrir la saison
+            {t('finances.seasons.reopenButton')}
           </Button>
         </div>
       </Sheet>

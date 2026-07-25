@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { CloudOff, Info, RefreshCw, TriangleAlert } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore.ts';
+import { useI18n } from '../i18n/index.ts';
 import { IS_SUPABASE } from './config.ts';
 import { retryDeadOps, retrySync } from './sync.ts';
 
@@ -18,6 +19,7 @@ const ACTION_CLASS =
  */
 export function SyncBanner() {
   const sync = useAppStore(s => s.syncStatus);
+  const { t } = useI18n();
 
   if (!IS_SUPABASE) return null;
   if (sync.state === 'idle' || sync.state === 'ready') return null;
@@ -27,27 +29,29 @@ export function SyncBanner() {
 
   let background = 'var(--color-primary)';
   let icon = <Info size={14} aria-hidden="true" className="shrink-0" />;
-  let message = 'Synchronisation…';
+  let message = t('sync.syncing');
   let showRetry = false;
 
   if (sync.state === 'offline') {
     const offline =
       typeof navigator !== 'undefined' && navigator.onLine === false;
-    const cause = offline ? 'Hors ligne' : 'Serveur injoignable';
+    const cause = offline ? t('sync.offline') : t('sync.unreachable');
     background = 'var(--uwh-warn)';
     icon = <CloudOff size={14} aria-hidden="true" className="shrink-0" />;
     message =
       pending > 0
-        ? `${cause} — ${pending} modification(s) en attente d'envoi`
-        : `${cause} — vos données restent disponibles`;
+        ? t('sync.offlinePending', { cause, n: pending })
+        : t('sync.offlineAvailable', { cause });
     showRetry = true;
   } else if (sync.state === 'error') {
     background = 'var(--uwh-debit)';
     icon = <TriangleAlert size={14} aria-hidden="true" className="shrink-0" />;
     message =
       dead > 0
-        ? `Synchronisation incomplète : ${sync.error}`
-        : `Synchronisation interrompue${sync.error ? ` : ${sync.error}` : ''}`;
+        ? t('sync.incomplete', { error: sync.error ?? '' })
+        : sync.error
+          ? t('sync.interruptedError', { error: sync.error })
+          : t('sync.interrupted');
     showRetry = true;
   } else {
     icon = (
@@ -75,11 +79,11 @@ export function SyncBanner() {
             onClick={() => void (dead > 0 ? retryDeadOps() : retrySync())}
             className={ACTION_CLASS}
           >
-            <RefreshCw size={12} aria-hidden="true" /> Réessayer
+            <RefreshCw size={12} aria-hidden="true" /> {t('common.retry')}
           </button>
           {dead > 0 && (
             <Link to="/settings" className={ACTION_CLASS}>
-              Détails
+              {t('common.details')}
             </Link>
           )}
         </span>

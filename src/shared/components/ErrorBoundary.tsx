@@ -3,6 +3,7 @@ import { AlertTriangle, Download, Home, RotateCcw } from 'lucide-react';
 import { recordError } from '@mister-guiiug/dev-wpa-config/react/observability';
 import { STORAGE_KEY } from '../lib/storage.ts';
 import { Button } from './Button.tsx';
+import { useI18n } from '../../i18n/index.ts';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -79,6 +80,7 @@ function AppFallback({
   error: Error;
   onRetry: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col items-center justify-center gap-5 p-6 text-center">
       <AlertTriangle
@@ -88,19 +90,18 @@ function AppFallback({
       />
       <div className="space-y-2">
         <h1 className="font-display text-xl font-bold">
-          Une erreur inattendue est survenue
+          {t('errors.app.title')}
         </h1>
         <p className="text-sm text-[var(--uwh-text-soft)]">
-          Vos données restent enregistrées sur cet appareil. Téléchargez une
-          sauvegarde par précaution, puis rechargez l'application.
+          {t('errors.app.body')}
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
         <Button onClick={downloadBackup} variant="secondary">
-          <Download size={18} aria-hidden="true" /> Télécharger mes données
+          <Download size={18} aria-hidden="true" /> {t('errors.app.download')}
         </Button>
         <Button onClick={() => window.location.reload()}>
-          <RotateCcw size={18} aria-hidden="true" /> Recharger l'application
+          <RotateCcw size={18} aria-hidden="true" /> {t('errors.app.reload')}
         </Button>
       </div>
       <button
@@ -108,11 +109,11 @@ function AppFallback({
         onClick={onRetry}
         className="text-xs text-[var(--uwh-text-soft)] underline"
       >
-        Réessayer sans recharger
+        {t('errors.app.retryNoReload')}
       </button>
       <details className="w-full max-w-md text-left">
         <summary className="cursor-pointer text-xs text-[var(--uwh-text-soft)]">
-          Détails techniques
+          {t('errors.app.technical')}
         </summary>
         <pre className="mt-2 overflow-auto rounded-xl bg-[var(--uwh-surface-2)] p-3 text-left text-xs">
           {error.message}
@@ -123,6 +124,7 @@ function AppFallback({
 }
 
 function RouteFallback({ onRetry }: { onRetry: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-col items-center gap-4 p-8 text-center">
       <AlertTriangle
@@ -131,18 +133,18 @@ function RouteFallback({ onRetry }: { onRetry: () => void }) {
         aria-hidden="true"
       />
       <p className="text-sm text-[var(--uwh-text-soft)]">
-        Cet écran a rencontré un problème. L'application reste utilisable.
+        {t('errors.route.body')}
       </p>
       <div className="flex items-center gap-2">
         <Button variant="secondary" onClick={onRetry}>
-          <RotateCcw size={18} aria-hidden="true" /> Réessayer
+          <RotateCcw size={18} aria-hidden="true" /> {t('common.retry')}
         </Button>
         <Button
           onClick={() => {
             window.location.hash = '#/';
           }}
         >
-          <Home size={18} aria-hidden="true" /> Accueil
+          <Home size={18} aria-hidden="true" /> {t('common.home')}
         </Button>
       </div>
     </div>

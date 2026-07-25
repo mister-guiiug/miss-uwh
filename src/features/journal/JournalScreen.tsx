@@ -13,10 +13,10 @@ import { runningBalances } from '../../shared/lib/engine.ts';
 import { allCategories, categoryByCode } from '../../shared/lib/categories.ts';
 import {
   PAYMENT_METHODS,
-  PAYMENT_METHOD_LABELS,
   type JournalEntry,
 } from '../../shared/types/domain.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { Money } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
@@ -31,6 +31,7 @@ const controlClass =
   'min-h-10 rounded-xl border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] px-2 text-sm';
 
 export function JournalScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const allEntries = useAppStore(s => s.data.entries);
   const allEvents = useAppStore(s => s.data.events);
@@ -98,17 +99,19 @@ export function JournalScreen() {
       <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="font-display text-lg font-bold">
-            {active.length} écriture{active.length > 1 ? 's' : ''}
+            {t('finances.journal.entryCount', { n: active.length })}
           </h2>
           <p className="text-xs text-[var(--uwh-text-soft)]">
-            {reconciledCount}/{active.length} pointée
-            {reconciledCount > 1 ? 's' : ''}
+            {t('finances.journal.reconciledCount', {
+              done: reconciledCount,
+              total: active.length,
+            })}
           </p>
         </div>
         <div className="flex gap-2">
           <Button
             variant="secondary"
-            aria-label="Rapprochement bancaire"
+            aria-label={t('finances.journal.reconcileAria')}
             onClick={() => setReconcile(true)}
           >
             <Landmark size={18} aria-hidden="true" />
@@ -117,7 +120,8 @@ export function JournalScreen() {
             onClick={() => setCreating(true)}
             disabled={season.status === 'cloturee'}
           >
-            <Plus size={18} aria-hidden="true" /> Écriture
+            <Plus size={18} aria-hidden="true" />{' '}
+            {t('finances.journal.addEntry')}
           </Button>
         </div>
       </div>
@@ -132,14 +136,14 @@ export function JournalScreen() {
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Rechercher…"
-            aria-label="Rechercher dans le journal"
+            placeholder={t('finances.journal.searchPlaceholder')}
+            aria-label={t('finances.journal.searchAria')}
             className="min-h-10 w-full rounded-full border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] pl-9 pr-3 text-sm"
           />
         </div>
         <Button
           variant={showFilters ? 'primary' : 'secondary'}
-          aria-label="Filtres avancés"
+          aria-label={t('finances.journal.filtersAria')}
           aria-pressed={showFilters}
           onClick={() => setShowFilters(v => !v)}
         >
@@ -150,32 +154,32 @@ export function JournalScreen() {
       {showFilters && (
         <div className="grid grid-cols-2 gap-2 rounded-2xl border border-[var(--uwh-border)] p-3">
           <select
-            aria-label="Sens"
+            aria-label={t('finances.journal.sensAria')}
             className={controlClass}
             value={sensFilter}
             onChange={e => setSensFilter(e.target.value as SensFilter)}
           >
-            <option value="all">Tout sens</option>
-            <option value="credit">Recettes</option>
-            <option value="debit">Dépenses</option>
+            <option value="all">{t('finances.journal.allSens')}</option>
+            <option value="credit">{t('finances.journal.income')}</option>
+            <option value="debit">{t('finances.journal.expenses')}</option>
           </select>
           <select
-            aria-label="Pointage"
+            aria-label={t('finances.journal.reconciliationAria')}
             className={controlClass}
             value={recFilter}
             onChange={e => setRecFilter(e.target.value as RecFilter)}
           >
-            <option value="all">Pointage : tout</option>
-            <option value="yes">Pointées</option>
-            <option value="no">Non pointées</option>
+            <option value="all">{t('finances.journal.recAll')}</option>
+            <option value="yes">{t('finances.journal.recYes')}</option>
+            <option value="no">{t('finances.journal.recNo')}</option>
           </select>
           <select
-            aria-label="Catégorie"
+            aria-label={t('common.category')}
             className={controlClass}
             value={category}
             onChange={e => setCategory(e.target.value)}
           >
-            <option value="">Toutes catégories</option>
+            <option value="">{t('finances.journal.allCategories')}</option>
             {allCategories().map(c => (
               <option key={c.code} value={c.code}>
                 {c.code} — {c.label}
@@ -183,26 +187,26 @@ export function JournalScreen() {
             ))}
           </select>
           <select
-            aria-label="Mode de règlement"
+            aria-label={t('finances.journal.methodAria')}
             className={controlClass}
             value={method}
             onChange={e => setMethod(e.target.value)}
           >
-            <option value="">Tous modes</option>
+            <option value="">{t('finances.journal.allMethods')}</option>
             {PAYMENT_METHODS.map(m => (
               <option key={m} value={m}>
-                {PAYMENT_METHOD_LABELS[m]}
+                {t(`enums.paymentMethod.${m}` as TKey)}
               </option>
             ))}
           </select>
           {events.length > 0 && (
             <select
-              aria-label="Événement"
+              aria-label={t('finances.journal.eventAria')}
               className={`${controlClass} col-span-2`}
               value={eventId}
               onChange={e => setEventId(e.target.value)}
             >
-              <option value="">Tous événements</option>
+              <option value="">{t('finances.journal.allEvents')}</option>
               {events.map(ev => (
                 <option key={ev.id} value={ev.id}>
                   {ev.name}
@@ -211,7 +215,7 @@ export function JournalScreen() {
             </select>
           )}
           <label className="flex flex-col gap-0.5 text-xs text-[var(--uwh-text-soft)]">
-            Du
+            {t('finances.journal.dateFrom')}
             <input
               type="date"
               className={controlClass}
@@ -220,7 +224,7 @@ export function JournalScreen() {
             />
           </label>
           <label className="flex flex-col gap-0.5 text-xs text-[var(--uwh-text-soft)]">
-            Au
+            {t('finances.journal.dateTo')}
             <input
               type="date"
               className={controlClass}
@@ -232,15 +236,15 @@ export function JournalScreen() {
       )}
 
       {rows.length === 0 ? (
-        <EmptyState Icon={ScrollText} title="Aucune écriture">
-          Ajustez les filtres, ajoutez une écriture, ou importez votre Excel.
+        <EmptyState Icon={ScrollText} title={t('finances.journal.emptyTitle')}>
+          {t('finances.journal.emptyBody')}
         </EmptyState>
       ) : (
         <VirtualList
           items={rows}
           getKey={({ entry }) => entry.id}
           estimateRowHeight={64}
-          ariaLabel="Journal des écritures"
+          ariaLabel={t('finances.journal.listAria')}
         >
           {({ entry, solde }) => {
             const cat = categoryByCode(entry.categoryCode);
@@ -249,7 +253,11 @@ export function JournalScreen() {
                 <button
                   onClick={() => setReconciled(entry.id, !entry.reconciled)}
                   disabled={season.status === 'cloturee'}
-                  aria-label={entry.reconciled ? 'Dépointer' : 'Pointer'}
+                  aria-label={
+                    entry.reconciled
+                      ? t('finances.journal.unreconcile')
+                      : t('finances.journal.reconcile')
+                  }
                   aria-pressed={!!entry.reconciled}
                   className="flex shrink-0 items-center justify-center rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface)] px-3 disabled:opacity-70"
                 >
@@ -292,11 +300,13 @@ export function JournalScreen() {
                       <span className="truncate">
                         {cat ? `${cat.label} · ` : ''}
                         {formatDateShort(entry.date)} ·{' '}
-                        {PAYMENT_METHOD_LABELS[entry.method]}
+                        {t(`enums.paymentMethod.${entry.method}` as TKey)}
                       </span>
                     </span>
                     <span className="tnum shrink-0">
-                      solde {solde.toLocaleString('fr-FR')} €
+                      {t('finances.journal.balanceCell', {
+                        value: solde.toLocaleString('fr-FR'),
+                      })}
                     </span>
                   </div>
                 </button>

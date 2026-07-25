@@ -3,6 +3,7 @@ import { Check, Coins, Download, FileText, Mail, X } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { formatEuro } from '../../shared/lib/format.ts';
 import type { Adherent } from '../../shared/types/domain.ts';
+import { useI18n } from '../../i18n/index.ts';
 import { IS_SUPABASE } from '../../backend/config.ts';
 import { importFromHelloAsso } from '../../backend/helloasso.ts';
 import { printAttestations } from '../export/attestation.ts';
@@ -13,6 +14,7 @@ import { CotisationSheet } from './CotisationSheet.tsx';
 
 /** Suivi des cotisations (montant dû/réglé) par membre sur la saison active. */
 export function CotisationsScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.adherents);
   const club = useAppStore(s => s.data.club);
@@ -28,12 +30,19 @@ export function CotisationsScreen() {
     try {
       const r = await importFromHelloAsso(season.id, helloAsso);
       setImportMsg(
-        `HelloAsso : ${r.imported} ajout(s), ${r.updated} mise(s) à jour` +
-          (r.skipped ? `, ${r.skipped} ignoré(s)` : '') +
+        t('adherents.cotisations.importResult', {
+          imported: r.imported,
+          updated: r.updated,
+        }) +
+          (r.skipped
+            ? t('adherents.cotisations.importSkipped', { skipped: r.skipped })
+            : '') +
           '.'
       );
     } catch (e) {
-      setImportMsg(e instanceof Error ? e.message : 'Import impossible.');
+      setImportMsg(
+        e instanceof Error ? e.message : t('adherents.cotisations.importFailed')
+      );
     } finally {
       setImporting(false);
     }
@@ -95,11 +104,14 @@ export function CotisationsScreen() {
 
   function relancerImpayes() {
     if (unpaidEmails.length === 0) return;
-    const subject = `Rappel de cotisation — ${club.name} (${season.label})`;
-    const body =
-      `Bonjour,\n\nSauf erreur de notre part, votre cotisation pour la saison ` +
-      `${season.label} n'a pas encore été réglée. Merci de bien vouloir la ` +
-      `régulariser.\n\nSportivement,\n${club.treasurer || club.name}`;
+    const subject = t('adherents.cotisations.reminderSubject', {
+      club: club.name,
+      season: season.label,
+    });
+    const body = t('adherents.cotisations.reminderBody', {
+      season: season.label,
+      signature: club.treasurer || club.name,
+    });
     const href =
       `mailto:?bcc=${encodeURIComponent(unpaidEmails.join(','))}` +
       `&subject=${encodeURIComponent(subject)}` +
@@ -111,15 +123,19 @@ export function CotisationsScreen() {
     <div className="flex flex-col gap-3 p-4">
       <div className="rounded-2xl bg-[var(--uwh-surface-2)] p-3 text-sm">
         <div className="flex flex-wrap gap-1.5">
-          <Badge tone="credit">{summary.paidCount} à jour</Badge>
+          <Badge tone="credit">
+            {t('adherents.cotisations.paidCount', { n: summary.paidCount })}
+          </Badge>
           {summary.unpaid > 0 && (
             <Badge tone="warn">
-              {summary.unpaid} impayé{summary.unpaid > 1 ? 's' : ''}
+              {t('adherents.cotisations.unpaidCount', { n: summary.unpaid })}
             </Badge>
           )}
         </div>
         <p className="mt-2 text-[var(--uwh-text-soft)]">
-          Encaissé <strong>{formatEuro(summary.collected)}</strong> / attendu{' '}
+          {t('adherents.cotisations.collected')}{' '}
+          <strong>{formatEuro(summary.collected)}</strong> /{' '}
+          {t('adherents.cotisations.expected')}{' '}
           <strong>{formatEuro(summary.total)}</strong>
         </p>
       </div>
@@ -131,13 +147,16 @@ export function CotisationsScreen() {
             disabled={unpaidEmails.length === 0}
             onClick={relancerImpayes}
           >
-            <Mail size={16} aria-hidden="true" /> Relancer les impayés (
-            {unpaidEmails.length})
+            <Mail size={16} aria-hidden="true" />{' '}
+            {t('adherents.cotisations.remindUnpaid', {
+              n: unpaidEmails.length,
+            })}
           </Button>
           {unpaidEmails.length < summary.unpaid && (
             <p className="text-xs text-[var(--uwh-text-soft)]">
-              {summary.unpaid - unpaidEmails.length} impayé(s) sans email — à
-              contacter autrement.
+              {t('adherents.cotisations.unpaidNoEmail', {
+                n: summary.unpaid - unpaidEmails.length,
+              })}
             </p>
           )}
         </div>
@@ -145,8 +164,8 @@ export function CotisationsScreen() {
 
       {summary.paidCount > 0 && (
         <Button variant="secondary" onClick={printRecus}>
-          <FileText size={16} aria-hidden="true" /> Attestations des cotisations
-          payées ({summary.paidCount})
+          <FileText size={16} aria-hidden="true" />{' '}
+          {t('adherents.cotisations.receipts', { n: summary.paidCount })}
         </Button>
       )}
 
@@ -158,12 +177,13 @@ export function CotisationsScreen() {
             onClick={() => void runHelloAsso()}
           >
             <Download size={16} aria-hidden="true" />
-            {importing ? 'Import en cours…' : 'Importer depuis HelloAsso'}
+            {importing
+              ? t('adherents.cotisations.importing')
+              : t('adherents.cotisations.importHelloAsso')}
           </Button>
           {(!helloAsso?.orgSlug || !helloAsso?.formSlug) && (
             <p className="text-xs text-[var(--uwh-text-soft)]">
-              Renseignez l'organisation et le formulaire dans Réglages →
-              Intégration HelloAsso.
+              {t('adherents.cotisations.helloAssoHint')}
             </p>
           )}
           {importMsg && (
@@ -173,8 +193,8 @@ export function CotisationsScreen() {
       )}
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Coins} title="Aucune cotisation">
-          Ajoutez des membres dans l'onglet Membres.
+        <EmptyState Icon={Coins} title={t('adherents.cotisations.emptyTitle')}>
+          {t('adherents.cotisations.emptyHint')}
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -182,7 +202,11 @@ export function CotisationsScreen() {
             <li key={a.id} className="flex items-stretch gap-1.5">
               <button
                 onClick={() => updateAdherent(a.id, { paid: !a.paid })}
-                aria-label={a.paid ? 'Marquer impayé' : 'Marquer réglé'}
+                aria-label={
+                  a.paid
+                    ? t('adherents.cotisations.markUnpaid')
+                    : t('adherents.cotisations.markPaid')
+                }
                 aria-pressed={a.paid}
                 className="flex shrink-0 items-center justify-center rounded-2xl border border-[var(--uwh-border)] bg-[var(--uwh-surface)] px-3"
               >

@@ -1,5 +1,6 @@
 import { Hammer } from 'lucide-react';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { useI18n } from '../../i18n/index.ts';
 
 /**
  * Écran d'attente pour les menus des lens non encore implémentés (scaffolding
@@ -12,10 +13,11 @@ export function PlaceholderScreen({
   title: string;
   note?: string;
 }) {
+  const { t } = useI18n();
   return (
     <div className="p-4">
       <EmptyState Icon={Hammer} title={title}>
-        {note ?? 'Cet écran arrive dans un prochain lot.'}
+        {note ?? t('common.comingSoon')}
       </EmptyState>
     </div>
   );

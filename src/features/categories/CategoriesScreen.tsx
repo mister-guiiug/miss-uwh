@@ -4,6 +4,7 @@ import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { CATEGORIES } from '../../shared/lib/categories.ts';
 import { categoryNet, isActive } from '../../shared/lib/engine.ts';
 import type { Category, Sens } from '../../shared/types/domain.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { SelectField, TextField } from '../../shared/components/Field.tsx';
@@ -34,6 +35,7 @@ function CategoryRow({
   onOpen,
   onDelete,
 }: RowProps) {
+  const { t } = useI18n();
   const ecart =
     budget != null ? Math.round((total - budget) * 100) / 100 : null;
   // Dépassement = dépense au-dessus du budget ; sous-réalisation = recette en deçà.
@@ -60,14 +62,16 @@ function CategoryRow({
           </p>
           <div className="mt-0.5 flex gap-1.5">
             {count === 0 ? (
-              <Badge tone="warn">à compléter</Badge>
+              <Badge tone="warn">{t('finances.categories.toComplete')}</Badge>
             ) : (
               <span className="text-xs text-[var(--uwh-text-soft)]">
-                {count} écriture{count > 1 ? 's' : ''}
+                {t('finances.categories.entryCount', { n: count })}
               </span>
             )}
             {cat.kind !== 'exploitation' && (
-              <Badge tone="neutral">{cat.kind}</Badge>
+              <Badge tone="neutral">
+                {t(`enums.categoryKind.${cat.kind}` as TKey)}
+              </Badge>
             )}
           </div>
         </button>
@@ -75,7 +79,9 @@ function CategoryRow({
         {onDelete && (
           <button
             onClick={onDelete}
-            aria-label={`Supprimer la catégorie ${cat.code}`}
+            aria-label={t('finances.categories.deleteCategoryAria', {
+              code: cat.code,
+            })}
             className="shrink-0 text-[var(--uwh-debit)]"
           >
             <Trash2 size={15} aria-hidden="true" />
@@ -85,10 +91,12 @@ function CategoryRow({
 
       {showBudget && (
         <div className="mt-1.5 flex items-center gap-2 text-xs">
-          <span className="text-[var(--uwh-text-soft)]">Budget</span>
+          <span className="text-[var(--uwh-text-soft)]">
+            {t('finances.categories.budget')}
+          </span>
           <input
             inputMode="decimal"
-            aria-label={`Budget ${cat.code}`}
+            aria-label={t('finances.categories.budgetAria', { code: cat.code })}
             disabled={!editable}
             defaultValue={budget ? String(budget) : ''}
             onBlur={e =>
@@ -99,8 +107,9 @@ function CategoryRow({
           />
           {ecart != null && budget !== 0 && (
             <Badge tone={tone}>
-              écart {ecart > 0 ? '+' : ''}
-              {ecart.toLocaleString('fr-FR')} €
+              {t('finances.categories.variance', {
+                value: `${ecart > 0 ? '+' : ''}${ecart.toLocaleString('fr-FR')}`,
+              })}
             </Badge>
           )}
         </div>
@@ -110,6 +119,7 @@ function CategoryRow({
 }
 
 export function CategoriesScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const entries = useAppStore(s => s.data.entries);
   const custom = useAppStore(s => s.data.customCategories);
@@ -179,7 +189,8 @@ export function CategoriesScreen() {
           onClick={() => setAddOpen(true)}
           className="inline-flex items-center gap-1.5 rounded-full bg-[var(--uwh-surface-2)] px-3 py-1.5 text-sm font-semibold text-[var(--uwh-text-soft)]"
         >
-          <Plus size={15} aria-hidden="true" /> Catégorie perso
+          <Plus size={15} aria-hidden="true" />{' '}
+          {t('finances.categories.customCategory')}
         </button>
         <button
           onClick={() => setShowBudget(v => !v)}
@@ -190,29 +201,30 @@ export function CategoriesScreen() {
               : 'bg-[var(--uwh-surface-2)] text-[var(--uwh-text-soft)]'
           }`}
         >
-          <Target size={15} aria-hidden="true" /> Budget prév./réalisé
+          <Target size={15} aria-hidden="true" />{' '}
+          {t('finances.categories.budgetToggle')}
         </button>
       </div>
 
       <Sheet
         open={addOpen}
-        title="Nouvelle catégorie personnalisée"
+        title={t('finances.categories.newCustomTitle')}
         onClose={() => setAddOpen(false)}
       >
         <div className="flex flex-col gap-4">
           <TextField
-            label="Libellé"
+            label={t('finances.categories.label')}
             value={newLabel}
             onChange={e => setNewLabel(e.target.value)}
-            placeholder="Ex. Sponsoring"
+            placeholder={t('finances.categories.labelPlaceholder')}
           />
           <SelectField
-            label="Sens"
+            label={t('finances.categories.sens')}
             value={newSens}
             onChange={e => setNewSens(e.target.value as Sens)}
           >
-            <option value="recette">Recette</option>
-            <option value="depense">Dépense</option>
+            <option value="recette">{t('enums.sens.recette')}</option>
+            <option value="depense">{t('enums.sens.depense')}</option>
           </SelectField>
           <Button
             block
@@ -223,13 +235,21 @@ export function CategoriesScreen() {
               setAddOpen(false);
             }}
           >
-            Ajouter
+            {t('common.add')}
           </Button>
         </div>
       </Sheet>
 
-      {renderCard('Recettes', recettes, 'text-[var(--uwh-credit)]')}
-      {renderCard('Dépenses', depenses, 'text-[var(--uwh-debit)]')}
+      {renderCard(
+        t('finances.categories.income'),
+        recettes,
+        'text-[var(--uwh-credit)]'
+      )}
+      {renderCard(
+        t('finances.categories.expenses'),
+        depenses,
+        'text-[var(--uwh-debit)]'
+      )}
 
       <Sheet
         open={!!openCat}
@@ -238,7 +258,7 @@ export function CategoriesScreen() {
       >
         {detail.length === 0 ? (
           <p className="text-sm text-[var(--uwh-text-soft)]">
-            Aucune écriture dans cette catégorie pour la saison {season.label}.
+            {t('finances.categories.emptyDetail', { season: season.label })}
           </p>
         ) : (
           <ul className="divide-y divide-[var(--uwh-border)]">

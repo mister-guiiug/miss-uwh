@@ -2,11 +2,13 @@ import { useMemo, useState } from 'react';
 import { Search, Users } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Adherent } from '../../shared/types/domain.ts';
+import { useI18n } from '../../i18n/index.ts';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
 import { FamilleSheet } from './FamilleSheet.tsx';
 
 /** Familles / tuteurs : choisir un membre pour gérer ses parents/contacts. */
 export function FamillesScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const members = useAppStore(s => s.data.adherents);
   const guardians = useAppStore(s => s.data.guardians);
@@ -34,8 +36,7 @@ export function FamillesScreen() {
   return (
     <div className="flex flex-col gap-3 p-4">
       <p className="text-sm text-[var(--uwh-text-soft)]">
-        Parents, tuteurs et contacts d'urgence. Sélectionnez un membre pour
-        gérer sa famille.
+        {t('adherents.familles.intro')}
       </p>
       <div className="relative">
         <Search
@@ -46,15 +47,15 @@ export function FamillesScreen() {
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Rechercher un membre…"
-          aria-label="Rechercher un membre"
+          placeholder={t('adherents.familles.searchPlaceholder')}
+          aria-label={t('adherents.familles.searchAria')}
           className="min-h-10 w-full rounded-full border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] pl-9 pr-3 text-sm"
         />
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Users} title="Aucun membre">
-          Ajoutez d'abord des membres dans l'onglet Membres.
+        <EmptyState Icon={Users} title={t('adherents.familles.emptyTitle')}>
+          {t('adherents.familles.emptyHint')}
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -71,8 +72,8 @@ export function FamillesScreen() {
                   </span>
                   <span className="shrink-0 text-xs text-[var(--uwh-text-soft)]">
                     {n === 0
-                      ? 'aucun contact'
-                      : `${n} contact${n > 1 ? 's' : ''}`}
+                      ? t('adherents.familles.noContact')
+                      : t('adherents.familles.contactCount', { n })}
                   </span>
                 </button>
               </li>

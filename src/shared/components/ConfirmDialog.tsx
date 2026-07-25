@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Sheet } from './Sheet.tsx';
 import { Button } from './Button.tsx';
+import { useI18n } from '../../i18n/index.ts';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -17,18 +18,19 @@ export function ConfirmDialog({
   open,
   title,
   children,
-  confirmLabel = 'Confirmer',
-  cancelLabel = 'Annuler',
+  confirmLabel,
+  cancelLabel,
   danger,
   onConfirm,
   onClose,
 }: ConfirmDialogProps) {
+  const { t } = useI18n();
   return (
     <Sheet open={open} title={title} onClose={onClose}>
       <div className="text-sm text-[var(--uwh-text-soft)]">{children}</div>
       <div className="mt-5 flex gap-2">
         <Button variant="secondary" block onClick={onClose}>
-          {cancelLabel}
+          {cancelLabel ?? t('common.cancel')}
         </Button>
         <Button
           variant={danger ? 'danger' : 'primary'}
@@ -38,7 +40,7 @@ export function ConfirmDialog({
             onClose();
           }}
         >
-          {confirmLabel}
+          {confirmLabel ?? t('common.confirm')}
         </Button>
       </div>
     </Sheet>

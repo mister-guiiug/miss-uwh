@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react';
 import { CalendarDays, Download, MapPin, Plus } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
-import {
-  CLUB_EVENT_TYPE_LABELS,
-  type ClubEvent,
-} from '../../shared/types/domain.ts';
+import { type ClubEvent } from '../../shared/types/domain.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { IS_SUPABASE } from '../../backend/config.ts';
 import { fetchGoogleCalendar } from '../../backend/gcal.ts';
 import { downloadClubEventsIcs } from '../export/icalExport.ts';
@@ -16,6 +14,7 @@ import { ClubEventSheet } from './ClubEventSheet.tsx';
 
 /** Agenda de la vie du club (réunions, sorties, AG, soirées…). */
 export function EvenementsScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.clubEvents);
   const addClubEvent = useAppStore(s => s.addClubEvent);
@@ -58,13 +57,17 @@ export function EvenementsScreen() {
       }
       setImportMsg(
         events.length === 0
-          ? 'Google Agenda : aucun événement trouvé.'
-          : `Google Agenda : ${imported} ajout(s)` +
-              (skipped ? `, ${skipped} déjà présent(s)` : '') +
+          ? t('vieclub.evenements.importNone')
+          : t('vieclub.evenements.importAdded', { n: imported }) +
+              (skipped
+                ? t('vieclub.evenements.importSkipped', { n: skipped })
+                : '') +
               '.'
       );
     } catch (e) {
-      setImportMsg(e instanceof Error ? e.message : 'Import impossible.');
+      setImportMsg(
+        e instanceof Error ? e.message : t('vieclub.evenements.importFailed')
+      );
     } finally {
       setImporting(false);
     }
@@ -82,13 +85,13 @@ export function EvenementsScreen() {
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-lg font-bold">
-          {rows.length} événement{rows.length > 1 ? 's' : ''}
+          {t('vieclub.evenements.count', { n: rows.length })}
         </h2>
         <div className="flex items-center gap-2">
           {rows.length > 0 && (
             <Button
               variant="secondary"
-              aria-label="Exporter l'agenda au format iCal (.ics)"
+              aria-label={t('vieclub.evenements.exportIcs')}
               onClick={() =>
                 downloadClubEventsIcs(rows, `${club.name} — ${season.label}`)
               }
@@ -97,7 +100,8 @@ export function EvenementsScreen() {
             </Button>
           )}
           <Button onClick={() => setCreating(true)}>
-            <Plus size={18} aria-hidden="true" /> Événement
+            <Plus size={18} aria-hidden="true" />{' '}
+            {t('vieclub.evenements.addButton')}
           </Button>
         </div>
       </div>
@@ -110,11 +114,13 @@ export function EvenementsScreen() {
             onClick={() => void runGcalImport()}
           >
             <Download size={16} aria-hidden="true" />
-            {importing ? 'Import en cours…' : 'Importer depuis Google Agenda'}
+            {importing
+              ? t('vieclub.evenements.importing')
+              : t('vieclub.evenements.importFromGcal')}
           </Button>
           {!icsUrl && (
             <p className="text-xs text-[var(--uwh-text-soft)]">
-              Renseignez l'URL iCal dans Réglages → Intégration Google Agenda.
+              {t('vieclub.evenements.icalHint')}
             </p>
           )}
           {importMsg && (
@@ -124,9 +130,11 @@ export function EvenementsScreen() {
       )}
 
       {rows.length === 0 ? (
-        <EmptyState Icon={CalendarDays} title="Agenda vide">
-          Planifiez réunions, sorties, AG et soirées de la saison {season.label}
-          .
+        <EmptyState
+          Icon={CalendarDays}
+          title={t('vieclub.evenements.emptyTitle')}
+        >
+          {t('vieclub.evenements.emptyBody', { season: season.label })}
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -140,7 +148,7 @@ export function EvenementsScreen() {
                   <p className="truncate text-sm font-semibold">{e.title}</p>
                   <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-[var(--uwh-text-soft)]">
                     <Badge tone="primary">
-                      {CLUB_EVENT_TYPE_LABELS[e.type]}
+                      {t(`enums.clubEventType.${e.type}` as TKey)}
                     </Badge>
                     <span>{formatDateShort(e.date)}</span>
                     {e.location && (

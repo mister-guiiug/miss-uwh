@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Lens } from '../lib/lenses.ts';
+import { useI18n } from '../../i18n/index.ts';
 import { Button } from './Button.tsx';
 
 /**
@@ -35,6 +36,7 @@ export function AppHeader({
   const setTheme = useAppStore(s => s.setTheme);
   const season = useAppStore(selectActiveSeason);
   const isDark = theme === 'dark';
+  const { t } = useI18n();
   const { pathname } = useLocation();
   const isLauncher = pathname === '/';
 
@@ -52,7 +54,7 @@ export function AppHeader({
         ) : (
           <Link
             to="/"
-            aria-label="Retour à l'accueil"
+            aria-label={t('app.header.home')}
             className="-ml-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--uwh-text-soft)]"
             style={lens ? { color: lens.accent } : undefined}
           >
@@ -68,7 +70,7 @@ export function AppHeader({
           <button
             type="button"
             onClick={onSearch}
-            aria-label="Recherche globale"
+            aria-label={t('app.header.search')}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--uwh-text-soft)]"
           >
             <Search size={20} aria-hidden="true" />
@@ -78,7 +80,11 @@ export function AppHeader({
           <button
             type="button"
             onClick={onAlerts}
-            aria-label={`Alertes${alertCount > 0 ? ` (${alertCount})` : ''}`}
+            aria-label={
+              alertCount > 0
+                ? t('app.header.alertsCount', { n: alertCount })
+                : t('app.header.alerts')
+            }
             className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--uwh-text-soft)]"
           >
             <Bell size={20} aria-hidden="true" />
@@ -92,7 +98,7 @@ export function AppHeader({
         <Link
           to="/finances/seasons"
           className="inline-flex items-center gap-1 rounded-full bg-[var(--uwh-surface-2)] px-3 py-1.5 text-xs font-semibold text-[var(--uwh-text-soft)]"
-          aria-label={`Saison active ${season.label}`}
+          aria-label={t('app.header.activeSeason', { label: season.label })}
         >
           {season.status === 'cloturee' && (
             <Lock
@@ -105,14 +111,16 @@ export function AppHeader({
         </Link>
         <Link
           to="/settings"
-          aria-label="Réglages"
+          aria-label={t('app.titles.settings')}
           className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--uwh-text-soft)]"
         >
           <Settings size={20} aria-hidden="true" />
         </Link>
         <Button
           variant="ghost"
-          aria-label={isDark ? 'Passer en clair' : 'Passer en sombre'}
+          aria-label={
+            isDark ? t('app.header.themeToLight') : t('app.header.themeToDark')
+          }
           aria-pressed={isDark}
           onClick={() => setTheme(isDark ? 'light' : 'dark')}
         >

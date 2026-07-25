@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
+import { useI18n } from '../../i18n/index.ts';
 
 interface Result {
   key: string;
@@ -36,6 +37,7 @@ export function GlobalSearch({
   const adherents = useAppStore(s => s.data.adherents);
   const entries = useAppStore(s => s.data.entries);
   const clubEvents = useAppStore(s => s.data.clubEvents);
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
 
   const results = useMemo<Result[]>(() => {
@@ -53,7 +55,7 @@ export function GlobalSearch({
           to: '/adherents',
           Icon: Users,
           primary: name,
-          secondary: 'Adhérent',
+          secondary: t('search.member'),
         });
       }
     }
@@ -66,7 +68,7 @@ export function GlobalSearch({
           to: '/finances/journal',
           Icon: ScrollText,
           primary: e.label,
-          secondary: `Écriture · ${formatDateShort(e.date)}`,
+          secondary: t('search.entry', { date: formatDateShort(e.date) }),
         });
       }
     }
@@ -79,12 +81,12 @@ export function GlobalSearch({
           to: '/vie-club',
           Icon: CalendarDays,
           primary: ev.title,
-          secondary: `Événement · ${formatDateShort(ev.date)}`,
+          secondary: t('search.event', { date: formatDateShort(ev.date) }),
         });
       }
     }
     return out;
-  }, [query, adherents, entries, clubEvents, season.id]);
+  }, [query, adherents, entries, clubEvents, season.id, t]);
 
   if (!open) return null;
 
@@ -99,7 +101,7 @@ export function GlobalSearch({
       onKeyDown={onKeyDown}
       role="dialog"
       aria-modal="true"
-      aria-label="Recherche globale"
+      aria-label={t('search.title')}
     >
       <div
         className="w-full max-w-md overflow-hidden rounded-2xl bg-[var(--uwh-surface)] shadow-lg"
@@ -115,14 +117,14 @@ export function GlobalSearch({
             autoFocus
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Rechercher (adhérents, écritures, événements)…"
-            aria-label="Terme de recherche"
+            placeholder={t('search.placeholder')}
+            aria-label={t('search.term')}
             className="min-w-0 flex-1 bg-transparent text-sm outline-none"
           />
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fermer la recherche"
+            aria-label={t('search.close')}
             className="shrink-0 text-[var(--uwh-text-soft)]"
           >
             <X size={18} aria-hidden="true" />
@@ -132,11 +134,11 @@ export function GlobalSearch({
         <div className="max-h-[60vh] overflow-y-auto p-2">
           {query.trim().length < 2 ? (
             <p className="p-4 text-center text-sm text-[var(--uwh-text-soft)]">
-              Tapez au moins 2 caractères.
+              {t('search.min2')}
             </p>
           ) : results.length === 0 ? (
             <p className="p-4 text-center text-sm text-[var(--uwh-text-soft)]">
-              Aucun résultat dans la saison {season.label}.
+              {t('search.noResults', { season: season.label })}
             </p>
           ) : (
             <ul className="flex flex-col">

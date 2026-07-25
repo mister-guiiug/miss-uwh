@@ -13,6 +13,7 @@ import { formatEuro } from '../../shared/lib/format.ts';
 import { Card } from '../../shared/components/Card.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 
 /**
  * Carte de synthèse trésorier de la saison active : trésorerie, solde, et
@@ -22,6 +23,7 @@ function SeasonSummary() {
   const season = useAppStore(selectActiveSeason);
   const adherents = useAppStore(s => s.data.adherents);
   const { bilan } = useBilan();
+  const { t } = useI18n();
 
   const inSeason = adherents.filter(a => a.seasonId === season.id);
   const unpaid = inSeason.filter(a => !a.paid).length;
@@ -37,24 +39,28 @@ function SeasonSummary() {
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-base font-bold">
-          Saison {season.label}
+          {t('home.season', { label: season.label })}
         </h2>
         {season.status === 'cloturee' && (
           <Badge tone="warn">
-            <Lock size={12} aria-hidden="true" /> clôturée
+            <Lock size={12} aria-hidden="true" /> {t('home.closed')}
           </Badge>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl bg-[var(--uwh-surface-2)] p-3">
-          <p className="text-xs text-[var(--uwh-text-soft)]">Trésorerie</p>
+          <p className="text-xs text-[var(--uwh-text-soft)]">
+            {t('home.treasury')}
+          </p>
           <p className="tnum text-lg font-bold">
             {formatEuro(bilan.tresorerie)}
           </p>
         </div>
         <div className="rounded-2xl bg-[var(--uwh-surface-2)] p-3">
-          <p className="text-xs text-[var(--uwh-text-soft)]">Solde créditeur</p>
+          <p className="text-xs text-[var(--uwh-text-soft)]">
+            {t('home.creditBalance')}
+          </p>
           <p className="tnum text-lg font-bold">
             {formatEuro(bilan.soldeCrediteur)}
           </p>
@@ -65,20 +71,23 @@ function SeasonSummary() {
         {unpaid > 0 && (
           <Link to="/adherents/cotisations">
             <Badge tone="warn">
-              {unpaid} cotisation{unpaid > 1 ? 's' : ''} impayée
-              {unpaid > 1 ? 's' : ''}
+              {t(unpaid > 1 ? 'home.unpaidMany' : 'home.unpaidOne', {
+                n: unpaid,
+              })}
             </Badge>
           </Link>
         )}
         {expiring > 0 && (
           <Link to="/adherents">
             <Badge tone="debit">
-              {expiring} échéance{expiring > 1 ? 's' : ''} licence/certificat
+              {t(expiring > 1 ? 'home.expiringMany' : 'home.expiringOne', {
+                n: expiring,
+              })}
             </Badge>
           </Link>
         )}
         {unpaid === 0 && expiring === 0 && (
-          <Badge tone="credit">Rien à signaler</Badge>
+          <Badge tone="credit">{t('home.allClear')}</Badge>
         )}
       </div>
     </Card>
@@ -91,13 +100,14 @@ function SeasonSummary() {
  */
 export function HomeLauncher() {
   const { roles } = useAuth();
+  const { t } = useI18n();
   const lenses = accessibleLenses(roles);
   const showSummary = canAccessLens(roles, lensById('finances')!);
 
   if (lenses.length === 0) {
     return (
-      <EmptyState Icon={Lock} title="Aucun espace accessible">
-        Demandez à un administrateur du club de vous attribuer un rôle.
+      <EmptyState Icon={Lock} title={t('home.noAccessTitle')}>
+        {t('home.noAccessBody')}
       </EmptyState>
     );
   }
@@ -125,10 +135,10 @@ export function HomeLauncher() {
               </div>
               <div>
                 <h2 className="font-display text-base font-bold">
-                  {lens.label}
+                  {t(lens.label as TKey)}
                 </h2>
                 <p className="mt-1 text-xs text-[var(--uwh-text-soft)]">
-                  {lens.description}
+                  {t(lens.description as TKey)}
                 </p>
               </div>
             </Card>

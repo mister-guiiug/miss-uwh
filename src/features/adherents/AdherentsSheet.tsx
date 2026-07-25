@@ -5,18 +5,12 @@ import {
   ADHERENT_CATEGORIES,
   type AdherentCategory,
 } from '../../shared/types/domain.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { formatEuro } from '../../shared/lib/format.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { SelectField, TextField } from '../../shared/components/Field.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
-
-const CAT_LABELS: Record<AdherentCategory, string> = {
-  adulte: 'Adulte',
-  adulte_reduit: 'Adulte réduit',
-  jeune: 'Jeune',
-  enfant: 'Enfant',
-};
 
 interface Props {
   open: boolean;
@@ -24,6 +18,7 @@ interface Props {
 }
 
 export function AdherentsSheet({ open, onClose }: Props) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.adherents);
   const addAdherent = useAppStore(s => s.addAdherent);
@@ -47,26 +42,39 @@ export function AdherentsSheet({ open, onClose }: Props) {
   }, [adherents]);
 
   return (
-    <Sheet open={open} title="Registre des adhérents" onClose={onClose}>
+    <Sheet
+      open={open}
+      title={t('adherents.adherentsSheet.title')}
+      onClose={onClose}
+    >
       <div className="flex flex-col gap-4">
         {/* Effectifs */}
         <div className="rounded-2xl bg-[var(--uwh-surface-2)] p-3 text-sm">
           <div className="flex flex-wrap gap-1.5">
-            <Badge tone="primary">{adherents.length} adhérent(s)</Badge>
-            <Badge tone="credit">{summary.paid} à jour</Badge>
+            <Badge tone="primary">
+              {t('adherents.adherentsSheet.memberCount', {
+                n: adherents.length,
+              })}
+            </Badge>
+            <Badge tone="credit">
+              {t('adherents.adherentsSheet.paidCount', { n: summary.paid })}
+            </Badge>
             {adherents.length - summary.paid > 0 && (
               <Badge tone="warn">
-                {adherents.length - summary.paid} impayé(s)
+                {t('adherents.adherentsSheet.unpaidCount', {
+                  n: adherents.length - summary.paid,
+                })}
               </Badge>
             )}
             {summary.byCat.map(x => (
               <Badge key={x.c} tone="neutral">
-                {x.n} {CAT_LABELS[x.c].toLowerCase()}
+                {x.n} {t(`enums.adherentCategory.${x.c}` as TKey).toLowerCase()}
               </Badge>
             ))}
           </div>
           <p className="mt-2 text-[var(--uwh-text-soft)]">
-            Total cotisations : <strong>{formatEuro(summary.total)}</strong>
+            {t('adherents.adherentsSheet.totalDues')}{' '}
+            <strong>{formatEuro(summary.total)}</strong>
           </p>
         </div>
 
@@ -79,7 +87,11 @@ export function AdherentsSheet({ open, onClose }: Props) {
               >
                 <button
                   onClick={() => updateAdherent(a.id, { paid: !a.paid })}
-                  aria-label={a.paid ? 'Marquer impayé' : 'Marquer payé'}
+                  aria-label={
+                    a.paid
+                      ? t('adherents.adherentsSheet.markUnpaid')
+                      : t('adherents.adherentsSheet.markPaid')
+                  }
                   aria-pressed={a.paid}
                   className="shrink-0"
                 >
@@ -102,13 +114,20 @@ export function AdherentsSheet({ open, onClose }: Props) {
                     {a.firstName} {a.lastName}
                   </p>
                   <p className="truncate text-xs text-[var(--uwh-text-soft)]">
-                    {CAT_LABELS[a.category]} · {formatEuro(a.amount)}
-                    {a.licenceNumber ? ` · lic. ${a.licenceNumber}` : ''}
+                    {t(`enums.adherentCategory.${a.category}` as TKey)} ·{' '}
+                    {formatEuro(a.amount)}
+                    {a.licenceNumber
+                      ? t('adherents.adherentsSheet.licenceInfo', {
+                          n: a.licenceNumber,
+                        })
+                      : ''}
                   </p>
                 </div>
                 <button
                   onClick={() => deleteAdherent(a.id)}
-                  aria-label={`Supprimer ${a.firstName} ${a.lastName}`}
+                  aria-label={t('adherents.adherentsSheet.deleteAria', {
+                    name: `${a.firstName} ${a.lastName}`,
+                  })}
                   className="shrink-0 text-[var(--uwh-debit)]"
                 >
                   <Trash2 size={16} aria-hidden="true" />
@@ -120,34 +139,35 @@ export function AdherentsSheet({ open, onClose }: Props) {
 
         <fieldset className="flex flex-col gap-3 rounded-2xl border border-[var(--uwh-border)] p-3">
           <legend className="flex items-center gap-1.5 px-1 text-xs font-semibold text-[var(--uwh-text-soft)]">
-            <UserPlus size={13} aria-hidden="true" /> Nouvel adhérent
+            <UserPlus size={13} aria-hidden="true" />{' '}
+            {t('adherents.adherentsSheet.newLegend')}
           </legend>
           <div className="grid grid-cols-2 gap-3">
             <TextField
-              label="Prénom"
+              label={t('common.firstName')}
               value={firstName}
               onChange={e => setFirstName(e.target.value)}
             />
             <TextField
-              label="Nom"
+              label={t('common.lastName')}
               value={lastName}
               onChange={e => setLastName(e.target.value)}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <SelectField
-              label="Catégorie"
+              label={t('common.category')}
               value={category}
               onChange={e => setCategory(e.target.value as AdherentCategory)}
             >
               {ADHERENT_CATEGORIES.map(c => (
                 <option key={c} value={c}>
-                  {CAT_LABELS[c]}
+                  {t(`enums.adherentCategory.${c}` as TKey)}
                 </option>
               ))}
             </SelectField>
             <TextField
-              label="Cotisation (€)"
+              label={t('adherents.adherentsSheet.duesLabel')}
               inputMode="decimal"
               value={amount}
               onChange={e => setAmount(e.target.value)}
@@ -170,7 +190,7 @@ export function AdherentsSheet({ open, onClose }: Props) {
               setAmount('');
             }}
           >
-            Ajouter l'adhérent
+            {t('adherents.adherentsSheet.addButton')}
           </Button>
         </fieldset>
       </div>

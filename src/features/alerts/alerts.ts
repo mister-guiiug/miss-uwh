@@ -6,10 +6,17 @@
 import type { Adherent } from '../../shared/types/domain.ts';
 import { expiryStatus } from '../../shared/lib/expiry.ts';
 
+export type AlertKind = 'unpaid' | 'expired' | 'soon';
+
 export interface Alert {
   id: string;
   tone: 'warn' | 'debit';
+  /** Libellé FR pré-calculé (conservé pour les tests et le repli). */
   title: string;
+  /** Nature de l'alerte : pilote la traduction au rendu (i18n). */
+  kind: AlertKind;
+  /** Effectif concerné (interpolé dans le message traduit). */
+  count: number;
   to: string;
 }
 
@@ -27,6 +34,8 @@ export function computeAlerts(
     alerts.push({
       id: 'unpaid',
       tone: 'warn',
+      kind: 'unpaid',
+      count: unpaid,
       title: `${unpaid} cotisation${unpaid > 1 ? 's' : ''} impayée${
         unpaid > 1 ? 's' : ''
       }`,
@@ -41,6 +50,8 @@ export function computeAlerts(
     alerts.push({
       id: 'expired',
       tone: 'debit',
+      kind: 'expired',
+      count: expired,
       title: `${expired} licence/certificat expiré${expired > 1 ? 's' : ''}`,
       to: '/adherents',
     });
@@ -53,6 +64,8 @@ export function computeAlerts(
     alerts.push({
       id: 'soon',
       tone: 'warn',
+      kind: 'soon',
+      count: soon,
       title: `${soon} licence/certificat à renouveler (< 30 j)`,
       to: '/adherents',
     });

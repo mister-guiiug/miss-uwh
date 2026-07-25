@@ -3,10 +3,10 @@ import { Mail, Phone, Trash2, UserPlus } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore.ts';
 import {
   GUARDIAN_RELATIONS,
-  GUARDIAN_RELATION_LABELS,
   type Adherent,
   type GuardianRelation,
 } from '../../shared/types/domain.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { SelectField, TextField } from '../../shared/components/Field.tsx';
@@ -20,6 +20,7 @@ interface Props {
 
 /** Gère les parents / tuteurs / contacts d'urgence d'un membre. */
 export function FamilleSheet({ open, member, onClose }: Props) {
+  const { t } = useI18n();
   const allGuardians = useAppStore(s => s.data.guardians);
   const addGuardian = useAppStore(s => s.addGuardian);
   const deleteGuardian = useAppStore(s => s.deleteGuardian);
@@ -47,13 +48,15 @@ export function FamilleSheet({ open, member, onClose }: Props) {
   return (
     <Sheet
       open={open}
-      title={`Famille de ${member.firstName} ${member.lastName}`}
+      title={t('adherents.familleSheet.title', {
+        name: `${member.firstName} ${member.lastName}`,
+      })}
       onClose={onClose}
     >
       <div className="flex flex-col gap-4">
         {guardians.length === 0 ? (
           <p className="text-sm text-[var(--uwh-text-soft)]">
-            Aucun parent / tuteur enregistré.
+            {t('adherents.familleSheet.empty')}
           </p>
         ) : (
           <ul className="flex flex-col gap-1.5">
@@ -65,7 +68,7 @@ export function FamilleSheet({ open, member, onClose }: Props) {
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 font-medium">
                     <Badge tone="primary">
-                      {GUARDIAN_RELATION_LABELS[g.relation]}
+                      {t(`enums.guardianRelation.${g.relation}` as TKey)}
                     </Badge>
                     <span className="truncate">{g.name}</span>
                   </p>
@@ -88,7 +91,9 @@ export function FamilleSheet({ open, member, onClose }: Props) {
                 </div>
                 <button
                   type="button"
-                  aria-label={`Supprimer ${g.name}`}
+                  aria-label={t('adherents.familleSheet.deleteAria', {
+                    name: g.name,
+                  })}
                   className="shrink-0 text-[var(--uwh-debit)]"
                   onClick={() => deleteGuardian(g.id)}
                 >
@@ -101,43 +106,43 @@ export function FamilleSheet({ open, member, onClose }: Props) {
 
         <fieldset className="flex flex-col gap-3 rounded-2xl border border-[var(--uwh-border)] p-3">
           <legend className="flex items-center gap-1.5 px-1 text-xs font-semibold text-[var(--uwh-text-soft)]">
-            <UserPlus size={13} aria-hidden="true" /> Ajouter un parent /
-            contact
+            <UserPlus size={13} aria-hidden="true" />{' '}
+            {t('adherents.familleSheet.addLegend')}
           </legend>
           <div className="grid grid-cols-2 gap-3">
             <SelectField
-              label="Lien"
+              label={t('adherents.familleSheet.relationLabel')}
               value={relation}
               onChange={e => setRelation(e.target.value as GuardianRelation)}
             >
               {GUARDIAN_RELATIONS.map(r => (
                 <option key={r} value={r}>
-                  {GUARDIAN_RELATION_LABELS[r]}
+                  {t(`enums.guardianRelation.${r}` as TKey)}
                 </option>
               ))}
             </SelectField>
             <TextField
-              label="Nom"
+              label={t('common.name')}
               value={name}
               onChange={e => setName(e.target.value)}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <TextField
-              label="Téléphone"
+              label={t('common.phone')}
               inputMode="tel"
               value={phone}
               onChange={e => setPhone(e.target.value)}
             />
             <TextField
-              label="Email"
+              label={t('common.email')}
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
             />
           </div>
           <Button block disabled={!name.trim()} onClick={add}>
-            Ajouter
+            {t('common.add')}
           </Button>
         </fieldset>
       </div>

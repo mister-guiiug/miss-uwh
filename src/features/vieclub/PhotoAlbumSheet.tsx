@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { PhotoAlbum } from '../../shared/types/domain.ts';
+import { useI18n } from '../../i18n/index.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { TextField } from '../../shared/components/Field.tsx';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function PhotoAlbumSheet({ open, album, onClose }: Props) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const addPhotoAlbum = useAppStore(s => s.addPhotoAlbum);
   const updatePhotoAlbum = useAppStore(s => s.updatePhotoAlbum);
@@ -26,8 +28,14 @@ export function PhotoAlbumSheet({ open, album, onClose }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const titleError = submitted && !title.trim() ? 'Titre requis.' : undefined;
-  const urlError = submitted && !url.trim() ? 'Lien requis.' : undefined;
+  const titleError =
+    submitted && !title.trim()
+      ? t('vieclub.photoAlbumSheet.titleRequired')
+      : undefined;
+  const urlError =
+    submitted && !url.trim()
+      ? t('vieclub.photoAlbumSheet.linkRequired')
+      : undefined;
 
   function save() {
     setSubmitted(true);
@@ -47,35 +55,39 @@ export function PhotoAlbumSheet({ open, album, onClose }: Props) {
   return (
     <Sheet
       open={open}
-      title={album ? "Modifier l'album" : 'Nouvel album'}
+      title={
+        album
+          ? t('vieclub.photoAlbumSheet.editTitle')
+          : t('vieclub.photoAlbumSheet.newTitle')
+      }
       onClose={onClose}
       footer={
         <div className="flex gap-2">
           {album && (
             <Button
               variant="danger"
-              aria-label="Supprimer"
+              aria-label={t('common.delete')}
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 size={18} aria-hidden="true" />
             </Button>
           )}
           <Button block onClick={save}>
-            {album ? 'Enregistrer' : 'Ajouter'}
+            {album ? t('common.save') : t('common.add')}
           </Button>
         </div>
       }
     >
       <div className="flex flex-col gap-4">
         <TextField
-          label="Titre"
+          label={t('common.title')}
           value={title}
           error={titleError}
           onChange={e => setTitle(e.target.value)}
-          placeholder="Ex. Sortie en mer 2026"
+          placeholder={t('vieclub.photoAlbumSheet.titlePlaceholder')}
         />
         <TextField
-          label="Lien de l'album"
+          label={t('vieclub.photoAlbumSheet.linkLabel')}
           type="url"
           value={url}
           error={urlError}
@@ -83,31 +95,31 @@ export function PhotoAlbumSheet({ open, album, onClose }: Props) {
           placeholder="https://photos.app.goo.gl/…"
         />
         <TextField
-          label="Date (optionnel)"
+          label={t('vieclub.photoAlbumSheet.dateOptional')}
           type="date"
           value={date}
           onChange={e => setDate(e.target.value)}
         />
         <TextField
-          label="Couverture (optionnel)"
+          label={t('vieclub.photoAlbumSheet.coverOptional')}
           value={coverUrl}
           onChange={e => setCoverUrl(e.target.value)}
-          placeholder="URL image de couverture (optionnel)"
+          placeholder={t('vieclub.photoAlbumSheet.coverPlaceholder')}
         />
       </div>
 
       <ConfirmDialog
         open={confirmDelete}
-        title="Retirer cet album ?"
+        title={t('vieclub.photoAlbumSheet.confirmDeleteTitle')}
         danger
-        confirmLabel="Supprimer"
+        confirmLabel={t('common.delete')}
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (album) deletePhotoAlbum(album.id);
           onClose();
         }}
       >
-        L'album sera retiré de la galerie.
+        {t('vieclub.photoAlbumSheet.confirmDeleteBody')}
       </ConfirmDialog>
     </Sheet>
   );

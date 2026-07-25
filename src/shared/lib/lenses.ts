@@ -32,6 +32,7 @@ import { IS_SUPABASE } from '../../backend/config.ts';
 export interface LensTab {
   /** Chemin RELATIF au préfixe du lens. '' = l'écran d'index du lens. */
   to: string;
+  /** Clé i18n du libellé (dot-notation), résolue par `t` au rendu. */
   label: string;
   Icon: LucideIcon;
   /** `end` de NavLink. Défaut : vrai quand `to === ''`. */
@@ -41,7 +42,9 @@ export interface LensTab {
 export interface Lens {
   /** Préfixe d'URL + clé stable, ex. 'finances'. */
   id: string;
+  /** Clé i18n du libellé (dot-notation), résolue par `t` au rendu. */
   label: string;
+  /** Clé i18n de la description (dot-notation), résolue par `t` au rendu. */
   description: string;
   Icon: LucideIcon;
   /** Couleur d'accent (token CSS ou hex), appliquée en style inline. */
@@ -54,59 +57,59 @@ export interface Lens {
 export const LENSES: Lens[] = [
   {
     id: 'finances',
-    label: 'Finances',
-    description: 'Bilan, journal comptable, catégories et saisons.',
+    label: 'nav.finances.label',
+    description: 'nav.finances.description',
     Icon: Wallet,
     accent: 'var(--color-primary)',
     roles: ['tresorier', 'tresorier_adjoint', 'president', 'controleur'],
     tabs: [
-      { to: '', label: 'Bilan', Icon: LayoutGrid, end: true },
-      { to: 'journal', label: 'Journal', Icon: ScrollText },
-      { to: 'categories', label: 'Catégories', Icon: BookOpenText },
-      { to: 'synthese', label: 'Synthèse', Icon: ChartPie },
-      { to: 'seasons', label: 'Saisons', Icon: CalendarRange },
+      { to: '', label: 'nav.tabs.bilan', Icon: LayoutGrid, end: true },
+      { to: 'journal', label: 'nav.tabs.journal', Icon: ScrollText },
+      { to: 'categories', label: 'nav.tabs.categories', Icon: BookOpenText },
+      { to: 'synthese', label: 'nav.tabs.synthese', Icon: ChartPie },
+      { to: 'seasons', label: 'nav.tabs.seasons', Icon: CalendarRange },
     ],
   },
   {
     id: 'adherents',
-    label: 'Adhérents',
-    description: 'Membres, familles, encadrement et cotisations.',
+    label: 'nav.adherents.label',
+    description: 'nav.adherents.description',
     Icon: Users,
     accent: '#7c5fbf',
     roles: ['president', 'secretaire', 'tresorier'],
     tabs: [
-      { to: '', label: 'Membres', Icon: Users, end: true },
-      { to: 'familles', label: 'Familles', Icon: Heart },
-      { to: 'encadrement', label: 'Encadrement', Icon: GraduationCap },
-      { to: 'cotisations', label: 'Cotisations', Icon: Coins },
+      { to: '', label: 'nav.tabs.membres', Icon: Users, end: true },
+      { to: 'familles', label: 'nav.tabs.familles', Icon: Heart },
+      { to: 'encadrement', label: 'nav.tabs.encadrement', Icon: GraduationCap },
+      { to: 'cotisations', label: 'nav.tabs.cotisations', Icon: Coins },
     ],
   },
   {
     id: 'entrainements',
-    label: 'Entraînements',
-    description: 'Séances, exercices, stratégie et arbitrage.',
+    label: 'nav.entrainements.label',
+    description: 'nav.entrainements.description',
     Icon: Dumbbell,
     accent: '#1f9d55',
     roles: ['entraineur', 'president'],
     tabs: [
-      { to: '', label: 'Séances', Icon: CalendarClock, end: true },
-      { to: 'exercices', label: 'Exercices', Icon: Dumbbell },
-      { to: 'strategie', label: 'Stratégie', Icon: Target },
-      { to: 'arbitrage', label: 'Arbitrage', Icon: Flag },
+      { to: '', label: 'nav.tabs.seances', Icon: CalendarClock, end: true },
+      { to: 'exercices', label: 'nav.tabs.exercices', Icon: Dumbbell },
+      { to: 'strategie', label: 'nav.tabs.strategie', Icon: Target },
+      { to: 'arbitrage', label: 'nav.tabs.arbitrage', Icon: Flag },
     ],
   },
   {
     id: 'vie-club',
-    label: 'Vie du club',
-    description: 'Événements, tournois, annonces et galerie.',
+    label: 'nav.vieClub.label',
+    description: 'nav.vieClub.description',
     Icon: PartyPopper,
     accent: '#e8833a',
     roles: ['resp_evenement', 'president'],
     tabs: [
-      { to: '', label: 'Événements', Icon: CalendarDays, end: true },
-      { to: 'tournois', label: 'Tournois', Icon: Trophy },
-      { to: 'annonces', label: 'Annonces', Icon: Megaphone },
-      { to: 'galerie', label: 'Galerie', Icon: ImageIcon },
+      { to: '', label: 'nav.tabs.evenements', Icon: CalendarDays, end: true },
+      { to: 'tournois', label: 'nav.tabs.tournois', Icon: Trophy },
+      { to: 'annonces', label: 'nav.tabs.annonces', Icon: Megaphone },
+      { to: 'galerie', label: 'nav.tabs.galerie', Icon: ImageIcon },
     ],
   },
 ];

@@ -1,18 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Clock, Dumbbell, Plus, Sparkles } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
-import {
-  EXERCISE_CATEGORY_LABELS,
-  type Exercise,
-} from '../../shared/types/domain.ts';
+import { type Exercise } from '../../shared/types/domain.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { ExerciceSheet } from './ExerciceSheet.tsx';
 import { AiGenerateSheet } from './AiGenerateSheet.tsx';
 
 /** Bibliothèque d'exercices (drills) réutilisables en séance. */
 export function ExercicesScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.exercises);
   const [editing, setEditing] = useState<Exercise | null>(null);
@@ -31,21 +30,26 @@ export function ExercicesScreen() {
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-lg font-bold">
-          {rows.length} exercice{rows.length > 1 ? 's' : ''}
+          {t('entrainements.exercices.count', { n: rows.length })}
         </h2>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => setGenerating(true)}>
-            <Sparkles size={18} aria-hidden="true" /> IA
+            <Sparkles size={18} aria-hidden="true" />{' '}
+            {t('entrainements.exercices.ai')}
           </Button>
           <Button onClick={() => setCreating(true)}>
-            <Plus size={18} aria-hidden="true" /> Exercice
+            <Plus size={18} aria-hidden="true" />{' '}
+            {t('entrainements.exercices.add')}
           </Button>
         </div>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Dumbbell} title="Bibliothèque vide">
-          Constituez votre catalogue d'exercices pour la saison {season.label}.
+        <EmptyState
+          Icon={Dumbbell}
+          title={t('entrainements.exercices.emptyTitle')}
+        >
+          {t('entrainements.exercices.emptyBody', { season: season.label })}
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -59,7 +63,7 @@ export function ExercicesScreen() {
                   <p className="truncate text-sm font-semibold">{e.name}</p>
                   <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-[var(--uwh-text-soft)]">
                     <Badge tone="primary">
-                      {EXERCISE_CATEGORY_LABELS[e.category]}
+                      {t(`enums.exerciseCategory.${e.category}` as TKey)}
                     </Badge>
                     {e.durationMin != null && (
                       <span className="inline-flex items-center gap-1">

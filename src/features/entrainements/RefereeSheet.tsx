@@ -6,6 +6,7 @@ import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { TextField } from '../../shared/components/Field.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+import { useI18n } from '../../i18n/index.ts';
 
 interface Props {
   open: boolean;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function RefereeSheet({ open, referee, onClose }: Props) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const addReferee = useAppStore(s => s.addReferee);
   const updateReferee = useAppStore(s => s.updateReferee);
@@ -28,7 +30,10 @@ export function RefereeSheet({ open, referee, onClose }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const nameError = submitted && !name.trim() ? 'Nom requis.' : undefined;
+  const nameError =
+    submitted && !name.trim()
+      ? t('entrainements.refereeSheet.nameRequired')
+      : undefined;
 
   function save() {
     setSubmitted(true);
@@ -48,46 +53,50 @@ export function RefereeSheet({ open, referee, onClose }: Props) {
   return (
     <Sheet
       open={open}
-      title={referee ? "Modifier l'arbitre" : 'Nouvel arbitre'}
+      title={
+        referee
+          ? t('entrainements.refereeSheet.editTitle')
+          : t('entrainements.refereeSheet.newTitle')
+      }
       onClose={onClose}
       footer={
         <div className="flex gap-2">
           {referee && (
             <Button
               variant="danger"
-              aria-label="Supprimer"
+              aria-label={t('common.delete')}
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 size={18} aria-hidden="true" />
             </Button>
           )}
           <Button block onClick={save}>
-            {referee ? 'Enregistrer' : 'Ajouter'}
+            {referee ? t('common.save') : t('common.add')}
           </Button>
         </div>
       }
     >
       <div className="flex flex-col gap-4">
         <TextField
-          label="Nom"
+          label={t('common.name')}
           value={name}
           error={nameError}
           onChange={e => setName(e.target.value)}
-          placeholder="Ex. Camille Martin"
+          placeholder={t('entrainements.refereeSheet.namePlaceholder')}
         />
         <TextField
-          label="Niveau (optionnel)"
+          label={t('entrainements.refereeSheet.level')}
           value={level}
           onChange={e => setLevel(e.target.value)}
-          placeholder="Départemental / Régional / National"
+          placeholder={t('entrainements.refereeSheet.levelPlaceholder')}
         />
         <TextField
-          label="Certifications (optionnel)"
+          label={t('entrainements.refereeSheet.certifications')}
           value={certifications}
           onChange={e => setCertifications(e.target.value)}
         />
         <label className="flex items-center justify-between gap-2 text-sm font-semibold">
-          Actif
+          {t('entrainements.refereeSheet.active')}
           <input
             type="checkbox"
             checked={active}
@@ -98,16 +107,16 @@ export function RefereeSheet({ open, referee, onClose }: Props) {
 
       <ConfirmDialog
         open={confirmDelete}
-        title="Supprimer cet arbitre ?"
+        title={t('entrainements.refereeSheet.deleteTitle')}
         danger
-        confirmLabel="Supprimer"
+        confirmLabel={t('common.delete')}
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (referee) deleteReferee(referee.id);
           onClose();
         }}
       >
-        L'arbitre sera retiré du registre.
+        {t('entrainements.refereeSheet.deleteBody')}
       </ConfirmDialog>
     </Sheet>
   );

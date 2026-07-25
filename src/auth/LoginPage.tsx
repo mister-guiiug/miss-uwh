@@ -3,11 +3,13 @@ import { Waves } from 'lucide-react';
 import { Card } from '../shared/components/Card.tsx';
 import { Button } from '../shared/components/Button.tsx';
 import { TextField } from '../shared/components/Field.tsx';
+import { useI18n } from '../i18n/index.ts';
 import { useAuth } from './useAuth.ts';
 
 /** Écran de connexion (mode Supabase). MFA gérée par Supabase Auth. */
 export function LoginPage() {
   const { signIn } = useAuth();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string>();
@@ -18,7 +20,7 @@ export function LoginPage() {
     setBusy(true);
     setError(undefined);
     const { error } = await signIn(email, password);
-    if (error) setError('Identifiants invalides.');
+    if (error) setError(t('auth.invalidCredentials'));
     setBusy(false);
   }
 
@@ -30,9 +32,9 @@ export function LoginPage() {
       </div>
       <Card className="w-full">
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <h1 className="font-display text-lg font-bold">Connexion</h1>
+          <h1 className="font-display text-lg font-bold">{t('auth.title')}</h1>
           <TextField
-            label="Email"
+            label={t('auth.email')}
             type="email"
             autoComplete="username"
             required
@@ -40,7 +42,7 @@ export function LoginPage() {
             onChange={e => setEmail(e.target.value)}
           />
           <TextField
-            label="Mot de passe"
+            label={t('auth.password')}
             type="password"
             autoComplete="current-password"
             required
@@ -49,11 +51,10 @@ export function LoginPage() {
             error={error}
           />
           <Button type="submit" block disabled={busy}>
-            {busy ? 'Connexion…' : 'Se connecter'}
+            {busy ? t('auth.signingIn') : t('auth.signIn')}
           </Button>
           <p className="text-center text-xs text-[var(--uwh-text-soft)]">
-            Une vérification MFA (TOTP) peut être demandée pour les rôles
-            sensibles (trésorier, président, administrateur).
+            {t('auth.mfaNote')}
           </p>
         </form>
       </Card>

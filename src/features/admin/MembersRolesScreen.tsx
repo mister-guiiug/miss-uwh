@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
 import { getSupabase } from '../../lib/supabase.ts';
 import type { Role } from '../../auth/useAuth.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
 
@@ -13,17 +14,17 @@ interface MemberRow {
   active: boolean;
 }
 
-const ROLES: { key: Role; label: string }[] = [
-  { key: 'admin_technique', label: 'Admin' },
-  { key: 'tresorier', label: 'Trésorier' },
-  { key: 'tresorier_adjoint', label: 'Trésorier adjoint' },
-  { key: 'president', label: 'Président' },
-  { key: 'secretaire', label: 'Secrétaire' },
-  { key: 'entraineur', label: 'Entraîneur' },
-  { key: 'resp_evenement', label: 'Resp. événement' },
-  { key: 'resp_materiel', label: 'Resp. matériel' },
-  { key: 'controleur', label: 'Contrôleur' },
-  { key: 'membre', label: 'Membre' },
+const ROLES: Role[] = [
+  'admin_technique',
+  'tresorier',
+  'tresorier_adjoint',
+  'president',
+  'secretaire',
+  'entraineur',
+  'resp_evenement',
+  'resp_materiel',
+  'controleur',
+  'membre',
 ];
 
 /**
@@ -31,6 +32,7 @@ const ROLES: { key: Role; label: string }[] = [
  * admin). Les écritures sont arbitrées par la RLS `members_admin` côté serveur.
  */
 export function MembersRolesScreen() {
+  const { t } = useI18n();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
@@ -79,8 +81,7 @@ export function MembersRolesScreen() {
   return (
     <div className="flex flex-col gap-4 p-4">
       <p className="text-sm text-[var(--uwh-text-soft)]">
-        Activez/désactivez les comptes et attribuez les rôles. Les droits réels
-        sont appliqués côté serveur (RLS), quel que soit l'affichage.
+        {t('adherents.roles.intro')}
       </p>
 
       {error && (
@@ -90,10 +91,12 @@ export function MembersRolesScreen() {
       )}
 
       {loading ? (
-        <p className="text-sm text-[var(--uwh-text-soft)]">Chargement…</p>
+        <p className="text-sm text-[var(--uwh-text-soft)]">
+          {t('common.loading')}
+        </p>
       ) : members.length === 0 ? (
-        <EmptyState Icon={Users} title="Aucun membre">
-          Aucun membre à afficher (accès réservé aux administrateurs).
+        <EmptyState Icon={Users} title={t('adherents.roles.emptyTitle')}>
+          {t('adherents.roles.emptyHint')}
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-4">
@@ -115,21 +118,25 @@ export function MembersRolesScreen() {
                   onClick={() => void toggleActive(m)}
                   aria-pressed={m.active}
                   aria-label={
-                    m.active ? 'Désactiver le compte' : 'Activer le compte'
+                    m.active
+                      ? t('adherents.roles.deactivateAccount')
+                      : t('adherents.roles.activateAccount')
                   }
                 >
                   <Badge tone={m.active ? 'credit' : 'neutral'}>
-                    {m.active ? 'actif' : 'inactif'}
+                    {m.active
+                      ? t('adherents.roles.active')
+                      : t('adherents.roles.inactive')}
                   </Badge>
                 </button>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {ROLES.map(r => {
-                  const on = m.roles.includes(r.key);
+                  const on = m.roles.includes(r);
                   return (
                     <button
-                      key={r.key}
-                      onClick={() => void toggleRole(m, r.key)}
+                      key={r}
+                      onClick={() => void toggleRole(m, r)}
                       aria-pressed={on}
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                         on
@@ -137,7 +144,7 @@ export function MembersRolesScreen() {
                           : 'bg-[var(--uwh-surface-2)] text-[var(--uwh-text-soft)]'
                       }`}
                     >
-                      {r.label}
+                      {t(`adherents.roles.${r}` as TKey)}
                     </button>
                   );
                 })}

@@ -1,17 +1,16 @@
 import { useMemo, useState } from 'react';
 import { ExternalLink, Plus, Target } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
-import {
-  STRATEGY_PHASE_LABELS,
-  type Strategy,
-} from '../../shared/types/domain.ts';
+import { type Strategy } from '../../shared/types/domain.ts';
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { StrategySheet } from './StrategySheet.tsx';
 
 /** Bibliothèque de stratégies de jeu (attaque, défense, transitions…). */
 export function StrategiesScreen() {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const all = useAppStore(s => s.data.strategies);
   const [editing, setEditing] = useState<Strategy | null>(null);
@@ -29,16 +28,20 @@ export function StrategiesScreen() {
     <div className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-lg font-bold">
-          {rows.length} stratégie{rows.length > 1 ? 's' : ''}
+          {t('entrainements.strategies.count', { n: rows.length })}
         </h2>
         <Button onClick={() => setCreating(true)}>
-          <Plus size={18} aria-hidden="true" /> Stratégie
+          <Plus size={18} aria-hidden="true" />{' '}
+          {t('entrainements.strategies.add')}
         </Button>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Target} title="Aucune stratégie">
-          Constituez la bibliothèque tactique de la saison {season.label}.
+        <EmptyState
+          Icon={Target}
+          title={t('entrainements.strategies.emptyTitle')}
+        >
+          {t('entrainements.strategies.emptyBody', { season: season.label })}
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -52,7 +55,7 @@ export function StrategiesScreen() {
                   <p className="truncate text-sm font-semibold">{s.name}</p>
                   <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-[var(--uwh-text-soft)]">
                     <Badge tone="primary">
-                      {STRATEGY_PHASE_LABELS[s.phase]}
+                      {t(`enums.strategyPhase.${s.phase}` as TKey)}
                     </Badge>
                     {s.diagramUrl && (
                       <ExternalLink size={11} aria-hidden="true" />

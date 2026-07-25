@@ -4,13 +4,13 @@ import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import {
   ADHERENT_CATEGORIES,
   MEMBER_ROLES,
-  MEMBER_ROLE_LABELS,
   MEMBER_STATUSES,
   type Adherent,
   type AdherentCategory,
   type MemberRole,
   type MemberStatus,
 } from '../../shared/types/domain.ts';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 import { Sheet } from '../../shared/components/Sheet.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import {
@@ -25,17 +25,6 @@ import {
   type MemberFormValues,
 } from '../../shared/lib/formSchemas.ts';
 
-const CAT_LABELS: Record<AdherentCategory, string> = {
-  adulte: 'Adulte',
-  adulte_reduit: 'Adulte réduit',
-  jeune: 'Jeune',
-  enfant: 'Enfant',
-};
-const STATUS_LABELS: Record<MemberStatus, string> = {
-  actif: 'Actif',
-  inactif: 'Inactif',
-};
-
 interface Props {
   open: boolean;
   member: Adherent | null;
@@ -45,6 +34,7 @@ interface Props {
 }
 
 export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
+  const { t } = useI18n();
   const season = useAppStore(selectActiveSeason);
   const addAdherent = useAppStore(s => s.addAdherent);
   const updateAdherent = useAppStore(s => s.updateAdherent);
@@ -94,21 +84,25 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
   return (
     <Sheet
       open={open}
-      title={member ? 'Modifier le membre' : 'Nouveau membre'}
+      title={
+        member
+          ? t('adherents.memberSheet.editTitle')
+          : t('adherents.memberSheet.newTitle')
+      }
       onClose={onClose}
       footer={
         <div className="flex gap-2">
           {member && (
             <Button
               variant="danger"
-              aria-label="Supprimer"
+              aria-label={t('common.delete')}
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 size={18} aria-hidden="true" />
             </Button>
           )}
           <Button block onClick={save}>
-            {member ? 'Enregistrer' : 'Ajouter'}
+            {member ? t('common.save') : t('common.add')}
           </Button>
         </div>
       }
@@ -116,26 +110,26 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
           <TextField
-            label="Prénom"
+            label={t('common.firstName')}
             value={values.firstName}
             error={errors.firstName}
             onChange={e => setValue('firstName', e.target.value)}
           />
           <TextField
-            label="Nom"
+            label={t('common.lastName')}
             value={values.lastName}
             onChange={e => setValue('lastName', e.target.value)}
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <TextField
-            label="Naissance"
+            label={t('adherents.memberSheet.birthDate')}
             type="date"
             value={values.birthDate}
             onChange={e => setValue('birthDate', e.target.value)}
           />
           <SelectField
-            label="Catégorie"
+            label={t('common.category')}
             value={values.category}
             onChange={e =>
               setValue('category', e.target.value as AdherentCategory)
@@ -143,7 +137,7 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
           >
             {ADHERENT_CATEGORIES.map(c => (
               <option key={c} value={c}>
-                {CAT_LABELS[c]}
+                {t(`enums.adherentCategory.${c}` as TKey)}
               </option>
             ))}
           </SelectField>
@@ -151,7 +145,7 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
 
         <fieldset className="rounded-2xl border border-[var(--uwh-border)] p-3">
           <legend className="px-1 text-xs font-semibold text-[var(--uwh-text-soft)]">
-            Rôles dans le club
+            {t('adherents.memberSheet.rolesLegend')}
           </legend>
           <div className="flex flex-wrap gap-2">
             {MEMBER_ROLES.map(r => {
@@ -168,7 +162,7 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
                       : 'bg-[var(--uwh-surface-2)] text-[var(--uwh-text-soft)]'
                   }`}
                 >
-                  {MEMBER_ROLE_LABELS[r]}
+                  {t(`enums.memberRole.${r}` as TKey)}
                 </button>
               );
             })}
@@ -177,31 +171,31 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
 
         <div className="grid grid-cols-2 gap-3">
           <TextField
-            label="N° licence"
+            label={t('adherents.memberSheet.licenceNumber')}
             value={values.licenceNumber}
             onChange={e => setValue('licenceNumber', e.target.value)}
           />
           <SelectField
-            label="Statut"
+            label={t('common.status')}
             value={values.status}
             onChange={e => setValue('status', e.target.value as MemberStatus)}
           >
             {MEMBER_STATUSES.map(s => (
               <option key={s} value={s}>
-                {STATUS_LABELS[s]}
+                {t(`enums.memberStatus.${s}` as TKey)}
               </option>
             ))}
           </SelectField>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <TextField
-            label="Licence — expire le"
+            label={t('adherents.memberSheet.licenceExpiry')}
             type="date"
             value={values.licenceExpiry}
             onChange={e => setValue('licenceExpiry', e.target.value)}
           />
           <TextField
-            label="Certificat médical — expire le"
+            label={t('adherents.memberSheet.medicalCertExpiry')}
             type="date"
             value={values.medicalCertExpiry}
             onChange={e => setValue('medicalCertExpiry', e.target.value)}
@@ -209,21 +203,21 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <TextField
-            label="Email"
+            label={t('common.email')}
             type="email"
             value={values.email}
             error={errors.email}
             onChange={e => setValue('email', e.target.value)}
           />
           <TextField
-            label="Téléphone"
+            label={t('common.phone')}
             inputMode="tel"
             value={values.phone}
             onChange={e => setValue('phone', e.target.value)}
           />
         </div>
         <TextAreaField
-          label="Notes (optionnel)"
+          label={t('adherents.memberSheet.notesOptional')}
           value={values.notes}
           onChange={e => setValue('notes', e.target.value)}
         />
@@ -231,16 +225,16 @@ export function MemberSheet({ open, member, onClose, defaultRole }: Props) {
 
       <ConfirmDialog
         open={confirmDelete}
-        title="Supprimer ce membre ?"
+        title={t('adherents.memberSheet.deleteTitle')}
         danger
-        confirmLabel="Supprimer"
+        confirmLabel={t('common.delete')}
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (member) deleteAdherent(member.id);
           onClose();
         }}
       >
-        Le membre est retiré du registre (et du serveur en mode Supabase).
+        {t('adherents.memberSheet.deleteBody')}
       </ConfirmDialog>
     </Sheet>
   );

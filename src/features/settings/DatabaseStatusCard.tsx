@@ -16,15 +16,21 @@ import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '../../shared/components/Button.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+import { useI18n, type TKey } from '../../i18n/index.ts';
 
-/** Octets → libellé lisible (fr). */
-function formatBytes(bytes: number): string {
+type Translate = (
+  key: TKey,
+  params?: Record<string, string | number>
+) => string;
+
+/** Octets → libellé lisible (localisé). */
+function formatBytes(bytes: number, t: Translate): string {
   const mb = bytes / (1024 * 1024);
   const value = mb >= 100 ? Math.round(mb) : Math.round(mb * 10) / 10;
-  return `${value.toLocaleString('fr-FR')} Mo`;
+  return t('database.megabytes', { value: value.toLocaleString('fr-FR') });
 }
 
-function formatLastSync(ts: number): string {
+function formatLastSync(ts: number, t: Translate): string {
   const d = new Date(ts);
   const today = new Date().toDateString() === d.toDateString();
   const time = d.toLocaleTimeString('fr-FR', {
@@ -32,39 +38,40 @@ function formatLastSync(ts: number): string {
     minute: '2-digit',
   });
   return today
-    ? `aujourd'hui à ${time}`
-    : `${d.toLocaleDateString('fr-FR')} à ${time}`;
+    ? t('database.todayAt', { time })
+    : t('database.dateAt', { date: d.toLocaleDateString('fr-FR'), time });
 }
 
 function SyncStateBadge({ state }: { state: string }) {
+  const { t } = useI18n();
   switch (state) {
     case 'ready':
       return (
         <Badge tone="credit">
-          <CheckCircle2 size={12} aria-hidden="true" /> Synchronisé
+          <CheckCircle2 size={12} aria-hidden="true" /> {t('database.synced')}
         </Badge>
       );
     case 'syncing':
       return (
         <Badge tone="primary">
           <RefreshCw size={12} aria-hidden="true" className="animate-spin" />{' '}
-          Synchronisation…
+          {t('sync.syncing')}
         </Badge>
       );
     case 'offline':
       return (
         <Badge tone="warn">
-          <CloudOff size={12} aria-hidden="true" /> Hors ligne
+          <CloudOff size={12} aria-hidden="true" /> {t('sync.offline')}
         </Badge>
       );
     case 'error':
       return (
         <Badge tone="debit">
-          <TriangleAlert size={12} aria-hidden="true" /> Erreur
+          <TriangleAlert size={12} aria-hidden="true" /> {t('database.error')}
         </Badge>
       );
     default:
-      return <Badge tone="neutral">En attente</Badge>;
+      return <Badge tone="neutral">{t('database.waiting')}</Badge>;
   }
 }
 
@@ -84,6 +91,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
  * rejeu ou abandon), volumétrie des données et espace local utilisé.
  */
 export function DatabaseStatusCard() {
+  const { t } = useI18n();
   const sync = useAppStore(s => s.syncStatus);
   const entriesCount = useAppStore(
     s => s.data.entries.filter(e => !e.deletedAt).length
@@ -125,54 +133,60 @@ export function DatabaseStatusCard() {
     <Card>
       <div className="mb-2 flex items-center gap-2">
         <Database size={16} className="text-primary" aria-hidden="true" />
-        <h3 className="font-display font-bold">État de la base de données</h3>
+        <h3 className="font-display font-bold">{t('database.title')}</h3>
       </div>
 
       <div className="flex flex-col divide-y divide-[var(--uwh-border)]">
-        <Row label="Stockage">
+        <Row label={t('database.storage')}>
           {BACKEND === 'supabase' ? (
-            <Badge tone="primary">Supabase (cloud)</Badge>
+            <Badge tone="primary">{t('database.supabase')}</Badge>
           ) : (
-            <Badge tone="neutral">Local (cet appareil)</Badge>
+            <Badge tone="neutral">{t('database.local')}</Badge>
           )}
         </Row>
 
         {IS_SUPABASE && (
           <>
-            <Row label="Synchronisation">
+            <Row label={t('database.sync')}>
               <SyncStateBadge state={sync.state} />
             </Row>
-            <Row label="Dernière synchro">
-              {sync.lastSyncAt ? formatLastSync(sync.lastSyncAt) : '—'}
+            <Row label={t('database.lastSync')}>
+              {sync.lastSyncAt ? formatLastSync(sync.lastSyncAt, t) : '—'}
             </Row>
-            <Row label="En attente d'envoi">
+            <Row label={t('database.pending')}>
               {pending > 0 ? (
                 <Badge tone="warn">{pending}</Badge>
               ) : (
-                <span className="text-[var(--uwh-text-soft)]">aucune</span>
+                <span className="text-[var(--uwh-text-soft)]">
+                  {t('database.none')}
+                </span>
               )}
             </Row>
-            <Row label="Refusées par le serveur">
+            <Row label={t('database.rejected')}>
               {dead.length > 0 ? (
                 <Badge tone="debit">{dead.length}</Badge>
               ) : (
-                <span className="text-[var(--uwh-text-soft)]">aucune</span>
+                <span className="text-[var(--uwh-text-soft)]">
+                  {t('database.none')}
+                </span>
               )}
             </Row>
           </>
         )}
 
-        <Row label="Données">
-          {entriesCount.toLocaleString('fr-FR')} écriture(s) ·{' '}
-          {adherentsCount.toLocaleString('fr-FR')} adhérent(s) ·{' '}
-          {seasonsCount.toLocaleString('fr-FR')} saison(s)
+        <Row label={t('database.data')}>
+          {t('database.counts', {
+            entries: entriesCount.toLocaleString('fr-FR'),
+            members: adherentsCount.toLocaleString('fr-FR'),
+            seasons: seasonsCount.toLocaleString('fr-FR'),
+          })}
         </Row>
 
         {storage && (
-          <Row label="Espace local utilisé">
-            {formatBytes(storage.usage)}{' '}
+          <Row label={t('database.localSpace')}>
+            {formatBytes(storage.usage, t)}{' '}
             <span className="font-normal text-[var(--uwh-text-soft)]">
-              sur {formatBytes(storage.quota)}
+              {t('database.of', { quota: formatBytes(storage.quota, t) })}
             </span>
           </Row>
         )}
@@ -195,8 +209,7 @@ export function DatabaseStatusCard() {
       {dead.length > 0 && (
         <div className="mt-3 rounded-xl border border-[var(--uwh-border)] bg-[var(--uwh-surface-2)] p-3">
           <p className="mb-2 text-xs font-semibold text-[var(--uwh-text-soft)]">
-            Opérations refusées — vos autres modifications continuent de se
-            synchroniser. Réessayez après correction, ou abandonnez-les.
+            {t('database.rejectedDesc')}
           </p>
           <ul className="flex flex-col gap-2">
             {dead.slice(0, 8).map(item => (
@@ -213,16 +226,16 @@ export function DatabaseStatusCard() {
             ))}
             {dead.length > 8 && (
               <li className="text-xs text-[var(--uwh-text-soft)]">
-                … et {dead.length - 8} autre(s)
+                {t('database.andMore', { n: dead.length - 8 })}
               </li>
             )}
           </ul>
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Button onClick={() => void onRetry()} disabled={retrying}>
-              <RefreshCw size={16} aria-hidden="true" /> Réessayer
+              <RefreshCw size={16} aria-hidden="true" /> {t('common.retry')}
             </Button>
             <Button variant="danger" onClick={() => setConfirmDiscard(true)}>
-              <Trash2 size={16} aria-hidden="true" /> Abandonner
+              <Trash2 size={16} aria-hidden="true" /> {t('database.discard')}
             </Button>
           </div>
         </div>
@@ -235,21 +248,19 @@ export function DatabaseStatusCard() {
           onClick={() => void onRetry()}
           disabled={retrying || sync.state === 'syncing'}
         >
-          <RefreshCw size={16} aria-hidden="true" /> Synchroniser maintenant
+          <RefreshCw size={16} aria-hidden="true" /> {t('database.syncNow')}
         </Button>
       )}
 
       <ConfirmDialog
         open={confirmDiscard}
-        title="Abandonner ces opérations ?"
+        title={t('database.discardTitle')}
         danger
-        confirmLabel="Abandonner"
+        confirmLabel={t('database.discard')}
         onClose={() => setConfirmDiscard(false)}
         onConfirm={() => discardDeadOps()}
       >
-        Les {dead.length} opération(s) refusée(s) par le serveur seront
-        définitivement supprimées de cet appareil. Les données correspondantes
-        ne seront PAS envoyées au serveur.
+        {t('database.discardBody', { n: dead.length })}
       </ConfirmDialog>
     </Card>
   );
