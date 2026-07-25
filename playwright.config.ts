@@ -18,6 +18,10 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'on-first-retry',
+    // Les specs assertent du texte français : depuis l'i18n (détection
+    // navigator.language), un navigateur en-US ferait rendre l'app en anglais.
+    // On force la locale FR pour des E2E déterministes.
+    locale: 'fr-FR',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
