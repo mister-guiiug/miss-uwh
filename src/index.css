@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '@mister-guiiug/dev-wpa-config/tailwind-preset.css';
 
 /*
  * Univers visuel « Miss UWH » aux couleurs du club (logo CHS) : bleu cobalt +
