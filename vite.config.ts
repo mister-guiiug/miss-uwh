@@ -24,6 +24,13 @@ export default defineConfig(({ command }) => {
     define: {
       __APP_VERSION__: JSON.stringify(version),
     },
+    // `react/observability` charge Sentry par un import dynamique annoté
+    // `/* @vite-ignore */` : le peer est OPTIONNEL et n'est pas installé ici.
+    // Le pré-bundling de dev perd l'annotation et fait échouer la résolution
+    // (500 sur toute la page). Le build de prod n'est pas concerné.
+    optimizeDeps: {
+      exclude: ['@mister-guiiug/dev-wpa-config/react/observability'],
+    },
     build: {
       sourcemap: true,
       chunkSizeWarningLimit: 900,

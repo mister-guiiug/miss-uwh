@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 @import '@mister-guiiug/dev-wpa-config/tailwind-preset.css';
+/* Habillage partagé des composants [data-dwc] (ici : FamilyApps). En
+   `@layer components`, donc tout ce qui suit dans ce fichier l'emporte. */
+@import '@mister-guiiug/dev-wpa-config/components.css';
 
 /*
  * Univers visuel « Miss UWH » aux couleurs du club (logo CHS) : bleu cobalt +
@@ -37,6 +40,25 @@
   --uwh-debit: #e11d48;
   --uwh-warn: #f59e0b;
   color-scheme: light;
+}
+
+/* Contrat des composants partagés : on branche `--dwc-*` sur les tokens Miss
+   UWH, une seule fois. Les valeurs suivent automatiquement le thème sombre,
+   puisqu'elles pointent sur des variables elles-mêmes redéfinies plus bas. */
+:root {
+  --dwc-surface: var(--uwh-surface);
+  --dwc-surface-2: var(--uwh-surface-2);
+  --dwc-text: var(--uwh-text);
+  --dwc-text-soft: var(--uwh-text-soft);
+  --dwc-border: var(--uwh-border);
+  --dwc-primary: var(--color-primary);
+  --dwc-primary-contrast: #ffffff;
+  --dwc-primary-soft: var(--color-primary-soft);
+  --dwc-success: var(--uwh-credit);
+  --dwc-danger: var(--uwh-debit);
+  --dwc-warning: var(--uwh-warn);
+  --dwc-radius: var(--radius-card);
+  --dwc-shadow: 0 1px 2px rgb(14 31 58 / 0.06);
 }
 
 :root[data-theme='dark'] {
@@ -131,101 +153,51 @@ h3,
   }
 }
 
-/* Famille — grille « Nos autres applications » (composant partagé FamilyApps).
-   Attributs [data-dwc="…"] scopés sous .uwh-family. Le titre interne du
-   composant est masqué : la Section fournit déjà son <h2>. Les couleurs
-   passent par les vars --uwh-* / --color-primary → thème clair/sombre auto. */
+/* Famille — « Nos autres applications » (composant partagé FamilyApps).
+   La base (structure, couleurs, cible tactile) vient de
+   `@mister-guiiug/dev-wpa-config/components.css` via le contrat --dwc-*.
+   Ne restent ici que les écarts VOULUS par rapport à cette base. */
+
+/* La Section fournit déjà son <h2>. */
 .uwh-family [data-dwc='family-apps-title'] {
   display: none;
 }
 
+/* Liste verticale plutôt que la grille par défaut : la carte Réglages est
+   étroite, deux colonnes y tronqueraient les descriptions. */
 .uwh-family [data-dwc='family-app-list'] {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 }
 
 .uwh-family [data-dwc='family-app'] {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: var(--uwh-surface-2);
-  border: 1px solid var(--uwh-border);
-  border-radius: 1rem;
-  padding: 0.6rem 0.8rem;
-  text-decoration: none;
-  color: var(--uwh-text);
   transition:
     border-color 0.15s,
     transform 0.15s;
 }
 
 .uwh-family [data-dwc='family-app']:hover {
-  border-color: var(--color-primary);
   transform: translateY(-1px);
 }
 
-.uwh-family [data-dwc='family-app-icon'] {
-  width: 40px;
-  height: 40px;
-  border-radius: 0.6rem;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Icône de repli en teinte douce plutôt qu'en aplat de primaire. */
+.uwh-family span[data-dwc='family-app-icon'] {
   background: var(--color-primary-soft);
   color: var(--color-primary);
-  font-weight: 700;
   font-size: 1.1rem;
-  object-fit: cover;
 }
 
-.uwh-family [data-dwc='family-app-body'] {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.uwh-family [data-dwc='family-app-head'] {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.uwh-family [data-dwc='family-app-name'] {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
+/* Description sur deux lignes plutôt que tronquée. */
 .uwh-family [data-dwc='family-app-desc'] {
-  font-size: 0.78rem;
-  color: var(--uwh-text-soft);
+  white-space: normal;
   line-height: 1.4;
 }
 
-.uwh-family [data-dwc='family-app-arrow'] {
-  color: var(--uwh-text-soft);
-  flex-shrink: 0;
-  display: flex;
-}
-
-/* Badge de maturité : 3 couleurs (alpha / beta / stable). Couleurs foncées
-   pour tenir le contraste AA sur les fonds teintés clairs. */
+/* Badge de maturité en pastille pleine. Couleurs foncées pour tenir le
+   contraste AA sur les fonds teintés clairs. */
 .uwh-family [data-dwc='maturity'] {
   font-size: 0.62rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.12em 0.5em;
-  border-radius: 999px;
-  white-space: nowrap;
-  border: 1px solid transparent;
 }
 
 .uwh-family [data-maturity='stable'] {
