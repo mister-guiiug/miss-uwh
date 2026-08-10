@@ -19,3 +19,6 @@ supabase/.temp/
 playwright-report/
 test-results/
 /playwright/.cache/
+
+# Lighthouse CI (rapports locaux)
+.lighthouseci/
