@@ -7,9 +7,12 @@ import {
   type PaymentMethod,
 } from '../../shared/types/domain.ts';
 import { formatEuro } from '../../shared/lib/format.ts';
-import { Sheet } from '../../shared/components/Sheet.tsx';
-import { Button } from '../../shared/components/Button.tsx';
-import { SelectField, TextField } from '../../shared/components/Field.tsx';
+import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import {
+  SelectField,
+  TextField,
+} from '@mister-guiiug/dev-wpa-config/react/field';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 
 interface Props {

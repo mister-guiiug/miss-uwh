@@ -4,7 +4,7 @@ import { getSupabase } from '../../lib/supabase.ts';
 import type { Role } from '../../auth/useAuth.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 
 interface MemberRow {
   id: string;
@@ -95,9 +95,11 @@ export function MembersRolesScreen() {
           {t('common.loading')}
         </p>
       ) : members.length === 0 ? (
-        <EmptyState Icon={Users} title={t('adherents.roles.emptyTitle')}>
-          {t('adherents.roles.emptyHint')}
-        </EmptyState>
+        <EmptyState
+          icon={<Users size={28} aria-hidden="true" />}
+          title={t('adherents.roles.emptyTitle')}
+          description={t('adherents.roles.emptyHint')}
+        />
       ) : (
         <ul className="flex flex-col gap-4">
           {members.map(m => (

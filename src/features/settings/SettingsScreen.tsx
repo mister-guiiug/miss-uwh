@@ -48,10 +48,14 @@ import { DatabaseStatusCard } from './DatabaseStatusCard.tsx';
 import { AiSkillsCard } from './AiSkillsCard.tsx';
 import { forceUpdate } from '../../pwa/forceUpdate.ts';
 import { Card } from '../../shared/components/Card.tsx';
-import { Button } from '../../shared/components/Button.tsx';
-import { SelectField, TextField } from '../../shared/components/Field.tsx';
-import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
-import { AppFooter } from '../../shared/components/AppFooter.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import {
+  SelectField,
+  TextField,
+} from '@mister-guiiug/dev-wpa-config/react/field';
+import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
+import { AppFooter } from '@mister-guiiug/dev-wpa-config/react/app-footer';
+import { repoUrl } from '@mister-guiiug/dev-wpa-config/apps-catalog';
 import { FamilyApps } from '@mister-guiiug/dev-wpa-config/react';
 import { cn } from '../../shared/lib/cn.ts';
 import { useI18n } from '../../i18n/index.ts';
@@ -692,7 +696,14 @@ export function SettingsScreen() {
             {t('settings.noMatch', { query: query.trim() })}
           </p>
         )}
-        <AppFooter />
+        {/* L'URL du dépôt vient du catalogue famille, plus d'une constante
+            recopiée : une app renommée n'a plus qu'un endroit à corriger. */}
+        <AppFooter
+          className="no-print"
+          repoUrl={repoUrl('miss-uwh')}
+          sourceLabel={t('app.footer.source')}
+          sponsorLabel={t('app.footer.sponsor')}
+        />
       </div>
 
       <ImportSheet open={importing} onClose={() => setImporting(false)} />
@@ -701,12 +712,13 @@ export function SettingsScreen() {
       <ConfirmDialog
         open={confirmReset}
         title={t('settings.resetConfirmTitle')}
-        danger
+        destructive
         confirmLabel={t('common.reset')}
-        onClose={() => setConfirmReset(false)}
-        onConfirm={() =>
-          resetAll(club.name, season.label, season.openingBalance)
-        }
+        onCancel={() => setConfirmReset(false)}
+        onConfirm={() => {
+          resetAll(club.name, season.label, season.openingBalance);
+          setConfirmReset(false);
+        }}
       >
         {t('settings.resetConfirmBody')}
       </ConfirmDialog>

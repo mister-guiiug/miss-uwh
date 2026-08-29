@@ -2,8 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Waves } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore.ts';
 import { Card } from '../../shared/components/Card.tsx';
-import { Button } from '../../shared/components/Button.tsx';
-import { TextField } from '../../shared/components/Field.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { TextField } from '@mister-guiiug/dev-wpa-config/react/field';
 import { useI18n } from '../../i18n/index.ts';
 
 /** Première installation : nom du club, saison de départ, reliquat d'ouverture. */

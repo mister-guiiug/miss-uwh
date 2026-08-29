@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import { Flag, Plus } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Referee } from '../../shared/types/domain.ts';
-import { Button } from '../../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { useI18n } from '../../i18n/index.ts';
 import { RefereeSheet } from './RefereeSheet.tsx';
 
@@ -37,9 +37,13 @@ export function ArbitrageScreen() {
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Flag} title={t('entrainements.arbitrage.emptyTitle')}>
-          {t('entrainements.arbitrage.emptyBody', { season: season.label })}
-        </EmptyState>
+        <EmptyState
+          icon={<Flag size={28} aria-hidden="true" />}
+          title={t('entrainements.arbitrage.emptyTitle')}
+          description={t('entrainements.arbitrage.emptyBody', {
+            season: season.label,
+          })}
+        />
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map(r => (

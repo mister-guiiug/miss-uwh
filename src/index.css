@@ -51,12 +51,20 @@
   --dwc-text: var(--uwh-text);
   --dwc-text-soft: var(--uwh-text-soft);
   --dwc-border: var(--uwh-border);
+  /* Le pourtour d'un CONTRÔLE (champ, bouton secondaire), pas un filet de
+     séparation : WCAG 1.4.11 lui demande 3:1. `--uwh-border` (#d9e2f1) ne les
+     tient pas — c'est le défaut que la copie locale de `Field` laissait
+     passer. `--uwh-text-soft` donne 4,9:1 en clair et 6,7:1 en sombre. */
+  --dwc-border-strong: var(--uwh-text-soft);
   --dwc-primary: var(--color-primary);
   --dwc-primary-contrast: #ffffff;
   --dwc-primary-soft: var(--color-primary-soft);
   --dwc-success: var(--uwh-credit);
   --dwc-danger: var(--uwh-debit);
   --dwc-warning: var(--uwh-warn);
+  /* `--color-sky` (#0ea5e9) est une couleur de graphique : 2,7:1 sur blanc,
+     insuffisant dès qu'elle porte du texte. Version assombrie pour l'info. */
+  --dwc-info: #0369a1;
   --dwc-radius: var(--radius-card);
   --dwc-shadow: 0 1px 2px rgb(14 31 58 / 0.06);
 }
@@ -73,6 +81,21 @@
   --uwh-debit: #fb7185;
   --uwh-warn: #fbbf24;
   color-scheme: dark;
+
+  /* Seuls les jetons `--dwc-*` posés en DUR plus haut sont repris ici : ceux
+     qui pointent vers un `--uwh-*` suivent déjà le thème tout seuls.
+     Le bleu cobalt de la marque (#1758ba) ne tient que 1,7:1 sur la surface
+     sombre : sur ce fond, c'est la version claire (`--uwh-ring`) qui porte le
+     rôle « primaire », comme le fait déjà le reste de l'app. */
+  --dwc-primary: var(--uwh-ring);
+  --dwc-primary-contrast: #0a1626;
+  --dwc-primary-soft: color-mix(
+    in srgb,
+    var(--uwh-ring) 22%,
+    var(--uwh-surface)
+  );
+  --dwc-info: #38bdf8;
+  --dwc-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
 }
 
 * {
@@ -101,8 +124,15 @@ h3,
   font-family: var(--font-display);
 }
 
-/* Anneau de focus visible et homogène (accessibilité clavier). */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+/* Anneau de focus visible et homogène (accessibilité clavier).
+   Le `border-radius` arrondit l'anneau sur un CONTRÔLE. Les panneaux modaux en
+   sont exclus : ils portent `tabindex="-1"` pour recevoir le focus à
+   l'ouverture, et la règle leur imposait 0,5 rem — la feuille se carrait donc
+   dès qu'elle s'ouvrait, au lieu de garder ses 1,76 rem. */
+:where(a, button, input, select, textarea, [tabindex]):not(
+    [data-dwc='sheet-panel'],
+    [data-dwc='confirm-panel']
+  ):focus-visible {
   outline: 3px solid var(--uwh-ring);
   outline-offset: 2px;
   border-radius: 0.5rem;
@@ -144,6 +174,14 @@ h3,
   .no-print {
     display: none !important;
   }
+  /* Les copies locales de `Sheet` et `ConfirmDialog` portaient `no-print` sur
+     leur racine ; celles du socle n'ont pas à connaître cette classe. La règle
+     remplace la classe, et vaut pour les vingt-trois feuilles d'un coup —
+     sans quoi imprimer un bilan feuille ouverte imprimerait la feuille. */
+  [data-dwc='sheet'],
+  [data-dwc='confirm'] {
+    display: none !important;
+  }
   body {
     background: #fff;
   }
@@ -151,6 +189,61 @@ h3,
     box-shadow: none !important;
     border: none !important;
   }
+}
+
+/* Identité Miss UWH sur les composants du socle.
+   Ne figurent ici que les écarts VOULUS par rapport à `components.css` : ce
+   que les copies locales faisaient et que la base partagée ne fait pas. */
+
+/* Boutons en pastille : c'est la forme de l'app depuis l'origine
+   (`rounded-full`), là où la base du socle arrondit à 0,7 × --dwc-radius. */
+[data-dwc='button'] {
+  border-radius: 999px;
+}
+
+[data-dwc='button'][data-variant='primary'] {
+  box-shadow: 0 1px 3px 0
+    color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+/* PAS d'animation d'identité sur les panneaux : le socle a la sienne
+   (`dwc-rise`), et il faut la lui laisser.
+   `uwh-rise` finit sur `to { transform: translateY(0) }`. Avec
+   `animation-fill-mode: both`, cette transformation reste appliquée APRÈS la
+   fin : le panneau devient alors bloc conteneur des descendants
+   `position: fixed` et ouvre un contexte d'empilement. Or `ConfirmDialog` est
+   rendu DANS la feuille dans les onze écrans qui l'utilisent : son `z-index: 60`
+   se retrouvait piégé sous le formulaire, et son voile ne couvrait plus l'écran
+   — la boîte de suppression s'affichait en transparence.
+   `dwc-rise` n'a qu'un `from`, donc l'état final est celui de l'élément,
+   sans transformation : c'est ce détail qui la rend imbricable. */
+
+/* Le titre des feuilles suit la police d'affichage, comme tous les h1-h3. */
+[data-dwc='sheet-title'],
+[data-dwc='confirm-title'] {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+/* États vides : la base du socle les encadre en pointillés sur une surface
+   teintée. Miss UWH les pose à même la page, l'icône dans une pastille. */
+[data-dwc='empty-state'] {
+  border: 0;
+  background: transparent;
+  gap: 0.75rem;
+  padding-block: 3rem;
+}
+
+[data-dwc='empty-state-icon'] {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--dwc-primary-soft);
+}
+
+[data-dwc='empty-state-title'] {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
 }
 
 /* Famille — « Nos autres applications » (composant partagé FamilyApps).

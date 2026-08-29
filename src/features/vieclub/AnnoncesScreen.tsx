@@ -4,8 +4,8 @@ import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Announcement } from '../../shared/types/domain.ts';
 import { useI18n } from '../../i18n/index.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Button } from '../../shared/components/Button.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { AnnouncementSheet } from './AnnouncementSheet.tsx';
 
 /** Annonces / actualités / convocations du club (épinglées en tête). */
@@ -42,9 +42,11 @@ export function AnnoncesScreen() {
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Megaphone} title={t('vieclub.annonces.emptyTitle')}>
-          {t('vieclub.annonces.emptyBody')}
-        </EmptyState>
+        <EmptyState
+          icon={<Megaphone size={28} aria-hidden="true" />}
+          title={t('vieclub.annonces.emptyTitle')}
+          description={t('vieclub.annonces.emptyBody')}
+        />
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map(a => (

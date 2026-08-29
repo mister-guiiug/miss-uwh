@@ -12,7 +12,7 @@ import { expiryStatus, worstExpiry } from '../../shared/lib/expiry.ts';
 import { formatEuro } from '../../shared/lib/format.ts';
 import { Card } from '../../shared/components/Card.tsx';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 
 /**
@@ -106,9 +106,11 @@ export function HomeLauncher() {
 
   if (lenses.length === 0) {
     return (
-      <EmptyState Icon={Lock} title={t('home.noAccessTitle')}>
-        {t('home.noAccessBody')}
-      </EmptyState>
+      <EmptyState
+        icon={<Lock size={28} aria-hidden="true" />}
+        title={t('home.noAccessTitle')}
+        description={t('home.noAccessBody')}
+      />
     );
   }
 

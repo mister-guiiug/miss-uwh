@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore.ts';
 import type { Adherent } from '../../shared/types/domain.ts';
 import { useI18n } from '../../i18n/index.ts';
-import { Sheet } from '../../shared/components/Sheet.tsx';
-import { Button } from '../../shared/components/Button.tsx';
-import { TextField } from '../../shared/components/Field.tsx';
+import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { TextField } from '@mister-guiiug/dev-wpa-config/react/field';
 
 /** Édite la cotisation (montant + réglée) d'un membre. */
 export function CotisationSheet({

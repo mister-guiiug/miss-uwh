@@ -1,6 +1,6 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Sparkles } from 'lucide-react';
-import { Button } from '../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { useI18n } from '../i18n/index.ts';
 
 /** Bandeau PWA : nouvelle version disponible. */

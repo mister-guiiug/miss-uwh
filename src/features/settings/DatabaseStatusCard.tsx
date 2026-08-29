@@ -13,9 +13,9 @@ import { discardDeadOps, retryDeadOps, retrySync } from '../../backend/sync.ts';
 import { describeRemoteOp } from '../../backend/syncBus.ts';
 import { deadItems } from '../../backend/syncQueue.ts';
 import { Card } from '../../shared/components/Card.tsx';
-import { Button } from '../../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 
 type Translate = (
@@ -255,10 +255,13 @@ export function DatabaseStatusCard() {
       <ConfirmDialog
         open={confirmDiscard}
         title={t('database.discardTitle')}
-        danger
+        destructive
         confirmLabel={t('database.discard')}
-        onClose={() => setConfirmDiscard(false)}
-        onConfirm={() => discardDeadOps()}
+        onCancel={() => setConfirmDiscard(false)}
+        onConfirm={() => {
+          discardDeadOps();
+          setConfirmDiscard(false);
+        }}
       >
         {t('database.discardBody', { n: dead.length })}
       </ConfirmDialog>

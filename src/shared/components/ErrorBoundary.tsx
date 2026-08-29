@@ -2,7 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, Download, Home, RotateCcw } from 'lucide-react';
 import { recordError } from '@mister-guiiug/dev-wpa-config/react/observability';
 import { STORAGE_KEY } from '../lib/storage.ts';
-import { Button } from './Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { useI18n } from '../../i18n/index.ts';
 
 interface ErrorBoundaryProps {

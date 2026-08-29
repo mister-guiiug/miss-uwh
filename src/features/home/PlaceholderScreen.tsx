@@ -1,5 +1,5 @@
 import { Hammer } from 'lucide-react';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { useI18n } from '../../i18n/index.ts';
 
 /**
@@ -16,9 +16,11 @@ export function PlaceholderScreen({
   const { t } = useI18n();
   return (
     <div className="p-4">
-      <EmptyState Icon={Hammer} title={title}>
-        {note ?? t('common.comingSoon')}
-      </EmptyState>
+      <EmptyState
+        icon={<Hammer size={28} aria-hidden="true" />}
+        title={title}
+        description={note ?? t('common.comingSoon')}
+      />
     </div>
   );
 }

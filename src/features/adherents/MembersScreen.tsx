@@ -3,9 +3,9 @@ import { Search, UserPlus, Users } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { type Adherent, type MemberRole } from '../../shared/types/domain.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
-import { Button } from '../../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { VirtualList } from '../../shared/components/VirtualList.tsx';
 import { expiryStatus, worstExpiry } from '../../shared/lib/expiry.ts';
 import { MemberSheet } from './MemberSheet.tsx';
@@ -90,15 +90,16 @@ export function MembersScreen({ roleFilter }: { roleFilter?: MemberRole }) {
 
       {rows.length === 0 ? (
         <EmptyState
-          Icon={Users}
+          icon={<Users size={28} aria-hidden="true" />}
           title={
             roleFilter === 'encadrant'
               ? t('adherents.members.emptyCoaches')
               : t('adherents.members.emptyMembers')
           }
-        >
-          {t('adherents.members.emptyHint', { season: season.label })}
-        </EmptyState>
+          description={t('adherents.members.emptyHint', {
+            season: season.label,
+          })}
+        />
       ) : (
         <VirtualList
           items={rows}
