@@ -46,7 +46,7 @@ import { RecurringSheet } from '../recurring/RecurringSheet.tsx';
 import { AdherentsSheet } from '../adherents/AdherentsSheet.tsx';
 import { DatabaseStatusCard } from './DatabaseStatusCard.tsx';
 import { AiSkillsCard } from './AiSkillsCard.tsx';
-import { forceUpdate } from '../../pwa/forceUpdate.ts';
+import { applyUpdate } from '@mister-guiiug/dev-wpa-config/sw-update';
 import { Card } from '../../shared/components/Card.tsx';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import {
@@ -520,7 +520,7 @@ export function SettingsScreen() {
                   {t('settings.version', { version: __APP_VERSION__ })}
                 </p>
               </div>
-              <Button variant="secondary" onClick={() => void forceUpdate()}>
+              <Button variant="secondary" onClick={() => void applyUpdate()}>
                 <RotateCw size={16} aria-hidden="true" />{' '}
                 {t('settings.forceUpdate')}
               </Button>

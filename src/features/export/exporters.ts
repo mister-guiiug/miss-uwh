@@ -3,6 +3,7 @@
  * (sauvegarde complète). Le PDF s'obtient via l'impression de l'écran Bilan
  * (mise en page dédiée @media print) — pas de dépendance lourde embarquée.
  */
+import { downloadText } from '@mister-guiiug/dev-wpa-config/download';
 import type {
   AppData,
   JournalEntry,
@@ -24,20 +25,6 @@ function csvCell(v: string | number): string {
 export function toCsv(rows: Array<Array<string | number>>): string {
   const body = rows.map(r => r.map(csvCell).join(';')).join('\r\n');
   return BOM + body;
-}
-
-export function downloadText(
-  filename: string,
-  mime: string,
-  text: string
-): void {
-  const blob = new Blob([text], { type: `${mime};charset=utf-8` });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 const num = (n: number) => n.toFixed(2).replace('.', ',');
@@ -77,7 +64,11 @@ export function exportJournalCsv(
       num(solde),
     ]);
   }
-  downloadText(`journal-${season.label}.csv`, 'text/csv', toCsv(rows));
+  downloadText(
+    toCsv(rows),
+    `journal-${season.label}.csv`,
+    'text/csv;charset=utf-8'
+  );
 }
 
 /** Synthèse bilan (recettes/dépenses par catégorie + totaux). */
@@ -104,13 +95,17 @@ export function exportBilanCsv(
     ['Solde créditeur', num(b.soldeCrediteur)],
     [`Résultat d'exploitation`, num(b.resultatExploitation)]
   );
-  downloadText(`bilan-${season.label}.csv`, 'text/csv', toCsv(rows));
+  downloadText(
+    toCsv(rows),
+    `bilan-${season.label}.csv`,
+    'text/csv;charset=utf-8'
+  );
 }
 
 export function exportJsonBackup(data: AppData): void {
   downloadText(
+    exportData(data),
     'miss-uwh-sauvegarde.json',
-    'application/json',
-    exportData(data)
+    'application/json;charset=utf-8'
   );
 }
