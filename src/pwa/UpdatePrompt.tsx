@@ -1,17 +1,17 @@
-import { useRegisterSW } from 'virtual:pwa-register/react';
+import { registerSW } from 'virtual:pwa-register';
 import { Sparkles } from 'lucide-react';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { useUpdatePrompt } from '@mister-guiiug/dev-wpa-config/react/use-update-prompt';
 import { useI18n } from '../i18n/index.ts';
 
-/** Bandeau PWA : nouvelle version disponible. */
+/** Bandeau PWA : nouvelle version disponible. L'état et l'application de la
+ * mise à jour viennent du socle (`useUpdatePrompt`) ; seul l'habillage est
+ * local. */
 export function UpdatePrompt() {
-  const {
-    needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW();
+  const { visible, update, dismiss } = useUpdatePrompt({ registerSW });
   const { t } = useI18n();
 
-  if (!needRefresh) return null;
+  if (!visible) return null;
 
   return (
     <div
@@ -28,10 +28,10 @@ export function UpdatePrompt() {
         {t('pwa.ready')}
       </p>
       <div className="flex gap-2">
-        <Button block onClick={() => updateServiceWorker(true)}>
+        <Button block onClick={() => void update()}>
           {t('common.update')}
         </Button>
-        <Button variant="secondary" block onClick={() => setNeedRefresh(false)}>
+        <Button variant="secondary" block onClick={dismiss}>
           {t('common.later')}
         </Button>
       </div>
