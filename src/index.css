@@ -165,6 +165,11 @@ h3,
   }
 }
 
+/* `both` est sans danger ICI : la seule cliente est la bannière de mise à jour,
+   qui est elle-même l'élément `fixed`. La transformation retenue ne piège donc
+   qu'elle-même, et elle n'a rien à empiler. Sur un panneau qui en CONTIENT un
+   autre, c'est une autre affaire — voir le bloc « animation d'identité » plus
+   bas. */
 .uwh-rise {
   animation: uwh-rise 0.26s ease-out both;
 }
@@ -206,17 +211,21 @@ h3,
     color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
-/* PAS d'animation d'identité sur les panneaux : le socle a la sienne
+/* PAS d'animation d'identité sur les panneaux : le socle pose la sienne
    (`dwc-rise`), et il faut la lui laisser.
-   `uwh-rise` finit sur `to { transform: translateY(0) }`. Avec
-   `animation-fill-mode: both`, cette transformation reste appliquée APRÈS la
-   fin : le panneau devient alors bloc conteneur des descendants
-   `position: fixed` et ouvre un contexte d'empilement. Or `ConfirmDialog` est
-   rendu DANS la feuille dans les onze écrans qui l'utilisent : son `z-index: 60`
-   se retrouvait piégé sous le formulaire, et son voile ne couvrait plus l'écran
-   — la boîte de suppression s'affichait en transparence.
-   `dwc-rise` n'a qu'un `from`, donc l'état final est celui de l'élément,
-   sans transformation : c'est ce détail qui la rend imbricable. */
+   Ce n'est pas la forme des images-clés qui compte, c'est le MODE DE
+   REMPLISSAGE. `both` et `forwards` retiennent la valeur d'arrivée après la
+   fin, et une transformation retenue reste une transformation — même réduite à
+   l'identité. Un `transform` autre que `none` fait du panneau le bloc conteneur
+   de ses descendants `position: fixed` et lui ouvre un contexte d'empilement.
+   Or `ConfirmDialog` est rendu DANS la feuille dans onze des quatorze écrans
+   qui l'utilisent : son `z-index: 60` restait prisonnier du panneau et son
+   voile se repliait sur la feuille — 480 × 634 au lieu de 1280 × 720, la boîte
+   de suppression s'affichant en transparence par-dessus le formulaire.
+   `uwh-rise 0.26s both` le provoquait ; `dwc-rise` le provoquait tout autant
+   tant qu'elle portait `both`, et c'est de là que venait le voile tronqué
+   relevé avant même la migration. Le socle est passé à `backwards`.
+   Si cette app redonne un jour une entrée aux panneaux : `backwards`. */
 
 /* Le titre des feuilles suit la police d'affichage, comme tous les h1-h3. */
 [data-dwc='sheet-title'],
