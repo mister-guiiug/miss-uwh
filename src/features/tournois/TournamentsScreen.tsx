@@ -4,9 +4,9 @@ import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { type Tournament } from '../../shared/types/domain.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Button } from '../../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { TournamentSheet } from './TournamentSheet.tsx';
 
 /** Tournois de la saison (prévus, en cours, terminés). */
@@ -38,9 +38,13 @@ export function TournamentsScreen() {
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Trophy} title={t('vieclub.tournois.emptyTitle')}>
-          {t('vieclub.tournois.emptyBody', { season: season.label })}
-        </EmptyState>
+        <EmptyState
+          icon={<Trophy size={28} aria-hidden="true" />}
+          title={t('vieclub.tournois.emptyTitle')}
+          description={t('vieclub.tournois.emptyBody', {
+            season: season.label,
+          })}
+        />
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map(tournament => (

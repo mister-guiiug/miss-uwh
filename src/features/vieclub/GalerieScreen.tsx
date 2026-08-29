@@ -4,9 +4,9 @@ import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { PhotoAlbum } from '../../shared/types/domain.ts';
 import { useI18n } from '../../i18n/index.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Button } from '../../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Card } from '../../shared/components/Card.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { PhotoAlbumSheet } from './PhotoAlbumSheet.tsx';
 
 /** Galerie : albums Google Photos partagés de la saison. */
@@ -37,9 +37,11 @@ export function GalerieScreen() {
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Images} title={t('vieclub.galerie.emptyTitle')}>
-          {t('vieclub.galerie.emptyBody')}
-        </EmptyState>
+        <EmptyState
+          icon={<Images size={28} aria-hidden="true" />}
+          title={t('vieclub.galerie.emptyTitle')}
+          description={t('vieclub.galerie.emptyBody')}
+        />
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {rows.map(album => (

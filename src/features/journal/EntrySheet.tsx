@@ -24,14 +24,14 @@ import {
   uploadAttachment,
 } from '../../backend/attachments.ts';
 import { createUuid } from '../../shared/lib/id.ts';
-import { Sheet } from '../../shared/components/Sheet.tsx';
-import { Button } from '../../shared/components/Button.tsx';
+import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import {
   SelectField,
   TextAreaField,
   TextField,
-} from '../../shared/components/Field.tsx';
-import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+} from '@mister-guiiug/dev-wpa-config/react/field';
+import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 import { Badge } from '../../shared/components/badges.tsx';
 import { validateEntry, hasErrors } from './entryValidation.ts';
 
@@ -439,12 +439,13 @@ export function EntrySheet({ open, entry, onClose }: Props) {
       <ConfirmDialog
         open={confirmDelete}
         title={t('finances.entry.confirmDeleteTitle')}
-        danger
+        destructive
         confirmLabel={t('common.delete')}
-        onClose={() => setConfirmDelete(false)}
+        onCancel={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (entry) softDeleteEntry(entry.id, 'Suppression manuelle');
           onClose();
+          setConfirmDelete(false);
         }}
       >
         {t('finances.entry.deleteInfoBefore')}

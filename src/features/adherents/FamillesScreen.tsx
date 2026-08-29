@@ -3,7 +3,7 @@ import { Search, Users } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Adherent } from '../../shared/types/domain.ts';
 import { useI18n } from '../../i18n/index.ts';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { FamilleSheet } from './FamilleSheet.tsx';
 
 /** Familles / tuteurs : choisir un membre pour gérer ses parents/contacts. */
@@ -54,9 +54,11 @@ export function FamillesScreen() {
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Users} title={t('adherents.familles.emptyTitle')}>
-          {t('adherents.familles.emptyHint')}
-        </EmptyState>
+        <EmptyState
+          icon={<Users size={28} aria-hidden="true" />}
+          title={t('adherents.familles.emptyTitle')}
+          description={t('adherents.familles.emptyHint')}
+        />
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map(a => {

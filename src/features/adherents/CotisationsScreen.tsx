@@ -8,8 +8,8 @@ import { IS_SUPABASE } from '../../backend/config.ts';
 import { importFromHelloAsso } from '../../backend/helloasso.ts';
 import { printAttestations } from '../export/attestation.ts';
 import { Badge } from '../../shared/components/badges.tsx';
-import { Button } from '../../shared/components/Button.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { CotisationSheet } from './CotisationSheet.tsx';
 
 /** Suivi des cotisations (montant dû/réglé) par membre sur la saison active. */
@@ -193,9 +193,11 @@ export function CotisationsScreen() {
       )}
 
       {rows.length === 0 ? (
-        <EmptyState Icon={Coins} title={t('adherents.cotisations.emptyTitle')}>
-          {t('adherents.cotisations.emptyHint')}
-        </EmptyState>
+        <EmptyState
+          icon={<Coins size={28} aria-hidden="true" />}
+          title={t('adherents.cotisations.emptyTitle')}
+          description={t('adherents.cotisations.emptyHint')}
+        />
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map(a => (

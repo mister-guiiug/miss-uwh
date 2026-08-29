@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ShieldCheck, ShieldOff } from 'lucide-react';
 import { Card } from '../shared/components/Card.tsx';
-import { Button } from '../shared/components/Button.tsx';
-import { TextField } from '../shared/components/Field.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { TextField } from '@mister-guiiug/dev-wpa-config/react/field';
 import { Badge } from '../shared/components/badges.tsx';
 import { useI18n } from '../i18n/index.ts';
 import { useAuth, type TotpEnrollment } from './useAuth.ts';

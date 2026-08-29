@@ -7,9 +7,9 @@ import { IS_SUPABASE } from '../../backend/config.ts';
 import { fetchGoogleCalendar } from '../../backend/gcal.ts';
 import { downloadClubEventsIcs } from '../export/icalExport.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Button } from '../../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { ClubEventSheet } from './ClubEventSheet.tsx';
 
 /** Agenda de la vie du club (réunions, sorties, AG, soirées…). */
@@ -131,11 +131,12 @@ export function EvenementsScreen() {
 
       {rows.length === 0 ? (
         <EmptyState
-          Icon={CalendarDays}
+          icon={<CalendarDays size={28} aria-hidden="true" />}
           title={t('vieclub.evenements.emptyTitle')}
-        >
-          {t('vieclub.evenements.emptyBody', { season: season.label })}
-        </EmptyState>
+          description={t('vieclub.evenements.emptyBody', {
+            season: season.label,
+          })}
+        />
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map(e => (

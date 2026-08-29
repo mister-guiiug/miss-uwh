@@ -3,9 +3,9 @@ import { ShieldCheck, Trash2, RotateCcw } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { formatDateTime } from '../../shared/lib/format.ts';
 import { Card } from '../../shared/components/Card.tsx';
-import { Button } from '../../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge, Money } from '../../shared/components/badges.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import type { AuditCategory } from '../../shared/types/domain.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 
@@ -99,9 +99,11 @@ export function AuditScreen() {
       )}
 
       {events.length === 0 ? (
-        <EmptyState Icon={ShieldCheck} title={t('finances.audit.emptyTitle')}>
-          {t('finances.audit.emptyBody')}
-        </EmptyState>
+        <EmptyState
+          icon={<ShieldCheck size={28} aria-hidden="true" />}
+          title={t('finances.audit.emptyTitle')}
+          description={t('finances.audit.emptyBody')}
+        />
       ) : (
         <ul className="flex flex-col gap-1.5">
           {events.map(e => (

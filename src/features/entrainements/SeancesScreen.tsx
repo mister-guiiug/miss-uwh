@@ -3,9 +3,9 @@ import { CalendarClock, ListChecks, Plus, Target, Users } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { type TrainingSession } from '../../shared/types/domain.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Button } from '../../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { useI18n } from '../../i18n/index.ts';
 import { SeanceSheet } from './SeanceSheet.tsx';
 import { planTotalMinutes } from './sessionPlan.ts';
@@ -40,11 +40,12 @@ export function SeancesScreen() {
 
       {rows.length === 0 ? (
         <EmptyState
-          Icon={CalendarClock}
+          icon={<CalendarClock size={28} aria-hidden="true" />}
           title={t('entrainements.seances.emptyTitle')}
-        >
-          {t('entrainements.seances.emptyBody', { season: season.label })}
-        </EmptyState>
+          description={t('entrainements.seances.emptyBody', {
+            season: season.label,
+          })}
+        />
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map(s => (

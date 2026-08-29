@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { FileSpreadsheet, TriangleAlert } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
-import { Sheet } from '../../shared/components/Sheet.tsx';
-import { Button } from '../../shared/components/Button.tsx';
+import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { useI18n } from '../../i18n/index.ts';
 import { parseWorkbookFile, type WorkbookParseResult } from './excelImport.ts';
 import { buildEntryInputs } from './buildImport.ts';

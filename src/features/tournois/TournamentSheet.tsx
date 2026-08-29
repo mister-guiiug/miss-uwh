@@ -7,14 +7,14 @@ import {
   type TournamentStatus,
 } from '../../shared/types/domain.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
-import { Sheet } from '../../shared/components/Sheet.tsx';
-import { Button } from '../../shared/components/Button.tsx';
+import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import {
   SelectField,
   TextAreaField,
   TextField,
-} from '../../shared/components/Field.tsx';
-import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+} from '@mister-guiiug/dev-wpa-config/react/field';
+import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 
 interface Props {
   open: boolean;
@@ -130,12 +130,13 @@ export function TournamentSheet({ open, tournament, onClose }: Props) {
       <ConfirmDialog
         open={confirmDelete}
         title={t('vieclub.tournamentSheet.confirmDeleteTitle')}
-        danger
+        destructive
         confirmLabel={t('common.delete')}
-        onClose={() => setConfirmDelete(false)}
+        onCancel={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (tournament) deleteTournament(tournament.id);
           onClose();
+          setConfirmDelete(false);
         }}
       >
         {t('vieclub.tournamentSheet.confirmDeleteBody')}

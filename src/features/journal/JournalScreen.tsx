@@ -17,9 +17,9 @@ import {
 } from '../../shared/types/domain.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
-import { Button } from '../../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Money } from '../../shared/components/badges.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { VirtualList } from '../../shared/components/VirtualList.tsx';
 import { EntrySheet } from './EntrySheet.tsx';
 import { ReconcileSheet } from '../reconcile/ReconcileSheet.tsx';
@@ -236,9 +236,11 @@ export function JournalScreen() {
       )}
 
       {rows.length === 0 ? (
-        <EmptyState Icon={ScrollText} title={t('finances.journal.emptyTitle')}>
-          {t('finances.journal.emptyBody')}
-        </EmptyState>
+        <EmptyState
+          icon={<ScrollText size={28} aria-hidden="true" />}
+          title={t('finances.journal.emptyTitle')}
+          description={t('finances.journal.emptyBody')}
+        />
       ) : (
         <VirtualList
           items={rows}

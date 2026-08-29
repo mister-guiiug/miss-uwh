@@ -10,10 +10,10 @@ import { useAppStore } from '../../store/useAppStore.ts';
 import { computeBilan } from '../../shared/lib/engine.ts';
 import type { Season } from '../../shared/types/domain.ts';
 import { Card } from '../../shared/components/Card.tsx';
-import { Button } from '../../shared/components/Button.tsx';
-import { Sheet } from '../../shared/components/Sheet.tsx';
-import { TextField } from '../../shared/components/Field.tsx';
-import { ConfirmDialog } from '../../shared/components/ConfirmDialog.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
+import { TextField } from '@mister-guiiug/dev-wpa-config/react/field';
+import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 import { useI18n } from '../../i18n/index.ts';
 
@@ -176,8 +176,11 @@ export function SeasonsScreen() {
           label: closing?.label ?? '',
         })}
         confirmLabel={t('finances.seasons.closeConfirmLabel')}
-        onClose={() => setClosing(null)}
-        onConfirm={() => closing && closeSeason(closing.id)}
+        onCancel={() => setClosing(null)}
+        onConfirm={() => {
+          if (closing) closeSeason(closing.id);
+          setClosing(null);
+        }}
       >
         {t('finances.seasons.closeInfoBefore')}
         <strong>{t('finances.seasons.closeInfoStrong')}</strong>

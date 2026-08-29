@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import { ExternalLink, Plus, Target } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { type Strategy } from '../../shared/types/domain.ts';
-import { Button } from '../../shared/components/Button.tsx';
+import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '../../shared/components/EmptyState.tsx';
+import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 import { StrategySheet } from './StrategySheet.tsx';
 
@@ -38,11 +38,12 @@ export function StrategiesScreen() {
 
       {rows.length === 0 ? (
         <EmptyState
-          Icon={Target}
+          icon={<Target size={28} aria-hidden="true" />}
           title={t('entrainements.strategies.emptyTitle')}
-        >
-          {t('entrainements.strategies.emptyBody', { season: season.label })}
-        </EmptyState>
+          description={t('entrainements.strategies.emptyBody', {
+            season: season.label,
+          })}
+        />
       ) : (
         <ul className="flex flex-col gap-1.5">
           {rows.map(s => (
