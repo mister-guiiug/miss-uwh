@@ -17,6 +17,7 @@ import {
   loadData,
   saveData,
   STORAGE_KEY,
+  unwrapSnapshot,
 } from './storage.ts';
 import { appDataSchema } from './schema.ts';
 import { isUuid } from './migrateIds.ts';
@@ -303,5 +304,110 @@ describe('invariant 3 — le contrat du module', () => {
 
     expect(restored.club.treasurer).toBe('Trésorier 2026');
     expect(totalAmount(restored)).toBeCloseTo(totalAmount(data), 2);
+  });
+});
+
+/**
+ * CE QUE LA BASCULE AJOUTE. Le filet que le `runMigrations` maison n'avait pas :
+ * une copie de côté avant toute perte possible, une migration écrite une fois
+ * pour toutes, et aucune destruction silencieuse.
+ */
+describe('apport du magasin versionné du socle', () => {
+  const BACKUP_V0 = `${STORAGE_KEY}.backup-v0`;
+
+  it('copie l’instantané de côté AVANT de le migrer, et n’y revient pas', () => {
+    const raw = JSON.stringify(realV1Snapshot());
+    localStorage.setItem(STORAGE_KEY, raw);
+
+    const migrated = loadData();
+
+    // L'original intact, à côté — la migration réécrit des ids, on garde la trace.
+    expect(localStorage.getItem(BACKUP_V0)).toBe(raw);
+    // La migration est PERSISTÉE : la clé principale porte l'enveloppe du socle…
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as {
+      v: number;
+      data: AppData;
+    };
+    expect(stored.v).toBe(SCHEMA_VERSION);
+    expect(stored.data.version).toBe(SCHEMA_VERSION);
+    // …donc le chargement suivant ne rejoue rien : les UUID tirés au sort par la
+    // migration ne changent plus d'un démarrage à l'autre.
+    expect(loadData().seasons.map(s => s.id)).toEqual(
+      migrated.seasons.map(s => s.id)
+    );
+  });
+
+  it('met de côté une enveloppe de version inconnue au lieu de l’écraser', () => {
+    const fromFuture = JSON.stringify({ v: 99, data: { club: 'demain' } });
+    localStorage.setItem(STORAGE_KEY, fromFuture);
+
+    const data = loadData();
+
+    expect(data.seasons.length).toBeGreaterThan(0); // repli sur le seed
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(fromFuture); // rien d'écrasé
+    expect(localStorage.getItem(`${STORAGE_KEY}.backup-v99`)).toBe(fromFuture);
+    // …et l'import du même fichier se REFUSE, avec un message exploitable.
+    expect(() => importData(fromFuture)).toThrow(/version 99/);
+  });
+
+  it('met de côté un instantané illisible plutôt que de le perdre', () => {
+    localStorage.setItem(STORAGE_KEY, '{"club": tronqué');
+
+    expect(loadData().seasons.length).toBeGreaterThan(0);
+    expect(localStorage.getItem(`${STORAGE_KEY}.backup-illisible`)).toBe(
+      '{"club": tronqué'
+    );
+  });
+
+  it('importe aussi une enveloppe du socle ({ v, data })', () => {
+    const data = realV2Snapshot();
+
+    const imported = importData(JSON.stringify({ v: SCHEMA_VERSION, data }));
+
+    expect(imported).toEqual(data);
+  });
+
+  it('un import refusé laisse l’état exactement comme avant', () => {
+    const data = realV2Snapshot();
+    saveData(data);
+    const before = localStorage.getItem(STORAGE_KEY);
+
+    expect(() => importData('{"foo":1}')).toThrow();
+
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(before);
+    // Et pas de toast « données locales illisibles » : rien n'a été réinitialisé,
+    // c'est l'écran Réglages qui rend compte de son propre import.
+    expect(useToasts.getState().toasts).toHaveLength(0);
+  });
+
+  it('clearData emporte aussi les copies de côté', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(realV1Snapshot()));
+    loadData(); // crée `…data.backup-v0`
+    expect(localStorage.getItem(BACKUP_V0)).not.toBeNull();
+
+    clearData();
+
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(BACKUP_V0)).toBeNull();
+  });
+
+  it('l’export de secours de l’ErrorBoundary reste de la donnée NUE', () => {
+    const data = realV2Snapshot();
+    saveData(data); // écrit l'enveloppe { v, data }
+
+    // Ce que fait `downloadBackup()` : lecture brute, sans React ni zod.
+    const file = unwrapSnapshot(localStorage.getItem(STORAGE_KEY)!);
+    const parsed = JSON.parse(file) as Record<string, unknown>;
+
+    expect(parsed['v']).toBeUndefined();
+    expect(parsed['version']).toBe(SCHEMA_VERSION);
+    expect(appDataSchema.safeParse(parsed).success).toBe(true);
+    expect(importData(file)).toEqual(data);
+  });
+
+  it('unwrapSnapshot rend l’original devant un instantané nu ou illisible', () => {
+    const nu = JSON.stringify(realV2Snapshot());
+    expect(unwrapSnapshot(nu)).toBe(nu);
+    expect(unwrapSnapshot('{ tronqué')).toBe('{ tronqué');
   });
 });
