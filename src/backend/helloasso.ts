@@ -26,7 +26,8 @@ export async function importFromHelloAsso(
   const orgSlug = config?.orgSlug?.trim();
   const formSlug = config?.formSlug?.trim();
   const formType = config?.formType?.trim();
-  const result = await getSupabase().functions.invoke('helloasso-sync', {
+  const sb = await getSupabase();
+  const result = await sb.functions.invoke('helloasso-sync', {
     body: {
       seasonId,
       ...(orgSlug ? { orgSlug } : {}),

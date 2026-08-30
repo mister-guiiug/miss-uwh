@@ -1,12 +1,14 @@
 /**
- * Couche de synchronisation (mode Supabase, offline-first) avec file d'attente
- * PERSISTANTE.
+ * Couche de synchronisation (mode Supabase, offline-first), adossée à la file
+ * d'attente PERSISTANTE du SOCLE (`syncQueue.ts`, instance de
+ * `@mister-guiiug/dev-wpa-config/sync-queue` — promue depuis ce dépôt).
  *
  * Lecture : `pullAll()` hydrate le store depuis le serveur (le serveur fait foi).
  * Écriture : chaque mutation locale est ENFILÉE (persistée) puis drainée vers
- * Supabase. Hors ligne / panne réseau → l'opération reste en file et sera rejouée
- * à la reconnexion (`online`). Échec PERMANENT (rejet serveur, ex. RLS) → lettre
- * morte, sans bloquer la file.
+ * Supabase. Hors ligne / panne réseau → l'opération reste en file et sera
+ * rejouée à la reconnexion (`online`) ou par le rejeu automatique en backoff du
+ * socle. Échec PERMANENT (rejet serveur, ex. RLS) → lettre morte, sans bloquer
+ * la file.
  *
  * Conflits : upsert idempotent (UUID client) → dernier-écrivain-gagne ; après un
  * drain complet à la reconnexion, on re-`pullAll()` pour réconcilier les
@@ -25,18 +27,24 @@ import {
   setRemoteHandler,
   type RemoteOp,
 } from './syncBus.ts';
-import * as q from './syncQueue.ts';
+import {
+  getSyncQueue,
+  isTransient,
+  setQueueObserver,
+  setQueueTransport,
+} from './syncQueue.ts';
 import * as repo from './supabaseRepository.ts';
 
 /** Conservé entre deux mises à jour de statut (succès du dernier pull). */
 let lastSyncAt: number | undefined;
 
 function setStatus(state: SyncStatus['state'], error?: string) {
+  const q = getSyncQueue();
   useAppStore.getState().setSyncStatus({
     state,
     error,
-    pending: q.pendingCount(),
-    dead: q.deadCount(),
+    pending: q.pending(),
+    dead: q.deadLetters().length,
     lastSyncAt,
   });
 }
@@ -44,27 +52,6 @@ function setStatus(state: SyncStatus['state'], error?: string) {
 function isOffline(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine === false;
 }
-
-/**
- * Une erreur transitoire (réseau, service indisponible, jeton à rafraîchir) est
- * réessayable ; sinon c'est un rejet serveur (ex. RLS) → lettre morte. Couvre
- * les messages des principaux navigateurs : « Failed to fetch » (Chrome),
- * « Load failed » (Safari), « NetworkError… » (Firefox).
- */
-export function isTransient(message: string): boolean {
-  return /fetch|network|load failed|timeout|timed?\s?out|offline|connexion|connection|econn|enotfound|socket|abort|too many requests|jwt expired|token.{0,10}expired|service unavailable|bad gateway|gateway time/i.test(
-    message
-  );
-}
-
-/**
- * Au-delà de ce nombre de tentatives, un échec « transitoire » est requalifié en
- * échec durable (lettre morte) : sinon une erreur mal classée bloquerait la
- * file pour toujours, silencieusement. L'opération reste récupérable depuis
- * les Réglages (« Réessayer »). N'est jamais atteint hors ligne : le drain
- * s'interrompt sans consommer de tentative quand le réseau est coupé.
- */
-export const MAX_TRANSIENT_ATTEMPTS = 10;
 
 /** Pull complet → hydrate le store. Le serveur est la source de vérité. */
 export async function pullAll(): Promise<void> {
@@ -175,6 +162,7 @@ export async function pullAll(): Promise<void> {
   }
 }
 
+/** Transport de la file : pousse une opération vers le repository Supabase. */
 async function applyOp(op: RemoteOp): Promise<void> {
   switch (op.kind) {
     case 'entry.upsert':
@@ -245,8 +233,9 @@ async function applyOp(op: RemoteOp): Promise<void> {
 }
 
 function reportQueueStatus(): void {
-  const dead = q.deadCount();
-  const pending = q.pendingCount();
+  const q = getSyncQueue();
+  const dead = q.deadLetters().length;
+  const pending = q.pending();
   if (dead > 0)
     setStatus('error', `${dead} opération(s) refusée(s) par le serveur`);
   else if (pending > 0)
@@ -264,54 +253,26 @@ function notifyDeadLetter(op: RemoteOp): void {
   );
 }
 
-let draining = false;
-let retryTimer: ReturnType<typeof setTimeout> | null = null;
+// Transport et observateur branchés à l'évaluation du module : de purs
+// enregistrements de rappels (aucune E/S — la doctrine anti-écran-blanc est
+// respectée), et un `drain()` déclenché depuis les Réglages trouve toujours
+// son transport, même sans `startSync()` préalable.
+setQueueTransport(applyOp);
+setQueueObserver({
+  // Le socle notifie après chaque évolution de la file (fin de drain comprise) :
+  // c'est lui qui rapporte l'état final ready / offline / error.
+  onChange: () => reportQueueStatus(),
+  onDead: op => notifyDeadLetter(op),
+});
 
-/** Programme un rejeu automatique avec backoff (échec transitoire, sans `online`). */
-function scheduleRetry(attempts: number): void {
-  if (retryTimer) clearTimeout(retryTimer);
-  retryTimer = setTimeout(() => {
-    retryTimer = null;
-    void drain();
-  }, q.backoffDelay(attempts));
-}
-
-/** Vide la file vers Supabase (en série, ordre préservé). */
+/**
+ * Vide la file vers Supabase — drain SÉRIALISÉ du socle (ordre préservé, rejeu
+ * automatique en backoff sur échec transitoire, lettre morte sur rejet).
+ */
 export async function drain(): Promise<void> {
-  if (draining) return;
-  draining = true;
-  if (retryTimer) {
-    clearTimeout(retryTimer);
-    retryTimer = null;
-  }
-  try {
-    if (q.pendingCount() > 0) setStatus('syncing');
-    let item = q.peek();
-    while (item) {
-      if (isOffline()) break;
-      try {
-        await applyOp(item.op);
-        q.ack(item.id);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : 'erreur';
-        if (isTransient(msg) && item.attempts + 1 < MAX_TRANSIENT_ATTEMPTS) {
-          q.bumpAttempt(item.id, msg); // réseau : on garde, on réessaiera
-          // Rejeu auto en backoff (en plus de l'événement `online`).
-          const next = q.peek();
-          if (next && !isOffline()) scheduleRetry(next.attempts);
-          break;
-        }
-        // Rejet serveur — ou échec « transitoire » récidivant (plafond atteint) :
-        // lettre morte, on continue avec les opérations suivantes.
-        q.deadLetter(item.id, msg);
-        notifyDeadLetter(item.op);
-      }
-      item = q.peek();
-    }
-    reportQueueStatus();
-  } finally {
-    draining = false;
-  }
+  const q = getSyncQueue();
+  if (q.pending() > 0) setStatus('syncing');
+  await q.flush();
 }
 
 async function onOnline(): Promise<void> {
@@ -319,7 +280,7 @@ async function onOnline(): Promise<void> {
   // Réconcilie dès que la file est vide — même si des lettres mortes
   // subsistent : elles restent signalées (reportQueueStatus) mais ne doivent
   // pas priver l'appareil des changements des autres utilisateurs.
-  if (q.pendingCount() === 0) await pullAll();
+  if (getSyncQueue().pending() === 0) await pullAll();
 }
 
 /** Coupure réseau : reflète immédiatement l'état (modifications en attente). */
@@ -330,107 +291,65 @@ function onOffline(): void {
 // ── Realtime : réconciliation en direct (plusieurs trésoriers) ────────
 let channel: RealtimeChannel | null = null;
 let pullTimer: ReturnType<typeof setTimeout> | null = null;
+/** Invalide un abonnement encore en cours de création (client asynchrone). */
+let realtimeGen = 0;
 
 function scheduleReconcilePull(): void {
   if (pullTimer) clearTimeout(pullTimer);
   pullTimer = setTimeout(() => {
     // On ne re-pull que si rien n'est en attente : éviter d'écraser des
-    // écritures locales non encore poussées.
-    if (q.pendingCount() === 0 && !draining) void pullAll();
+    // écritures locales non encore poussées (un drain en cours garde
+    // l'opération en file jusqu'à l'acquittement, donc `pending() > 0`).
+    if (getSyncQueue().pending() === 0) void pullAll();
   }, 1200);
 }
 
-function subscribeRealtime(): void {
-  const sb = getSupabase();
-  channel = sb
-    .channel('miss-uwh-sync')
-    .on(
+const REALTIME_TABLES = [
+  'entries',
+  'seasons',
+  'events',
+  'recurrings',
+  'adherents',
+  'guardians',
+  'club_events',
+  'announcements',
+  'tournaments',
+  'training_sessions',
+  'exercises',
+  'strategies',
+  'referees',
+  'photo_albums',
+  'categories',
+  'ai_config',
+] as const;
+
+async function subscribeRealtime(): Promise<void> {
+  const gen = ++realtimeGen;
+  // SDK injoignable : la synchro pull/push reste fonctionnelle sans Realtime.
+  const sb = await getSupabase().catch(() => null);
+  if (!sb) return;
+  if (gen !== realtimeGen) return; // stopSync() est passé entre-temps
+  let ch = sb.channel('miss-uwh-sync');
+  for (const table of REALTIME_TABLES) {
+    ch = ch.on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'entries' },
+      { event: '*', schema: 'public', table },
       scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'seasons' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'events' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'recurrings' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'adherents' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'guardians' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'club_events' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'announcements' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'tournaments' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'training_sessions' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'exercises' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'strategies' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'referees' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'photo_albums' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'categories' },
-      scheduleReconcilePull
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'ai_config' },
-      scheduleReconcilePull
-    )
-    .subscribe();
+    );
+  }
+  channel = ch.subscribe();
 }
 
 function unsubscribeRealtime(): void {
+  realtimeGen += 1;
   if (channel) {
-    void getSupabase().removeChannel(channel);
+    const ch = channel;
     channel = null;
+    void getSupabase()
+      .then(sb => sb.removeChannel(ch))
+      .catch(() => {
+        /* client indisponible : le canal meurt avec la page */
+      });
   }
   if (pullTimer) {
     clearTimeout(pullTimer);
@@ -441,14 +360,19 @@ function unsubscribeRealtime(): void {
 /** Branche le push (enfilage + drain), l'écoute des reconnexions et le Realtime. */
 export function startSync(): void {
   setRemoteHandler(op => {
-    q.enqueue(op);
+    if (getSyncQueue().enqueue(op) === null)
+      // Plafond du socle atteint : refuser VISIBLEMENT plutôt que perdre en
+      // silence — l'utilisateur peut réessayer une fois la file drainée.
+      notifyError(
+        `File de synchronisation saturée : ${describeRemoteOp(op)} n'a pas pu être mis en attente. Réessayez une fois la connexion rétablie.`
+      );
     void drain();
   });
   if (typeof window !== 'undefined') {
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
   }
-  subscribeRealtime();
+  void subscribeRealtime();
 }
 
 export function stopSync(): void {
@@ -457,10 +381,7 @@ export function stopSync(): void {
     window.removeEventListener('online', onOnline);
     window.removeEventListener('offline', onOffline);
   }
-  if (retryTimer) {
-    clearTimeout(retryTimer);
-    retryTimer = null;
-  }
+  getSyncQueue().stop(); // annule le rejeu programmé ; la file, elle, persiste
   lastSyncAt = undefined; // appareil partagé : pas d'horodatage inter-comptes
   unsubscribeRealtime();
 }
@@ -474,7 +395,7 @@ export async function initialSync(): Promise<void> {
 /** Bouton « Réessayer » : rejoue la file puis réconcilie si vide. */
 export async function retrySync(): Promise<void> {
   await drain();
-  if (q.pendingCount() === 0) await pullAll();
+  if (getSyncQueue().pending() === 0) await pullAll();
 }
 
 /**
@@ -482,12 +403,12 @@ export async function retrySync(): Promise<void> {
  * utile après correction côté serveur (droits, données) — puis réconcilie.
  */
 export async function retryDeadOps(): Promise<void> {
-  q.requeueDead();
+  getSyncQueue().requeueDead();
   await retrySync();
 }
 
 /** Réglages : abandonne définitivement les opérations refusées. */
 export function discardDeadOps(): void {
-  q.clearDead();
-  reportQueueStatus();
+  // L'observateur (`onChange`) recalcule le statut après la purge.
+  getSyncQueue().clearDead();
 }

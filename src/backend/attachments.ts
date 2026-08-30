@@ -18,7 +18,7 @@ export async function uploadAttachment(
   entryId: string,
   file: File
 ): Promise<Attachment> {
-  const sb = getSupabase();
+  const sb = await getSupabase();
   const id = createUuid();
   const path = attachmentPath(entryId, id, file.name);
 
@@ -55,8 +55,9 @@ export async function signedUrl(
   path: string,
   expiresIn = 600
 ): Promise<string> {
-  const { data, error } = await getSupabase()
-    .storage.from(BUCKET)
+  const sb = await getSupabase();
+  const { data, error } = await sb.storage
+    .from(BUCKET)
     .createSignedUrl(path, expiresIn);
   if (error || !data) throw new Error(error?.message ?? 'URL indisponible');
   return data.signedUrl;
@@ -64,7 +65,7 @@ export async function signedUrl(
 
 /** Supprime le binaire + la ligne de métadonnées. */
 export async function removeAttachmentRemote(att: Attachment): Promise<void> {
-  const sb = getSupabase();
+  const sb = await getSupabase();
   if (att.storagePath) await sb.storage.from(BUCKET).remove([att.storagePath]);
   await sb.from('attachments').delete().eq('id', att.id);
 }

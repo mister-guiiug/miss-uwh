@@ -215,7 +215,7 @@ export function DatabaseStatusCard() {
             {dead.slice(0, 8).map(item => (
               <li key={item.id} className="text-xs">
                 <span className="font-semibold">
-                  {describeRemoteOp(item.op)}
+                  {describeRemoteOp(item.payload)}
                 </span>
                 {item.lastError && (
                   <span className="block break-words text-[var(--uwh-text-soft)]">
