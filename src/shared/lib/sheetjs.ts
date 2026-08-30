@@ -2,6 +2,12 @@
  * Chargeur SheetJS partagé (import ET export Excel). Chargé PARESSEUSEMENT depuis
  * le CDN officiel — hors bundle (pas d'impact hors ligne ni sur l'audit de
  * dépendances). Les opérations Excel sont des actions ponctuelles, en ligne.
+ *
+ * TOUJOURS LÀ MALGRÉ `@mister-guiiug/dev-wpa-config/xlsx`, pour deux raisons
+ * distinctes : l'IMPORT LIT des classeurs et le module socle ne sait
+ * qu'écrire ; l'EXPORT en produit une vingtaine d'onglets et le module socle
+ * est mono-feuille (le détail est dans `features/export/xlsxExport.ts`).
+ * Supprimer ce chargeur suppose donc de régler les deux, pas un seul.
  */
 export interface SheetJs {
   read: (
