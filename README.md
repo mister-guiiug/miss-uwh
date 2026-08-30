@@ -276,6 +276,10 @@ séances, exercices, stratégie, arbitrage — en cours.)_
 **Améliorations (juin 2026)**
 
 - [x] **Export Excel multi-feuilles** (Bilan + Compte + une feuille par catégorie + Evolution) via SheetJS ; préparation pure et testée.
+      Le module `xlsx` du socle (zéro dépendance, sans CDN) ne le remplace pas :
+      il écrit une **seule** feuille, là où cet export en produit 3 au minimum et
+      19 sur le jeu de démonstration (cf. l'explication dans
+      [`xlsxExport.ts`](src/features/export/xlsxExport.ts)).
 - [x] **Rapprochement bancaire** : import CSV de relevé + appariement montant/date
       (testé) + pointage auto ; **pointage manuel** par écriture.
 - [x] **Filtres journal avancés** (dates, catégorie, mode, événement, pointage).
