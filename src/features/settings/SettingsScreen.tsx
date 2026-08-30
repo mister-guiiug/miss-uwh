@@ -316,7 +316,7 @@ export function SettingsScreen() {
               <Button
                 variant="secondary"
                 className="col-span-2"
-                onClick={() => void exportWorkbookXlsx(data, season)}
+                onClick={() => exportWorkbookXlsx(data, season)}
               >
                 <FileSpreadsheet size={16} aria-hidden="true" />{' '}
                 {t('settings.exportXlsx')}
