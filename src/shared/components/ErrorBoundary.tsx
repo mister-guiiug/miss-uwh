@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, Download, Home, RotateCcw } from 'lucide-react';
 import { recordError } from '@mister-guiiug/dev-wpa-config/react/observability';
-import { STORAGE_KEY } from '../lib/storage.ts';
+import { STORAGE_KEY, unwrapSnapshot } from '../lib/storage.ts';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { useI18n } from '../../i18n/index.ts';
 
@@ -55,13 +55,18 @@ export class ErrorBoundary extends Component<
   }
 }
 
-/** Télécharge le snapshot brut du localStorage, sans dépendre de l'état React. */
+/**
+ * Télécharge le snapshot du localStorage, sans dépendre de l'état React.
+ * `unwrapSnapshot` retire l'enveloppe `{v, data}` du magasin versionné : le
+ * fichier de secours a exactement le format d'un export normal, donc se
+ * réimporte ici comme dans une version antérieure de l'app.
+ */
 function downloadBackup(): void {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const url = URL.createObjectURL(
-      new Blob([raw], { type: 'application/json' })
+      new Blob([unwrapSnapshot(raw)], { type: 'application/json' })
     );
     const link = document.createElement('a');
     link.href = url;
