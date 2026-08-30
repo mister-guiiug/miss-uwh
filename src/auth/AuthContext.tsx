@@ -16,7 +16,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshMfa = useCallback(async () => {
     if (!IS_SUPABASE) return;
-    const sb = getSupabase();
+    const sb = await getSupabase();
     const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
     const { data: factors } = await sb.auth.mfa.listFactors();
     const verified = (factors?.totp ?? []).some(f => f.status === 'verified');
@@ -28,56 +28,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!IS_SUPABASE) return;
-    const sb = getSupabase();
+    // Client asynchrone (fabrique du socle : SDK importé dynamiquement) :
+    // l'abonnement se fait après résolution. Un démontage survenu AVANT est
+    // honoré par `disposed` — la continuation s'exécute d'un bloc (mono-thread),
+    // donc soit elle voit `disposed`, soit `unsubscribe` est posé avant que le
+    // nettoyage ne s'exécute.
+    let disposed = false;
+    let unsubscribe: (() => void) | undefined;
 
-    async function hydrate(s: Session | null) {
-      setSession(s);
-      if (s?.user?.email) setCurrentActor(s.user.email);
-      if (s) {
-        const { data } = await sb
-          .from('members')
-          .select('roles')
-          .eq('auth_id', s.user.id)
-          .maybeSingle();
-        setRoles((data?.roles as Role[]) ?? []);
-        await refreshMfa();
-      } else {
-        setRoles([]);
-        setNeedsMfa(false);
-        setHasTotp(false);
-        setCurrentActor('local');
-      }
-      setLoading(false);
-    }
+    getSupabase()
+      .then(sb => {
+        if (disposed) return;
 
-    sb.auth.getSession().then(({ data }) => hydrate(data.session));
-    const { data: sub } = sb.auth.onAuthStateChange((event, s) => {
-      void hydrate(s);
-      if (event === 'SIGNED_IN' && s?.user?.email)
-        logSecurity('auth.signin', `Connexion de ${s.user.email}.`);
-      // Déconnexion : on purge les données locales (appareil potentiellement
-      // partagé) — aucune écriture ne doit subsister pour le membre suivant.
-      if (event === 'SIGNED_OUT') wipeLocal();
-    });
-    return () => sub.subscription.unsubscribe();
+        async function hydrate(s: Session | null) {
+          setSession(s);
+          if (s?.user?.email) setCurrentActor(s.user.email);
+          if (s) {
+            const { data } = await sb
+              .from('members')
+              .select('roles')
+              .eq('auth_id', s.user.id)
+              .maybeSingle();
+            setRoles((data?.roles as Role[]) ?? []);
+            await refreshMfa();
+          } else {
+            setRoles([]);
+            setNeedsMfa(false);
+            setHasTotp(false);
+            setCurrentActor('local');
+          }
+          setLoading(false);
+        }
+
+        sb.auth.getSession().then(({ data }) => hydrate(data.session));
+        const { data: sub } = sb.auth.onAuthStateChange((event, s) => {
+          void hydrate(s);
+          if (event === 'SIGNED_IN' && s?.user?.email)
+            logSecurity('auth.signin', `Connexion de ${s.user.email}.`);
+          // Déconnexion : on purge les données locales (appareil potentiellement
+          // partagé) — aucune écriture ne doit subsister pour le membre suivant.
+          if (event === 'SIGNED_OUT') wipeLocal();
+        });
+        unsubscribe = () => sub.subscription.unsubscribe();
+      })
+      .catch(() => {
+        // SDK injoignable : on sort de l'état de chargement — la connexion
+        // resignalera l'erreur au moment où l'utilisateur agit.
+        if (!disposed) setLoading(false);
+      });
+
+    return () => {
+      disposed = true;
+      unsubscribe?.();
+    };
   }, [logSecurity, refreshMfa, wipeLocal]);
 
   async function signIn(email: string, password: string) {
-    const { error } = await getSupabase().auth.signInWithPassword({
-      email,
-      password,
-    });
+    const sb = await getSupabase();
+    const { error } = await sb.auth.signInWithPassword({ email, password });
     return { error: error?.message };
   }
 
   async function signOut() {
-    await getSupabase().auth.signOut();
+    const sb = await getSupabase();
+    await sb.auth.signOut();
   }
 
   async function enrollTotp(): Promise<TotpEnrollment | { error: string }> {
-    const { data, error } = await getSupabase().auth.mfa.enroll({
-      factorType: 'totp',
-    });
+    const sb = await getSupabase();
+    const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp' });
     if (error || !data)
       return { error: error?.message ?? 'Enrôlement impossible' };
     return {
@@ -89,10 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function verifyTotp(factorId: string, code: string) {
-    const { error } = await getSupabase().auth.mfa.challengeAndVerify({
-      factorId,
-      code,
-    });
+    const sb = await getSupabase();
+    const { error } = await sb.auth.mfa.challengeAndVerify({ factorId, code });
     if (!error) {
       await refreshMfa();
       logSecurity('auth.mfa.verify', 'Vérification MFA (TOTP) réussie.');
@@ -101,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function challengeTotp(code: string) {
-    const sb = getSupabase();
+    const sb = await getSupabase();
     const { data: factors } = await sb.auth.mfa.listFactors();
     const totp = (factors?.totp ?? []).find(f => f.status === 'verified');
     if (!totp) return { error: 'Aucun facteur TOTP vérifié.' };
@@ -109,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function unenrollTotp(factorId?: string) {
-    const sb = getSupabase();
+    const sb = await getSupabase();
     let id = factorId;
     if (!id) {
       const { data: factors } = await sb.auth.mfa.listFactors();

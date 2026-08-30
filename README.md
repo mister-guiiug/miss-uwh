@@ -262,8 +262,9 @@ séances, exercices, stratégie, arbitrage — en cours.)_
       (`syncBus` → `sync.ts` → upserts UUID), bandeau de statut.
 - [x] **Synthèse visuelle** : donuts recettes/dépenses par catégorie + évolution
       multi-saisons (barres recettes/dépenses + ligne solde), SVG pur.
-- [x] **File d'attente hors ligne persistante** (`syncQueue`, testée) + rejeu à la
-      reconnexion + lettre morte (échec serveur) ; réconciliation par re-pull.
+- [x] **File d'attente hors ligne persistante** (module `sync-queue` du socle,
+      promu depuis ce dépôt) + rejeu à la reconnexion + lettre morte (échec
+      serveur) ; réconciliation par re-pull.
 - [x] **MFA in-app (TOTP)** : enrôlement (QR) dans les réglages + élévation AAL2
       à la connexion ; **admin membres/rôles** (gardé admin, RLS serveur).
 - [x] **Justificatifs** : upload vers le bucket privé `justificatifs` + table

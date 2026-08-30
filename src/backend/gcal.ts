@@ -24,7 +24,8 @@ export async function fetchGoogleCalendar(
   const url = icsUrl.trim();
   if (!url) throw new Error('Aucune URL iCal renseignée (Réglages).');
 
-  const result = await getSupabase().functions.invoke('gcal-import', {
+  const sb = await getSupabase();
+  const result = await sb.functions.invoke('gcal-import', {
     body: { icsUrl: url },
   });
   const data = await unwrapInvoke(result);

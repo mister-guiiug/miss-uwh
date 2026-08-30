@@ -42,7 +42,8 @@ export function MembersRolesScreen() {
     void (async () => {
       setLoading(true);
       setError(undefined);
-      const { data, error } = await getSupabase()
+      const sb = await getSupabase();
+      const { data, error } = await sb
         .from('members')
         .select('id,email,display_name,roles,active')
         .order('email');
@@ -61,17 +62,16 @@ export function MembersRolesScreen() {
       ? m.roles.filter(r => r !== role)
       : [...m.roles, role];
     setMembers(prev => prev.map(x => (x.id === m.id ? { ...x, roles } : x)));
-    const { error } = await getSupabase()
-      .from('members')
-      .update({ roles })
-      .eq('id', m.id);
+    const sb = await getSupabase();
+    const { error } = await sb.from('members').update({ roles }).eq('id', m.id);
     if (error) setError(error.message);
   }
 
   async function toggleActive(m: MemberRow) {
     const active = !m.active;
     setMembers(prev => prev.map(x => (x.id === m.id ? { ...x, active } : x)));
-    const { error } = await getSupabase()
+    const sb = await getSupabase();
+    const { error } = await sb
       .from('members')
       .update({ active })
       .eq('id', m.id);

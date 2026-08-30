@@ -12,7 +12,11 @@ import { join } from 'node:path';
 const ASSETS_DIR = 'dist/assets';
 // Budget TOTAL gzip du JS (kB). À ajuster sciemment : +budget = +code livré.
 // Référence ~208 kB (juin 2026) ; ~10 % de marge pour les évolutions normales.
-const TOTAL_GZIP_BUDGET_KB = 245; // +15 kB : catalogue i18n FR+EN (2 locales)
+// +15 kB (i18n FR+EN) ; +5 kB (août 2026) : modules socle supabase-client +
+// sync-queue (~4 kB réels — le SDK importé dynamiquement se tree-shake moins,
+// mais le chunk `supabase` de ~51 kB quitte le chemin critique : chargé au
+// premier `getClient()`, jamais en mode local).
+const TOTAL_GZIP_BUDGET_KB = 250;
 
 const gzipKB = buf => gzipSync(buf).length / 1024;
 
