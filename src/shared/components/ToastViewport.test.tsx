@@ -2,38 +2,66 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ToastViewport } from './ToastViewport.tsx';
-import { notifyError, useToasts } from '../lib/toasts.ts';
+import { notifyError, notifySuccess, useToasts } from '../lib/toasts.ts';
+import { SocleLabels } from '../../i18n/SocleLabels.tsx';
 import { I18nProvider } from '../../i18n/index.ts';
 
-// ToastViewport consomme useI18n : chaque rendu doit être enveloppé dans le
-// provider i18n (sinon useI18n lève « doit être utilisé dans son I18nProvider »).
+// Les libellés de la zone d'affichage viennent du socle (`SocleLabels`), qui
+// suit la langue de l'app : on force FR pour assurer les textes attendus.
 const render = (ui: Parameters<typeof rtlRender>[0]) => {
-  // jsdom rapporte navigator.language=en-US : on force FR pour que les
-  // assertions sur le texte français restent valides.
   localStorage.setItem('uwh_locale', 'fr');
-  return rtlRender(ui, { wrapper: I18nProvider });
+  return rtlRender(ui, {
+    wrapper: ({ children }) => (
+      <I18nProvider>
+        <SocleLabels>{children}</SocleLabels>
+      </I18nProvider>
+    ),
+  });
 };
 
 describe('ToastViewport', () => {
   beforeEach(() => useToasts.getState().clear());
 
-  it('ne rend rien sans toast', () => {
-    const { container } = render(<ToastViewport />);
-    expect(container).toBeEmptyDOMElement();
+  it('monte ses régions vivantes AVANT tout message', () => {
+    render(<ToastViewport />);
+
+    // Un lecteur d'écran n'annonce une insertion que dans une région déjà
+    // présente : les deux zones existent donc en permanence, vides et muettes.
+    expect(
+      screen.getByRole('region', { name: 'Notifications' })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toBeEmptyDOMElement(); // assertive
+    expect(screen.getByRole('status')).toBeEmptyDOMElement(); // polie
   });
 
-  it('affiche un toast d’erreur en role="alert"', () => {
+  it('annonce une erreur dans la région assertive', () => {
     notifyError('Sauvegarde impossible');
     render(<ToastViewport />);
-    const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent('Sauvegarde impossible');
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Sauvegarde impossible'
+    );
+    // …et pas dans la polie : les deux files ne se mélangent pas.
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+
+  it('annonce un succès dans la région polie', () => {
+    notifySuccess('Écriture enregistrée');
+    render(<ToastViewport />);
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Écriture enregistrée'
+    );
+    expect(screen.getByRole('alert')).toBeEmptyDOMElement();
   });
 
   it('le bouton Fermer retire le toast', async () => {
     const user = userEvent.setup();
     notifyError('à fermer');
     render(<ToastViewport />);
+
     await user.click(screen.getByRole('button', { name: /fermer/i }));
+
     expect(screen.queryByText('à fermer')).not.toBeInTheDocument();
     expect(useToasts.getState().toasts).toHaveLength(0);
   });

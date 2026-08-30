@@ -198,10 +198,6 @@ const fr = {
       source: 'Code source',
       sponsor: 'Soutenir',
     },
-    toasts: {
-      region: 'Notifications',
-      dismiss: 'Fermer la notification',
-    },
   },
   errors: {
     app: {
@@ -645,10 +641,6 @@ const en = {
     footer: {
       source: 'Source code',
       sponsor: 'Sponsor',
-    },
-    toasts: {
-      region: 'Notifications',
-      dismiss: 'Dismiss notification',
     },
   },
   errors: {

@@ -1,11 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { notifyError, notifyInfo, notifySuccess, useToasts } from './toasts.ts';
+import {
+  notifyError,
+  notifyInfo,
+  notifySuccess,
+  setToastsPaused,
+  useToasts,
+} from './toasts.ts';
 
 describe('toasts', () => {
   beforeEach(() => {
     useToasts.getState().clear();
+    setToastsPaused(false);
   });
   afterEach(() => {
+    setToastsPaused(false);
     vi.useRealTimers();
   });
 
@@ -47,5 +55,42 @@ describe('toasts', () => {
     expect(useToasts.getState().toasts).toHaveLength(2);
     vi.advanceTimersByTime(5000);
     expect(useToasts.getState().toasts).toHaveLength(0);
+  });
+
+  it('borne la pile en laissant partir le plus ancien', () => {
+    for (const n of [1, 2, 3, 4, 5]) notifyError(`erreur ${n}`);
+
+    const messages = useToasts.getState().toasts.map(t => t.message);
+    expect(messages).toEqual(['erreur 2', 'erreur 3', 'erreur 4', 'erreur 5']);
+  });
+
+  it('suspend le rebours au survol, et reprend là où il s’était arrêté', () => {
+    vi.useFakeTimers();
+    notifySuccess('à lire');
+
+    vi.advanceTimersByTime(2000); // 3 s restantes
+    setToastsPaused(true); // la souris arrive sur la pile
+
+    vi.advanceTimersByTime(60_000);
+    expect(useToasts.getState().toasts).toHaveLength(1); // rien ne s'efface
+
+    setToastsPaused(false); // la souris repart
+    vi.advanceTimersByTime(2999);
+    expect(useToasts.getState().toasts).toHaveLength(1); // le reste, pas plus
+    vi.advanceTimersByTime(1);
+    expect(useToasts.getState().toasts).toHaveLength(0);
+  });
+
+  it('n’efface plus rien après un clear (pas de minuterie orpheline)', () => {
+    vi.useFakeTimers();
+    notifySuccess('éphémère');
+    useToasts.getState().clear();
+    notifyError('la suivante');
+
+    vi.advanceTimersByTime(10_000);
+
+    expect(useToasts.getState().toasts.map(t => t.message)).toEqual([
+      'la suivante',
+    ]);
   });
 });
