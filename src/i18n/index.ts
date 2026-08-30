@@ -11,11 +11,17 @@ const STORAGE_KEY = 'uwh_locale';
  * i18n de l'application (FR par défaut, EN complet). Construit une fois au niveau
  * module via le helper partagé `createI18n` : contexte + provider + hook typés.
  * Les clés sont vérifiées à la compilation (dot-notation dérivée du dictionnaire).
+ *
+ * `createI18n` pose aussi la locale par défaut de `dev-wpa-config/format` : les
+ * montants et les dates suivent la langue choisie (cf. `shared/lib/format.ts`).
+ * L'anglais est épinglé sur `en-GB` — un club français tient un journal en
+ * jour/mois, et `en-US` aurait affiché « 01/12/2026 » pour le 12 janvier.
  */
 export const { I18nProvider, useI18n } = createI18n({
   messages,
   locales: ['fr', 'en'],
   fallbackLocale: 'fr',
+  localeTags: { en: 'en-GB' },
   storageKey: STORAGE_KEY,
 });
 
