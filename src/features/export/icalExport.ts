@@ -1,85 +1,94 @@
 /**
- * Export iCal (RFC 5545) de l'agenda de la vie du club : génère un fichier
- * `.ics` d'événements « journée » (VALUE=DATE) partageable / importable dans
- * Google Agenda, Outlook, Apple Calendar… `buildIcs` est pur (testable) ;
- * `downloadClubEventsIcs` déclenche le téléchargement.
+ * Export iCalendar (RFC 5545) de l'agenda de la vie du club : un fichier `.ics`
+ * partageable / importable dans Google Agenda, Outlook, Apple Calendar…
+ *
+ * BASCULÉ SUR `@mister-guiiug/dev-wpa-config/ical` (socle 3.24.0). Le module du
+ * socle est né de QUATRE réécritures de la RFC 5545 dans la famille, dont
+ * celle-ci : il a repris d'ici la journée entière et le `DTSTAMP` injectable,
+ * et il corrige ce que le pliage local ratait (cf. plus bas). Il ne reste donc
+ * dans ce fichier que ce qui est propre à miss-uwh : la conversion d'un
+ * `ClubEvent` en événement d'agenda, et le nom du fichier téléchargé.
+ *
+ * POURQUOI DES JOURNÉES ENTIÈRES (`VALUE=DATE`) ET PAS DES INSTANTS. Le socle
+ * sait écrire trois natures de date — instant UTC, heure locale flottante,
+ * journée entière — et le choix n'est pas cosmétique. Ici il est dicté par le
+ * domaine : `ClubEvent.date` est une date ISO `yyyy-mm-dd`, sans heure, et le
+ * formulaire de saisie n'en propose aucune (cf. ClubEventSheet). Il n'y a donc
+ * aucune heure à écrire, et en inventer une (minuit) la rendrait fausse deux
+ * fois : l'AG s'afficherait « 31 janvier, 01:00 » à Paris, et carrément le
+ * 30 janvier pour un lecteur à l'ouest de Greenwich — alors que la liste des
+ * événements, elle, affiche `formatDateShort` (« 31/01/2026 »), un jour de
+ * calendrier qui ne bouge nulle part. La journée entière est la seule des trois
+ * formes qui ne contredit pas l'écran.
+ *
+ * CE QUI EST RECONDUIT À L'IDENTIQUE, ET POURQUOI. `PRODID` et le motif d'`UID`
+ * (`<id>@miss-uwh`) sont repassés en options au socle. Un `UID` est la seule
+ * propriété dont la valeur doit survivre aux versions : un abonné qui a déjà
+ * importé l'agenda verrait ses événements EN DOUBLE si on changeait le motif,
+ * au lieu de les voir mis à jour. Le nom du fichier téléchargé ne bouge pas non
+ * plus.
  */
+import { downloadText } from '@mister-guiiug/dev-wpa-config/download';
+import {
+  ICAL_MIME,
+  toIcalendar,
+  type IcalEvent,
+} from '@mister-guiiug/dev-wpa-config/ical';
 import type { ClubEvent } from '../../shared/types/domain.ts';
 
-function escapeText(s: string): string {
-  return s
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n');
+/** Le logiciel qui a écrit le fichier — inchangé depuis le premier export. */
+const PROD_ID = '-//Miss UWH//Agenda//FR';
+
+/**
+ * Suffixe d'`UID`, inchangé lui aussi : c'est lui qui fait qu'un réimport MET À
+ * JOUR les événements au lieu d'en créer une seconde collection.
+ */
+const UID_DOMAIN = 'miss-uwh';
+
+/** Nom du calendrier importé quand l'appelant n'en fournit pas. */
+const DEFAULT_CAL_NAME = 'Miss UWH';
+
+/**
+ * Le mapping métier : un événement du club → un événement d'agenda. Pur, c'est
+ * là qu'est la valeur de l'app — le reste (échappement, pliage, CRLF,
+ * `DTEND` exclusif au lendemain) est garanti et testé par le socle.
+ *
+ * `allDay` est explicite bien que le socle le déduise d'une date sans heure :
+ * le jour où `ClubEvent.date` gagnerait une heure, l'export doit continuer à
+ * dire ce que l'app affiche, pas suivre la forme de la donnée en silence.
+ */
+export function clubEventToIcal(event: ClubEvent): IcalEvent {
+  return {
+    uid: event.id,
+    start: event.date,
+    allDay: true,
+    summary: event.title,
+    location: event.location,
+    description: event.description,
+  };
 }
 
-/** « 2025-01-31 » → « 20250131 ». */
-function ymd(iso: string): string {
-  return iso.replace(/-/g, '');
-}
-
-/** Lendemain au format compact (DTEND exclusif pour un événement « journée »). */
-function nextDayCompact(iso: string): string {
-  const d = new Date(`${iso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + 1);
-  return d.toISOString().slice(0, 10).replace(/-/g, '');
-}
-
-/** Repli de ligne RFC 5545 (≤ 75 octets ; continuation par espace). */
-function fold(line: string): string {
-  if (line.length <= 73) return line;
-  const parts = [line.slice(0, 73)];
-  let rest = line.slice(73);
-  while (rest.length > 72) {
-    parts.push(' ' + rest.slice(0, 72));
-    rest = rest.slice(72);
-  }
-  if (rest) parts.push(' ' + rest);
-  return parts.join('\r\n');
-}
-
+/** Le `.ics` complet. Pur : `dtstamp` injectable rend l'export comparable. */
 export function buildIcs(
-  events: ClubEvent[],
+  events: readonly ClubEvent[],
   opts: { calName?: string; dtstamp?: string } = {}
 ): string {
-  const dtstamp =
-    opts.dtstamp ??
-    new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
-  const lines: string[] = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Miss UWH//Agenda//FR',
-    'CALSCALE:GREGORIAN',
-    fold(`X-WR-CALNAME:${escapeText(opts.calName ?? 'Miss UWH')}`),
-  ];
-  for (const e of events) {
-    lines.push('BEGIN:VEVENT');
-    lines.push(`UID:${e.id}@miss-uwh`);
-    lines.push(`DTSTAMP:${dtstamp}`);
-    lines.push(`DTSTART;VALUE=DATE:${ymd(e.date)}`);
-    lines.push(`DTEND;VALUE=DATE:${nextDayCompact(e.date)}`);
-    lines.push(fold(`SUMMARY:${escapeText(e.title)}`));
-    if (e.location) lines.push(fold(`LOCATION:${escapeText(e.location)}`));
-    if (e.description) {
-      lines.push(fold(`DESCRIPTION:${escapeText(e.description)}`));
-    }
-    lines.push('END:VEVENT');
-  }
-  lines.push('END:VCALENDAR');
-  return lines.join('\r\n') + '\r\n';
+  return toIcalendar(events, {
+    name: opts.calName ?? DEFAULT_CAL_NAME,
+    prodId: PROD_ID,
+    uidDomain: UID_DOMAIN,
+    dtstamp: opts.dtstamp,
+    map: clubEventToIcal,
+  });
 }
 
 export function downloadClubEventsIcs(
-  events: ClubEvent[],
+  events: readonly ClubEvent[],
   calName: string
 ): void {
-  const ics = buildIcs(events, { calName });
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${calName.replace(/[^\w-]+/g, '-').toLowerCase()}-agenda.ics`;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadText(
+    buildIcs(events, { calName }),
+    `${calName.replace(/[^\w-]+/g, '-').toLowerCase()}-agenda.ics`,
+    ICAL_MIME
+  );
 }
