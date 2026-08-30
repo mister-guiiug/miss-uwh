@@ -282,6 +282,14 @@ séances, exercices, stratégie, arbitrage — en cours.)_
       était mono-feuille, là où cet export en produit 3 au minimum, 19 sur le jeu
       de démonstration et 30 au maximum (cf.
       [`xlsxExport.ts`](src/features/export/xlsxExport.ts)).
+- [x] **Export iCalendar de l'agenda du club** écrit par le module `ical` du socle
+      (promu depuis quatre réécritures de la RFC 5545, dont celle-ci : elle lui a
+      donné la journée entière et le `DTSTAMP` injectable). Corrige au passage le
+      pliage local, compté en caractères : un titre accentué un peu long sortait
+      sur une ligne hors limite (76 à 138 octets pour un maximum de 75) et un
+      emoji à cheval sur la coupe revenait en mojibake. `PRODID` et motif d'`UID`
+      reconduits — un agenda déjà importé se met à jour, il ne se duplique pas
+      (cf. [`icalExport.ts`](src/features/export/icalExport.ts)).
 - [x] **Rapprochement bancaire** : import CSV de relevé + appariement montant/date
       (testé) + pointage auto ; **pointage manuel** par écriture.
 - [x] **Filtres journal avancés** (dates, catégorie, mode, événement, pointage).
