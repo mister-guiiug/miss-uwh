@@ -3,6 +3,7 @@ import type { JournalEntry, Season } from '../../shared/types/domain.ts';
 import {
   buildEvolutionRows,
   buildWorkbookSheets,
+  COMPTE_HEADER,
   safeSheetName,
 } from './buildWorkbook.ts';
 
@@ -60,10 +61,15 @@ describe('buildWorkbookSheets', () => {
     expect(names).toEqual(['Bilan', 'Compte', 'R1', 'D4', 'Evolution']);
 
     const compte = sheets.find(s => s.name === 'Compte')!;
-    // en-tête + 2 écritures
-    expect(compte.rows).toHaveLength(3);
+    // L'en-tête sort des `rows` : le socle le rend lui-même, en gras.
+    expect(compte.header).toEqual(COMPTE_HEADER);
+    expect(compte.rows).toHaveLength(2); // 2 écritures
     // solde courant final = reliquat + 647 - 100
-    expect(compte.rows[2]![8]).toBe(2911.85);
+    expect(compte.rows[1]![8]).toBe(2911.85);
+
+    // Un titre n'est pas un en-tête : Bilan et catégories n'en déclarent pas.
+    expect(sheets.find(s => s.name === 'Bilan')!.header).toBeUndefined();
+    expect(sheets.find(s => s.name === 'R1')!.header).toBeUndefined();
   });
 });
 
@@ -75,6 +81,6 @@ describe('buildEvolutionRows', () => {
       summary: { totalRecettes: 49536.46, totalDepenses: 44152.64 },
     };
     const rows = buildEvolutionRows([histo], []);
-    expect(rows[1]).toEqual(['2024-2025', 49536.46, 44152.64, 5383.82]);
+    expect(rows[0]).toEqual(['2024-2025', 49536.46, 44152.64, 5383.82]);
   });
 });
