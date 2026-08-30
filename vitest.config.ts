@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import {
   baseTestOptions,
@@ -9,6 +10,16 @@ import {
 // rapprochement, file de sync, validation, export). À monter, jamais à baisser.
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      // `virtual:pwa-register` n'est fourni que par vite-plugin-pwa, absent
+      // d'ici : sans ce double, tout test qui monte la bannière de mise à jour
+      // échoue à l'import, avant d'avoir rien éprouvé.
+      'virtual:pwa-register': fileURLToPath(
+        new URL('./src/test/pwa-register-stub.ts', import.meta.url)
+      ),
+    },
+  },
   test: {
     ...baseTestOptions,
     exclude: ['**/node_modules/**', '**/e2e/**'],
