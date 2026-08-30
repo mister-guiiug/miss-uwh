@@ -16,7 +16,17 @@ const ASSETS_DIR = 'dist/assets';
 // sync-queue (~4 kB réels — le SDK importé dynamiquement se tree-shake moins,
 // mais le chunk `supabase` de ~51 kB quitte le chemin critique : chargé au
 // premier `getClient()`, jamais en mode local).
-const TOTAL_GZIP_BUDGET_KB = 250;
+//
+// +5 kB (août 2026) : bascule de l'export Excel sur le module `xlsx` du socle.
+// Coût MESURÉ +1,7 kB (248,7 → 250,4 kB : le chunk `vendor` passe de 16,1 à
+// 17,9 kB, `SettingsScreen` maigrit de 0,1 kB — la glue SheetJS de l'export
+// disparaît). Ce que ces 1,7 kB achètent : l'export ne charge plus SheetJS
+// depuis un CDN tiers à l'exécution ; le trésorier qui clique « Classeur
+// Excel » n'a plus besoin ni du réseau ni de cdn.sheetjs.com. Les 3,3 kB
+// restants rendent au garde-fou une marge de travail : à 248,7 sur 250 il ne
+// lui restait plus 1,3 kB, moins que le bruit d'une montée de dépendance — un
+// budget qui échoue sur le bruit ne signale plus les régressions.
+const TOTAL_GZIP_BUDGET_KB = 255;
 
 const gzipKB = buf => gzipSync(buf).length / 1024;
 
