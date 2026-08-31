@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
+import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
 import { getSupabase } from '../../lib/supabase.ts';
 import type { Role } from '../../auth/useAuth.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
@@ -36,6 +37,25 @@ export function MembersRolesScreen() {
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
+
+  /**
+   * LE SEUL ÉCRAN DE L'APP OÙ L'IHM MENT QUAND LE RÉSEAU MANQUE.
+   *
+   * Partout ailleurs, une écriture part dans la file du socle : elle est
+   * conservée, rejouée à la reconnexion, et le bandeau la compte. Ici, non.
+   * `toggleRole` et `toggleActive` peignent d'abord l'état localement
+   * (`setMembers`), écrivent ensuite EN DIRECT dans `members`, et en cas
+   * d'échec se contentent d'un `setError` — sans jamais défaire la peinture.
+   * Hors connexion, la pastille de rôle reste donc visiblement activée alors
+   * que RIEN n'a été écrit ; elle redeviendra grise au prochain chargement,
+   * bien plus tard, sans que personne ne fasse le lien. Un administrateur
+   * repart convaincu d'avoir nommé un trésorier qui ne l'est pas.
+   *
+   * Le garde refuse AVANT de peindre : pas de peinture, pas de mensonge.
+   * `aria-disabled` plutôt que `disabled` — la pastille reste focusable, donc
+   * le motif reste découvrable au clavier — et `wrap()` rend l'action inerte.
+   */
+  const guard = useActionGuard({ online: true });
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +110,15 @@ export function MembersRolesScreen() {
         </p>
       )}
 
+      {/* Le motif, écrit une fois pour tout l'écran : il vaut pour chaque
+          pastille de rôle comme pour chaque bascule d'activation. Le répéter
+          sur les dizaines de pastilles en ferait du bruit. */}
+      {guard.reason && (
+        <p role="status" className="text-sm text-[var(--uwh-warn)]">
+          {guard.reason}
+        </p>
+      )}
+
       {loading ? (
         <p className="text-sm text-[var(--uwh-text-soft)]">
           {t('common.loading')}
@@ -117,7 +146,10 @@ export function MembersRolesScreen() {
                   </p>
                 </div>
                 <button
-                  onClick={() => void toggleActive(m)}
+                  onClick={guard.wrap(() => void toggleActive(m))}
+                  {...guard.disabledProps}
+                  title={guard.reason ?? undefined}
+                  className={guard.disabled ? 'opacity-45' : undefined}
                   aria-pressed={m.active}
                   aria-label={
                     m.active
@@ -138,13 +170,15 @@ export function MembersRolesScreen() {
                   return (
                     <button
                       key={r}
-                      onClick={() => void toggleRole(m, r)}
+                      onClick={guard.wrap(() => void toggleRole(m, r))}
+                      {...guard.disabledProps}
+                      title={guard.reason ?? undefined}
                       aria-pressed={on}
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                         on
                           ? 'bg-primary text-white'
                           : 'bg-[var(--uwh-surface-2)] text-[var(--uwh-text-soft)]'
-                      }`}
+                      }${guard.disabled ? ' opacity-45' : ''}`}
                     >
                       {t(`adherents.roles.${r}` as TKey)}
                     </button>
