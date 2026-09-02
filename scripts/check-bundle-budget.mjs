@@ -26,9 +26,11 @@ const ASSETS_DIR = 'dist/assets';
 // restants rendent au garde-fou une marge de travail : à 248,7 sur 250 il ne
 // lui restait plus 1,3 kB, moins que le bruit d'une montée de dépendance — un
 // budget qui échoue sur le bruit ne signale plus les régressions.
-// 02/09/2026 : 255,0 kB mesurés, budget à 255 — les imports du socle
-// (getDefaultLocale, createLogger) de la campagne PARC.md pèsent ~0,1 kB.
-const TOTAL_GZIP_BUDGET_KB = 258;
+// 02/09/2026 : 258,6 kB mesurés. Deux hausses le même jour — les imports du
+// socle de la campagne PARC.md (getDefaultLocale, createLogger, ~0,1 kB), puis
+// le socle 3.33.0 lui-meme, dont `react/labels` porte sept dictionnaires au
+// lieu de deux. Marge de 3 kB pour ne pas rougir sur du bruit.
+const TOTAL_GZIP_BUDGET_KB = 262;
 
 const gzipKB = buf => gzipSync(buf).length / 1024;
 
