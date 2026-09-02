@@ -12,7 +12,7 @@ import { BACKEND, IS_SUPABASE } from '../../backend/config.ts';
 import { discardDeadOps, retryDeadOps, retrySync } from '../../backend/sync.ts';
 import { describeRemoteOp } from '../../backend/syncBus.ts';
 import { deadItems } from '../../backend/syncQueue.ts';
-import { Card } from '../../shared/components/Card.tsx';
+import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
 import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';

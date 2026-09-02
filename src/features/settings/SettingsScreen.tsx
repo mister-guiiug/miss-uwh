@@ -47,7 +47,7 @@ import { AdherentsSheet } from '../adherents/AdherentsSheet.tsx';
 import { DatabaseStatusCard } from './DatabaseStatusCard.tsx';
 import { AiSkillsCard } from './AiSkillsCard.tsx';
 import { applyUpdate } from '@mister-guiiug/dev-wpa-config/sw-update';
-import { Card } from '../../shared/components/Card.tsx';
+import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import {
   SelectField,

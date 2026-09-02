@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Waves } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore.ts';
-import { Card } from '../../shared/components/Card.tsx';
+import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { TextField } from '@mister-guiiug/dev-wpa-config/react/field';
 import { useI18n } from '../../i18n/index.ts';

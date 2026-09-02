@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ShieldCheck, ShieldOff } from 'lucide-react';
-import { Card } from '../shared/components/Card.tsx';
+import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { TextField } from '@mister-guiiug/dev-wpa-config/react/field';
 import { Badge } from '../shared/components/badges.tsx';

@@ -9,7 +9,7 @@ import {
 import { useAppStore } from '../../store/useAppStore.ts';
 import { computeBilan } from '../../shared/lib/engine.ts';
 import type { Season } from '../../shared/types/domain.ts';
-import { Card } from '../../shared/components/Card.tsx';
+import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
 import { TextField } from '@mister-guiiug/dev-wpa-config/react/field';

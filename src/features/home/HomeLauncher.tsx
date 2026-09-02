@@ -10,7 +10,7 @@ import {
 } from '../../shared/lib/lenses.ts';
 import { expiryStatus, worstExpiry } from '../../shared/lib/expiry.ts';
 import { formatEuro } from '../../shared/lib/format.ts';
-import { Card } from '../../shared/components/Card.tsx';
+import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { useI18n, type TKey } from '../../i18n/index.ts';

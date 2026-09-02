@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ShieldCheck, Trash2, RotateCcw } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { formatDateTime } from '../../shared/lib/format.ts';
-import { Card } from '../../shared/components/Card.tsx';
+import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';

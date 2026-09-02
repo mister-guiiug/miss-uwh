@@ -8,7 +8,7 @@ import {
   AI_PROVIDER_LABELS,
   type AiProvider,
 } from '../../shared/types/domain.ts';
-import { Card } from '../../shared/components/Card.tsx';
+import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import {
   SelectField,

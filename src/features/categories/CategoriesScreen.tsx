@@ -12,7 +12,7 @@ import {
   TextField,
 } from '@mister-guiiug/dev-wpa-config/react/field';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Card } from '../../shared/components/Card.tsx';
+import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
