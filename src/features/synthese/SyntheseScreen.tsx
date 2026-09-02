@@ -5,7 +5,7 @@ import { useBilan } from '../../shared/hooks/useBilan.ts';
 import { seasonTotals } from '../../shared/lib/engine.ts';
 import { categoryColor } from '../../shared/lib/colors.ts';
 import type { BilanLine } from '../../shared/lib/engine.ts';
-import { Card } from '../../shared/components/Card.tsx';
+import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
 import {
   DonutChart,
   type DonutSegment,
