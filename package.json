@@ -7,7 +7,7 @@
   "description": "Miss UWH — PWA de bilan comptable saisonnier pour un club de Hockey Subaquatique (Under Water Hockey). Local-first, installable, hors ligne, RBAC sécurisé via Supabase en option.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/check-bundle-budget.mjs",
+    "build": "tsc -b && vite build && pwa-bundle-budget",
     "build:analyze": "cross-env ANALYZE=1 npm run build",
     "check:bundle": "node scripts/check-bundle-budget.mjs",
     "preview": "vite preview --base /miss-uwh/",
@@ -24,6 +24,9 @@
     "supabase:link": "supabase link",
     "supabase:types": "supabase gen types typescript --linked > src/backend/database.types.ts",
     "prepare": "husky || true"
+  },
+  "bundleBudget": {
+    "totalGzipKb": 262
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
