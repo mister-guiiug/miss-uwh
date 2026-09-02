@@ -42,6 +42,9 @@ import { remapNonUuidSyncIds } from './migrateIds.ts';
 import { createInitialData, SCHEMA_VERSION } from './seed.ts';
 import { notifyError } from './toasts.ts';
 import { translate } from '../../i18n/index.ts';
+import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+
+const log = createLogger('storage');
 
 /** Clé localStorage du snapshot complet (réutilisée par l'export de secours). */
 export const STORAGE_KEY = 'miss-uwh:data';
@@ -99,7 +102,9 @@ const store = createVersionedStore<AppData>({
       return appDataSchema.parse(data) as AppData;
     } catch (err) {
       if (!importInProgress) {
-        console.warn('[miss-uwh] données invalides, réinitialisation', err);
+        log.warn('[miss-uwh] données invalides, réinitialisation', {
+          error: err,
+        });
         notifyError(translate('system.storageCorrupt'));
       }
       throw err;
@@ -115,7 +120,7 @@ export function loadData(): AppData {
 
 export function saveData(data: AppData): void {
   if (!store.save(data)) {
-    console.error('[miss-uwh] écriture du stockage impossible');
+    log.error('[miss-uwh] écriture du stockage impossible');
     notifyError(translate('system.storageSaveFailed'));
   }
 }

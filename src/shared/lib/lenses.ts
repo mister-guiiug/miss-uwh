@@ -54,7 +54,7 @@ export interface Lens {
   tabs: LensTab[];
 }
 
-export const LENSES: Lens[] = [
+const LENSES: Lens[] = [
   {
     id: 'finances',
     label: 'nav.finances.label',

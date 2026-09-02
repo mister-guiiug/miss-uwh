@@ -14,6 +14,7 @@ import {
 import { formatDateShort } from '../../shared/lib/format.ts';
 import { Card } from '../../shared/components/Card.tsx';
 import { Badge, Money } from '../../shared/components/badges.tsx';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 interface RowProps {
   cat: Category;
@@ -111,7 +112,7 @@ function CategoryRow({
           {ecart != null && budget !== 0 && (
             <Badge tone={tone}>
               {t('finances.categories.variance', {
-                value: `${ecart > 0 ? '+' : ''}${ecart.toLocaleString('fr-FR')}`,
+                value: `${ecart > 0 ? '+' : ''}${ecart.toLocaleString(getDefaultLocale())}`,
               })}
             </Badge>
           )}

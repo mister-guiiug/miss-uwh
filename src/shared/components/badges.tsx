@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { formatSignedEuro } from '../lib/format.ts';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 type Tone = 'neutral' | 'credit' | 'debit' | 'warn' | 'primary';
 
@@ -58,7 +59,7 @@ export function Money({
     <span className={cn('tnum font-semibold', signed && tone, className)}>
       {signed
         ? formatSignedEuro(value, decimals)
-        : value.toLocaleString('fr-FR', {
+        : value.toLocaleString(getDefaultLocale(), {
             style: 'currency',
             currency: 'EUR',
             minimumFractionDigits: decimals,

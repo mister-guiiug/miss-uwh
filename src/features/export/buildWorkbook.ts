@@ -58,7 +58,7 @@ export function safeSheetName(raw: string, used: Set<string>): string {
   return final;
 }
 
-export function buildBilanRows(
+function buildBilanRows(
   season: Season,
   allEntries: JournalEntry[],
   clubName: string
@@ -101,7 +101,7 @@ export const COMPTE_HEADER = [
 ];
 
 /** Lignes du journal soldé, SANS l'en-tête (cf. `COMPTE_HEADER`). */
-export function buildCompteRows(
+function buildCompteRows(
   season: Season,
   allEntries: JournalEntry[]
 ): Array<Array<string | number>> {
@@ -130,7 +130,7 @@ export function buildCompteRows(
 }
 
 /** En-tête de la feuille Evolution — passé en `header` au socle, donc en gras. */
-export const EVOLUTION_HEADER = [
+const EVOLUTION_HEADER = [
   'Saison',
   'Total recettes',
   'Total dépenses',

@@ -4,6 +4,9 @@ import { recordError } from '@mister-guiiug/dev-wpa-config/react/observability';
 import { STORAGE_KEY, unwrapSnapshot } from '../lib/storage.ts';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { useI18n } from '../../i18n/index.ts';
+import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+
+const log = createLogger('components');
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -39,7 +42,10 @@ export class ErrorBoundary extends Component<
       source: 'error-boundary',
       react: info.componentStack,
     });
-    console.error('[miss-uwh] erreur de rendu', error, info.componentStack);
+    log.error('[miss-uwh] erreur de rendu', {
+      error: error,
+      details: [info.componentStack],
+    });
   }
 
   private reset = (): void => this.setState({ error: null });

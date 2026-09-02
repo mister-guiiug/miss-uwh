@@ -22,7 +22,7 @@ function csvCell(v: string | number): string {
   return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-export function toCsv(rows: Array<Array<string | number>>): string {
+function toCsv(rows: Array<Array<string | number>>): string {
   const body = rows.map(r => r.map(csvCell).join(';')).join('\r\n');
   return BOM + body;
 }

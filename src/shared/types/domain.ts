@@ -193,13 +193,6 @@ export const MEMBER_ROLES = [
 ] as const;
 export type MemberRole = (typeof MEMBER_ROLES)[number];
 
-export const MEMBER_ROLE_LABELS: Record<MemberRole, string> = {
-  joueur: 'Joueur',
-  encadrant: 'Encadrant',
-  arbitre: 'Arbitre',
-  dirigeant: 'Dirigeant',
-};
-
 export const MEMBER_STATUSES = ['actif', 'inactif'] as const;
 export type MemberStatus = (typeof MEMBER_STATUSES)[number];
 
@@ -244,13 +237,6 @@ export const GUARDIAN_RELATIONS = [
 ] as const;
 export type GuardianRelation = (typeof GUARDIAN_RELATIONS)[number];
 
-export const GUARDIAN_RELATION_LABELS: Record<GuardianRelation, string> = {
-  pere: 'Père',
-  mere: 'Mère',
-  tuteur: 'Tuteur',
-  urgence: "Contact d'urgence",
-};
-
 export interface Guardian {
   id: string;
   /** Adhérent rattaché (`Adherent.id`). */
@@ -272,15 +258,6 @@ export const CLUB_EVENT_TYPES = [
   'autre',
 ] as const;
 export type ClubEventType = (typeof CLUB_EVENT_TYPES)[number];
-
-export const CLUB_EVENT_TYPE_LABELS: Record<ClubEventType, string> = {
-  reunion: 'Réunion',
-  sortie: 'Sortie',
-  ag: 'Assemblée générale',
-  soiree: 'Soirée',
-  competition: 'Compétition',
-  autre: 'Autre',
-};
 
 export interface ClubEvent {
   id: string;
@@ -320,12 +297,6 @@ export interface PhotoAlbum {
 // ── Tournois (Lot B) ─────────────────────────────────────────────────
 export const TOURNAMENT_STATUSES = ['prevu', 'en_cours', 'termine'] as const;
 export type TournamentStatus = (typeof TOURNAMENT_STATUSES)[number];
-
-export const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
-  prevu: 'Prévu',
-  en_cours: 'En cours',
-  termine: 'Terminé',
-};
 
 export interface Tournament {
   id: string;
@@ -407,13 +378,6 @@ export const STRATEGY_PHASES = [
   'specifique',
 ] as const;
 export type StrategyPhase = (typeof STRATEGY_PHASES)[number];
-
-export const STRATEGY_PHASE_LABELS: Record<StrategyPhase, string> = {
-  attaque: 'Attaque',
-  defense: 'Défense',
-  transition: 'Transition',
-  specifique: 'Situation spéciale',
-};
 
 export interface Strategy {
   id: string;

@@ -16,6 +16,7 @@ import { TextField } from '@mister-guiiug/dev-wpa-config/react/field';
 import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 import { useI18n } from '../../i18n/index.ts';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 export function SeasonsScreen() {
   const { t } = useI18n();
@@ -73,7 +74,8 @@ export function SeasonsScreen() {
                 </p>
                 <p className="mt-0.5 text-xs text-[var(--uwh-text-soft)]">
                   {t('finances.seasons.carryOver', {
-                    value: season.openingBalance.toLocaleString('fr-FR'),
+                    value:
+                      season.openingBalance.toLocaleString(getDefaultLocale()),
                   })}{' '}
                   ·{' '}
                   {season.reopenReason &&

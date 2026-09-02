@@ -17,6 +17,7 @@ import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
 import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 import { useI18n, type TKey } from '../../i18n/index.ts';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 type Translate = (
   key: TKey,
@@ -27,19 +28,24 @@ type Translate = (
 function formatBytes(bytes: number, t: Translate): string {
   const mb = bytes / (1024 * 1024);
   const value = mb >= 100 ? Math.round(mb) : Math.round(mb * 10) / 10;
-  return t('database.megabytes', { value: value.toLocaleString('fr-FR') });
+  return t('database.megabytes', {
+    value: value.toLocaleString(getDefaultLocale()),
+  });
 }
 
 function formatLastSync(ts: number, t: Translate): string {
   const d = new Date(ts);
   const today = new Date().toDateString() === d.toDateString();
-  const time = d.toLocaleTimeString('fr-FR', {
+  const time = d.toLocaleTimeString(getDefaultLocale(), {
     hour: '2-digit',
     minute: '2-digit',
   });
   return today
     ? t('database.todayAt', { time })
-    : t('database.dateAt', { date: d.toLocaleDateString('fr-FR'), time });
+    : t('database.dateAt', {
+        date: d.toLocaleDateString(getDefaultLocale()),
+        time,
+      });
 }
 
 function SyncStateBadge({ state }: { state: string }) {
@@ -176,9 +182,9 @@ export function DatabaseStatusCard() {
 
         <Row label={t('database.data')}>
           {t('database.counts', {
-            entries: entriesCount.toLocaleString('fr-FR'),
-            members: adherentsCount.toLocaleString('fr-FR'),
-            seasons: seasonsCount.toLocaleString('fr-FR'),
+            entries: entriesCount.toLocaleString(getDefaultLocale()),
+            members: adherentsCount.toLocaleString(getDefaultLocale()),
+            seasons: seasonsCount.toLocaleString(getDefaultLocale()),
           })}
         </Row>
 

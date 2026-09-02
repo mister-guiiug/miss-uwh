@@ -20,6 +20,7 @@ import { Badge, Money } from '../../shared/components/badges.tsx';
 import { EventsSheet } from '../events/EventsSheet.tsx';
 import type { BilanLine } from '../../shared/lib/engine.ts';
 import { useI18n } from '../../i18n/index.ts';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 function Kpi({
   label,
@@ -173,7 +174,7 @@ export function BilanScreen() {
         <div className="flex items-center justify-between text-sm">
           <span className="text-[var(--uwh-text-soft)]">
             {t('finances.bilan.openingBalance', {
-              value: bilan.reliquat.toLocaleString('fr-FR'),
+              value: bilan.reliquat.toLocaleString(getDefaultLocale()),
             })}
           </span>
           <Money value={bilan.tresorerie} />
@@ -241,8 +242,8 @@ export function BilanScreen() {
                     {ev.event.name}
                   </p>
                   <p className="text-xs text-[var(--uwh-text-soft)]">
-                    +{ev.recettes.toLocaleString('fr-FR')} € / −
-                    {ev.depenses.toLocaleString('fr-FR')} €
+                    +{ev.recettes.toLocaleString(getDefaultLocale())} € / −
+                    {ev.depenses.toLocaleString(getDefaultLocale())} €
                   </p>
                 </div>
                 <Money value={ev.net} signed className="shrink-0" />
