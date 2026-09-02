@@ -36,7 +36,7 @@ export function isActive(e: JournalEntry): boolean {
 }
 
 /** Tri stable : date croissante puis ordre de création. */
-export function sortEntries(entries: JournalEntry[]): JournalEntry[] {
+function sortEntries(entries: JournalEntry[]): JournalEntry[] {
   return [...entries].sort((a, b) => {
     if (a.date !== b.date) return a.date < b.date ? -1 : 1;
     return a.createdAt - b.createdAt;

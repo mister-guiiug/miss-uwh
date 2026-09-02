@@ -11,6 +11,7 @@ import { Badge } from '../../shared/components/badges.tsx';
 import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { CotisationSheet } from './CotisationSheet.tsx';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 /** Suivi des cotisations (montant dû/réglé) par membre sur la saison active. */
 export function CotisationsScreen() {
@@ -93,7 +94,7 @@ export function CotisationsScreen() {
       clubName: club.name,
       treasurer: club.treasurer,
       seasonLabel: season.label,
-      dateLabel: new Date().toLocaleDateString('fr-FR', {
+      dateLabel: new Date().toLocaleDateString(getDefaultLocale(), {
         day: 'numeric',
         month: 'long',
         year: 'numeric',

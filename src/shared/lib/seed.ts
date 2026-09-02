@@ -17,7 +17,7 @@ import { createId, createUuid } from './id.ts';
 
 export const SCHEMA_VERSION = 2;
 
-export const DEFAULT_SETTINGS: Settings = {
+const DEFAULT_SETTINGS: Settings = {
   theme: 'light',
   decimals: 2,
   showCompensated: true,

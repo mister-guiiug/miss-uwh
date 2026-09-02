@@ -34,6 +34,9 @@ import {
 import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
 import { Badge } from '../../shared/components/badges.tsx';
 import { validateEntry, hasErrors } from './entryValidation.ts';
+import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+
+const log = createLogger('journal');
 
 interface Props {
   open: boolean;
@@ -162,7 +165,7 @@ export function EntrySheet({ open, entry, onClose }: Props) {
         });
       }
     } catch (err) {
-      console.error(err);
+      log.error('Envoi de la pièce jointe impossible', { error: err });
       setAttError(t('finances.entry.uploadFailed'));
     } finally {
       setAttBusy(false);

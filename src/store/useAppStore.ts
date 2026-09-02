@@ -11,7 +11,7 @@
  *  - les suppressions d'écritures sont LOGIQUES (`deletedAt`), jamais physiques.
  */
 import { create } from 'zustand';
-import type { JournalEntry, Season } from '../shared/types/domain.ts';
+import type { Season } from '../shared/types/domain.ts';
 import { setCustomCategories } from '../shared/lib/categories.ts';
 import { loadData } from '../shared/lib/storage.ts';
 import type { AppState } from './types.ts';
@@ -53,10 +53,4 @@ export function selectActiveSeason(s: AppState): Season {
     s.data.seasons.find(x => x.id === s.data.activeSeasonId) ??
     s.data.seasons[0]!
   );
-}
-
-/** Sélecteur : écritures actives de la saison active. */
-export function selectActiveEntries(s: AppState): JournalEntry[] {
-  const sid = s.data.activeSeasonId;
-  return s.data.entries.filter(e => e.seasonId === sid && !e.deletedAt);
 }

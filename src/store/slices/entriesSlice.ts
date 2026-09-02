@@ -7,6 +7,9 @@ import {
   isLocked,
   remote,
 } from '../storeHelpers.ts';
+import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+
+const log = createLogger('slices');
 
 /**
  * Écritures du journal : cœur comptable. Toutes les mutations respectent le
@@ -16,7 +19,7 @@ export const createEntriesSlice: StoreSlice<EntriesActions> = (set, get) => ({
   addEntry: input => {
     const data = get().data;
     if (isLocked(data, input.seasonId)) {
-      console.warn('[miss-uwh] saison verrouillée : création refusée');
+      log.warn('[miss-uwh] saison verrouillée : création refusée');
       return null;
     }
     const now = Date.now();

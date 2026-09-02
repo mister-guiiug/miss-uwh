@@ -8,7 +8,7 @@
 import type { Category } from '../types/domain.ts';
 
 /** Composantes tarifaires des inscriptions (règle 8). */
-export const INSCRIPTION_COMPONENTS = [
+const INSCRIPTION_COMPONENTS = [
   'adulte_plein',
   'adulte_reduit',
   'enfant',
@@ -21,7 +21,7 @@ export const INSCRIPTION_COMPONENTS = [
   'parrainage',
 ] as const;
 
-export const INSCRIPTION_COMPONENT_LABELS: Record<string, string> = {
+const INSCRIPTION_COMPONENT_LABELS: Record<string, string> = {
   adulte_plein: 'Adulte plein tarif',
   adulte_reduit: 'Adulte tarif réduit',
   enfant: 'Enfant',
@@ -35,9 +35,9 @@ export const INSCRIPTION_COMPONENT_LABELS: Record<string, string> = {
 };
 
 /** Composantes des licences FFESSM (D1). */
-export const LICENCE_COMPONENTS = ['adulte', 'jeune', 'enfant', 'transfert'];
+const LICENCE_COMPONENTS = ['adulte', 'jeune', 'enfant', 'transfert'];
 /** Composantes des assurances (D2). */
-export const ASSURANCE_COMPONENTS = [
+const ASSURANCE_COMPONENTS = [
   'piscine',
   'loisirs1',
   'loisirs2',

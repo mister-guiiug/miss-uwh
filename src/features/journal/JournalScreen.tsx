@@ -23,6 +23,7 @@ import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
 import { VirtualList } from '../../shared/components/VirtualList.tsx';
 import { EntrySheet } from './EntrySheet.tsx';
 import { ReconcileSheet } from '../reconcile/ReconcileSheet.tsx';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
 
 type SensFilter = 'all' | 'credit' | 'debit';
 type RecFilter = 'all' | 'yes' | 'no';
@@ -307,7 +308,7 @@ export function JournalScreen() {
                     </span>
                     <span className="tnum shrink-0">
                       {t('finances.journal.balanceCell', {
-                        value: solde.toLocaleString('fr-FR'),
+                        value: solde.toLocaleString(getDefaultLocale()),
                       })}
                     </span>
                   </div>

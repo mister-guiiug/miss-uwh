@@ -6,6 +6,10 @@ import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
 import { useI18n } from '../../i18n/index.ts';
 import { parseWorkbookFile, type WorkbookParseResult } from './excelImport.ts';
 import { buildEntryInputs } from './buildImport.ts';
+import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+
+const log = createLogger('import');
 
 interface Props {
   open: boolean;
@@ -46,7 +50,7 @@ export function ImportSheet({ open, onClose }: Props) {
     try {
       setParsed(await parseWorkbookFile(file));
     } catch (err) {
-      console.error(err);
+      log.error('Lecture du classeur impossible', { error: err });
       setError(t('io.import.readError'));
     } finally {
       setBusy(false);
@@ -143,7 +147,7 @@ export function ImportSheet({ open, onClose }: Props) {
                 Reliquat détecté
               </span>
               <span className="font-semibold tnum">
-                {parsed.openingBalance.toLocaleString('fr-FR')} €
+                {parsed.openingBalance.toLocaleString(getDefaultLocale())} €
               </span>
             </div>
             {parsed.warnings.length > 0 && (
