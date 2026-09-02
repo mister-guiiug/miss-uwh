@@ -1,24 +1,10 @@
-/** Identifiants courts, stables, sans dépendance externe. */
-export function createId(prefix = 'id'): string {
-  const rnd =
-    typeof crypto !== 'undefined' && 'randomUUID' in crypto
-      ? crypto.randomUUID().slice(0, 8)
-      : Math.random().toString(36).slice(2, 10);
-  return `${prefix}_${rnd}`;
-}
-
 /**
- * UUID v4 — utilisé pour les entités synchronisables (écritures, saisons,
- * événements) afin que l'identifiant local soit IDENTIQUE à la clé primaire
- * Postgres (insert avec id explicite), ce qui rend l'upsert idempotent.
+ * Identifiants — RÉEXPORTÉS DU SOCLE (`@mister-guiiug/dev-wpa-config/id`).
+ *
+ * Le corps vivait ici : même repli `crypto.randomUUID`, même secours
+ * `Math.random`. Le socle porte la version éprouvée — son repli v4 pose les
+ * bits de version et de variante, ce que la nôtre ne faisait pas — et ce
+ * fichier reste comme point d'entrée pour que les imports de l'app ne bougent
+ * pas (PARC.md, chantier 3).
  */
-export function createUuid(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
+export { createId, createUuid } from '@mister-guiiug/dev-wpa-config/id';
