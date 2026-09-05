@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { FileSpreadsheet, TriangleAlert } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
-import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Sheet } from '@mister-guiiug/dev-pwa-config/react/sheet';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { useI18n } from '../../i18n/index.ts';
 import { parseWorkbookFile, type WorkbookParseResult } from './excelImport.ts';
 import { buildEntryInputs } from './buildImport.ts';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
-import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
+import { createLogger } from '@mister-guiiug/dev-pwa-config/logger';
 
 const log = createLogger('import');
 

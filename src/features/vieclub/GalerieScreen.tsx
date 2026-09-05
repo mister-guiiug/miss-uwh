@@ -4,9 +4,9 @@ import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { PhotoAlbum } from '../../shared/types/domain.ts';
 import { useI18n } from '../../i18n/index.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
-import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
-import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
+import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
+import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 import { PhotoAlbumSheet } from './PhotoAlbumSheet.tsx';
 
 /** Galerie : albums Google Photos partagés de la saison. */

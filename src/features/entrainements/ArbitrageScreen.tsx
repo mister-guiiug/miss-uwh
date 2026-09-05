@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import { Flag, Plus } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Referee } from '../../shared/types/domain.ts';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 import { useI18n } from '../../i18n/index.ts';
 import { RefereeSheet } from './RefereeSheet.tsx';
 

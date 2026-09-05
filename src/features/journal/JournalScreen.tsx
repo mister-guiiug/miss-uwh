@@ -17,13 +17,13 @@ import {
 } from '../../shared/types/domain.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Money } from '../../shared/components/badges.tsx';
-import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 import { VirtualList } from '../../shared/components/VirtualList.tsx';
 import { EntrySheet } from './EntrySheet.tsx';
 import { ReconcileSheet } from '../reconcile/ReconcileSheet.tsx';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 type SensFilter = 'all' | 'credit' | 'debit';
 type RecFilter = 'all' | 'yes' | 'no';

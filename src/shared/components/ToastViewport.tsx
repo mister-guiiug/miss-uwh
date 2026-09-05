@@ -1,4 +1,4 @@
-import { ToastViewport as SocleToastViewport } from '@mister-guiiug/dev-wpa-config/react/toast';
+import { ToastViewport as SocleToastViewport } from '@mister-guiiug/dev-pwa-config/react/toast';
 import { setToastsPaused, useToasts } from '../lib/toasts.ts';
 
 /**
@@ -6,7 +6,7 @@ import { setToastsPaused, useToasts } from '../lib/toasts.ts';
  * Montée une seule fois (cf. `App.tsx`), hors routeur, pour afficher aussi les
  * messages survenant à l'amorçage (lecture du stockage) ou sur l'écran de login.
  *
- * L'AFFICHAGE vient de `dev-wpa-config/react/toast` ; la FILE reste dans le
+ * L'AFFICHAGE vient de `dev-pwa-config/react/toast` ; la FILE reste dans le
  * magasin zustand de `shared/lib/toasts.ts` — `storage.ts` et la couche de
  * synchro notifient depuis du code sans React, où `useToast()` n'existe pas.
  * Le socle publie sa zone d'affichage seule pour exactement ce cas.

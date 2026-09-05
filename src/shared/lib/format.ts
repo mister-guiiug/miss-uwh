@@ -1,7 +1,7 @@
 /**
  * Formatage comptable : montants en euros, dates du journal.
  *
- * La MÉCANIQUE vient de `dev-wpa-config/format` — instances `Intl` mémorisées
+ * La MÉCANIQUE vient de `dev-pwa-config/format` — instances `Intl` mémorisées
  * (elles coûtent cher, et une liste d'écritures en construisait une par ligne),
  * dates invalides absorbées, et surtout une locale par défaut DÉPLAÇABLE.
  *
@@ -25,7 +25,7 @@ import {
   formatDate as formatDateIntl,
   formatDateTime as formatDateTimeIntl,
   formatNumber,
-} from '@mister-guiiug/dev-wpa-config/format';
+} from '@mister-guiiug/dev-pwa-config/format';
 
 /** Jour/mois/année en chiffres — le format compact des journaux. */
 const NUMERIC_DAY: Intl.DateTimeFormatOptions = {

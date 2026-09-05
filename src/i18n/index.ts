@@ -1,7 +1,7 @@
 import {
   createI18n,
   createTranslator,
-} from '@mister-guiiug/dev-wpa-config/react/i18n';
+} from '@mister-guiiug/dev-pwa-config/react/i18n';
 import { messages } from './messages.ts';
 import type { Locale, Messages } from './messages.ts';
 
@@ -12,7 +12,7 @@ const STORAGE_KEY = 'uwh_locale';
  * module via le helper partagé `createI18n` : contexte + provider + hook typés.
  * Les clés sont vérifiées à la compilation (dot-notation dérivée du dictionnaire).
  *
- * `createI18n` pose aussi la locale par défaut de `dev-wpa-config/format` : les
+ * `createI18n` pose aussi la locale par défaut de `dev-pwa-config/format` : les
  * montants et les dates suivent la langue choisie (cf. `shared/lib/format.ts`).
  * L'anglais est épinglé sur `en-GB` — un club français tient un journal en
  * jour/mois, et `en-US` aurait affiché « 01/12/2026 » pour le 12 janvier.

@@ -3,7 +3,7 @@ import { Search, Users } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Adherent } from '../../shared/types/domain.ts';
 import { useI18n } from '../../i18n/index.ts';
-import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 import { FamilleSheet } from './FamilleSheet.tsx';
 
 /** Familles / tuteurs : choisir un membre pour gérer ses parents/contacts. */

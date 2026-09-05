@@ -3,7 +3,7 @@
  * (sauvegarde complète). Le PDF s'obtient via l'impression de l'écran Bilan
  * (mise en page dédiée @media print) — pas de dépendance lourde embarquée.
  */
-import { downloadText } from '@mister-guiiug/dev-wpa-config/download';
+import { downloadText } from '@mister-guiiug/dev-pwa-config/download';
 import type {
   AppData,
   JournalEntry,

@@ -4,9 +4,9 @@ import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { type Tournament } from '../../shared/types/domain.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 import { TournamentSheet } from './TournamentSheet.tsx';
 
 /** Tournois de la saison (prévus, en cours, terminés). */

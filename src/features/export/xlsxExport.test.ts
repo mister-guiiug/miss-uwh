@@ -1,6 +1,6 @@
 /**
  * Preuve de bout en bout que l'export Excel est bien MULTI-FEUILLES depuis la
- * bascule sur `@mister-guiiug/dev-wpa-config/xlsx` — le point exact sur lequel
+ * bascule sur `@mister-guiiug/dev-pwa-config/xlsx` — le point exact sur lequel
  * la PR #54 avait refusé d'adopter le module socle.
  *
  * Le classeur est RELU, pas seulement construit : `buildXlsx` produit une
@@ -10,7 +10,7 @@
  * rendus par `safeSheetName` intacts, les montants en cellules NUMÉRIQUES, les
  * en-têtes en gras, et les lignes vides et de longueurs inégales préservées.
  */
-import { buildXlsx } from '@mister-guiiug/dev-wpa-config/xlsx';
+import { buildXlsx } from '@mister-guiiug/dev-pwa-config/xlsx';
 import { describe, expect, it } from 'vitest';
 import type { JournalEntry, Season } from '../../shared/types/domain.ts';
 import { buildWorkbookSheets } from './buildWorkbook.ts';

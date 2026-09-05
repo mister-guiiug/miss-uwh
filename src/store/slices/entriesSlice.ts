@@ -7,7 +7,7 @@ import {
   isLocked,
   remote,
 } from '../storeHelpers.ts';
-import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+import { createLogger } from '@mister-guiiug/dev-pwa-config/logger';
 
 const log = createLogger('slices');
 

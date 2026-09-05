@@ -8,10 +8,10 @@ import { IS_SUPABASE } from '../../backend/config.ts';
 import { importFromHelloAsso } from '../../backend/helloasso.ts';
 import { printAttestations } from '../export/attestation.ts';
 import { Badge } from '../../shared/components/badges.tsx';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
-import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
+import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 import { CotisationSheet } from './CotisationSheet.tsx';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 /** Suivi des cotisations (montant dû/réglé) par membre sur la saison active. */
 export function CotisationsScreen() {

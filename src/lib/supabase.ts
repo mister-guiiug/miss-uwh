@@ -9,7 +9,7 @@
  * protégée par RLS côté serveur, jamais par le client. `flowType: 'pkce'` pour
  * un flux d'auth robuste, MFA (TOTP) gérée par Supabase Auth (cf. README).
  */
-import { createSupabaseClientFactory } from '@mister-guiiug/dev-wpa-config/supabase-client';
+import { createSupabaseClientFactory } from '@mister-guiiug/dev-pwa-config/supabase-client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const supabase = createSupabaseClientFactory<SupabaseClient>({

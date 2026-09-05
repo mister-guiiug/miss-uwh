@@ -1,4 +1,4 @@
-# Lighthouse délégué au reusable workflow famille (dev-wpa-config).
+# Lighthouse délégué au reusable workflow famille (dev-pwa-config).
 # Build mesuré avec VITE_BASE_PATH=/ (défaut) → dist/ servi à la racine.
 name: Lighthouse
 
@@ -13,5 +13,5 @@ permissions:
 
 jobs:
   lighthouse:
-    uses: mister-guiiug/dev-wpa-config/.github/workflows/pwa-lighthouse.yml@v3
+    uses: mister-guiiug/dev-pwa-config/.github/workflows/pwa-lighthouse.yml@v4
     secrets: inherit

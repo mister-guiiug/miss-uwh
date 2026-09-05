@@ -5,16 +5,16 @@ import { CATEGORIES } from '../../shared/lib/categories.ts';
 import { categoryNet, isActive } from '../../shared/lib/engine.ts';
 import type { Category, Sens } from '../../shared/types/domain.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
-import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Sheet } from '@mister-guiiug/dev-pwa-config/react/sheet';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import {
   SelectField,
   TextField,
-} from '@mister-guiiug/dev-wpa-config/react/field';
+} from '@mister-guiiug/dev-pwa-config/react/field';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
+import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
 import { Badge, Money } from '../../shared/components/badges.tsx';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 interface RowProps {
   cat: Category;

@@ -2,8 +2,8 @@ import { defineConfig, type PluginOption } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { pwaSeoPlugin } from '@mister-guiiug/dev-wpa-config/vite-pwa-base';
-import { cspPlugin } from '@mister-guiiug/dev-wpa-config/vite-csp';
+import { pwaSeoPlugin } from '@mister-guiiug/dev-pwa-config/vite-pwa-base';
+import { cspPlugin } from '@mister-guiiug/dev-pwa-config/vite-csp';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { readFileSync } from 'node:fs';
 
@@ -29,7 +29,7 @@ export default defineConfig(({ command }) => {
     // Le pré-bundling de dev perd l'annotation et fait échouer la résolution
     // (500 sur toute la page). Le build de prod n'est pas concerné.
     optimizeDeps: {
-      exclude: ['@mister-guiiug/dev-wpa-config/react/observability'],
+      exclude: ['@mister-guiiug/dev-pwa-config/react/observability'],
     },
     build: {
       sourcemap: true,

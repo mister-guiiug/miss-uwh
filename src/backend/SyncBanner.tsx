@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { CloudOff, Info, RefreshCw, TriangleAlert } from 'lucide-react';
-import { ConnectionBanner } from '@mister-guiiug/dev-wpa-config/react/connection-banner';
+import { ConnectionBanner } from '@mister-guiiug/dev-pwa-config/react/connection-banner';
 import { useAppStore } from '../store/useAppStore.ts';
 import { useI18n } from '../i18n/index.ts';
 import { IS_SUPABASE } from './config.ts';

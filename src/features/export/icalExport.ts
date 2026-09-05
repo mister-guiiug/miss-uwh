@@ -2,7 +2,7 @@
  * Export iCalendar (RFC 5545) de l'agenda de la vie du club : un fichier `.ics`
  * partageable / importable dans Google Agenda, Outlook, Apple Calendar…
  *
- * BASCULÉ SUR `@mister-guiiug/dev-wpa-config/ical` (socle 3.24.0). Le module du
+ * BASCULÉ SUR `@mister-guiiug/dev-pwa-config/ical` (socle 3.24.0). Le module du
  * socle est né de QUATRE réécritures de la RFC 5545 dans la famille, dont
  * celle-ci : il a repris d'ici la journée entière et le `DTSTAMP` injectable,
  * et il corrige ce que le pliage local ratait (cf. plus bas). Il ne reste donc
@@ -28,12 +28,12 @@
  * au lieu de les voir mis à jour. Le nom du fichier téléchargé ne bouge pas non
  * plus.
  */
-import { downloadText } from '@mister-guiiug/dev-wpa-config/download';
+import { downloadText } from '@mister-guiiug/dev-pwa-config/download';
 import {
   ICAL_MIME,
   toIcalendar,
   type IcalEvent,
-} from '@mister-guiiug/dev-wpa-config/ical';
+} from '@mister-guiiug/dev-pwa-config/ical';
 import type { ClubEvent } from '../../shared/types/domain.ts';
 
 /** Le logiciel qui a écrit le fichier — inchangé depuis le premier export. */

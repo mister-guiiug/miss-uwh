@@ -8,12 +8,12 @@ import {
   AI_PROVIDER_LABELS,
   type AiProvider,
 } from '../../shared/types/domain.ts';
-import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import {
   SelectField,
   TextField,
-} from '@mister-guiiug/dev-wpa-config/react/field';
+} from '@mister-guiiug/dev-pwa-config/react/field';
 import { notifySuccess } from '../../shared/lib/toasts.ts';
 import { useI18n } from '../../i18n/index.ts';
 

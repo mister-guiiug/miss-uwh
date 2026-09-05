@@ -24,17 +24,17 @@ import {
   uploadAttachment,
 } from '../../backend/attachments.ts';
 import { createUuid } from '../../shared/lib/id.ts';
-import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Sheet } from '@mister-guiiug/dev-pwa-config/react/sheet';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import {
   SelectField,
   TextAreaField,
   TextField,
-} from '@mister-guiiug/dev-wpa-config/react/field';
-import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
+} from '@mister-guiiug/dev-pwa-config/react/field';
+import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
 import { Badge } from '../../shared/components/badges.tsx';
 import { validateEntry, hasErrors } from './entryValidation.ts';
-import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+import { createLogger } from '@mister-guiiug/dev-pwa-config/logger';
 
 const log = createLogger('journal');
 

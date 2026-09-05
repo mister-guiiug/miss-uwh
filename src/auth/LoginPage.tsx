@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Waves } from 'lucide-react';
-import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
-import { TextField } from '@mister-guiiug/dev-wpa-config/react/field';
+import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
+import { TextField } from '@mister-guiiug/dev-pwa-config/react/field';
 import { useI18n } from '../i18n/index.ts';
 import { useAuth } from './useAuth.ts';
 

@@ -12,7 +12,7 @@ import {
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Lens } from '../lib/lenses.ts';
 import { useI18n } from '../../i18n/index.ts';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 
 /**
  * En-tête : retour à l'accueil (hors lanceur — lens ET routes globales comme

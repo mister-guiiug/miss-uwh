@@ -7,9 +7,9 @@ import { IS_SUPABASE } from '../../backend/config.ts';
 import { fetchGoogleCalendar } from '../../backend/gcal.ts';
 import { downloadClubEventsIcs } from '../export/icalExport.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 import { ClubEventSheet } from './ClubEventSheet.tsx';
 
 /** Agenda de la vie du club (réunions, sorties, AG, soirées…). */

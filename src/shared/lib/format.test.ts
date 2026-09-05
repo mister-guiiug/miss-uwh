@@ -1,10 +1,10 @@
 /**
  * Le formatage est ce que le trésorier LIT. Ces tests portent sur l'usage
  * (montants du journal, dates de l'audit), pas sur la mécanique `Intl` — celle-
- * là est éprouvée chez `dev-wpa-config/format`.
+ * là est éprouvée chez `dev-pwa-config/format`.
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { setDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 import {
   formatDateShort,
   formatDateTime,
