@@ -12,12 +12,12 @@ import { BACKEND, IS_SUPABASE } from '../../backend/config.ts';
 import { discardDeadOps, retryDeadOps, retrySync } from '../../backend/sync.ts';
 import { describeRemoteOp } from '../../backend/syncBus.ts';
 import { deadItems } from '../../backend/syncQueue.ts';
-import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
+import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
 import { useI18n, type TKey } from '../../i18n/index.ts';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 type Translate = (
   key: TKey,

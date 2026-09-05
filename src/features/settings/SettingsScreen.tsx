@@ -46,17 +46,17 @@ import { RecurringSheet } from '../recurring/RecurringSheet.tsx';
 import { AdherentsSheet } from '../adherents/AdherentsSheet.tsx';
 import { DatabaseStatusCard } from './DatabaseStatusCard.tsx';
 import { AiSkillsCard } from './AiSkillsCard.tsx';
-import { applyUpdate } from '@mister-guiiug/dev-wpa-config/sw-update';
-import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { applyUpdate } from '@mister-guiiug/dev-pwa-config/sw-update';
+import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import {
   SelectField,
   TextField,
-} from '@mister-guiiug/dev-wpa-config/react/field';
-import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
-import { AppFooter } from '@mister-guiiug/dev-wpa-config/react/app-footer';
-import { repoUrl } from '@mister-guiiug/dev-wpa-config/apps-catalog';
-import { FamilyApps } from '@mister-guiiug/dev-wpa-config/react';
+} from '@mister-guiiug/dev-pwa-config/react/field';
+import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
+import { AppFooter } from '@mister-guiiug/dev-pwa-config/react/app-footer';
+import { repoUrl } from '@mister-guiiug/dev-pwa-config/apps-catalog';
+import { FamilyApps } from '@mister-guiiug/dev-pwa-config/react';
 import { cn } from '../../shared/lib/cn.ts';
 import { useI18n } from '../../i18n/index.ts';
 

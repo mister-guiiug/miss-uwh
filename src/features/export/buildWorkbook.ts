@@ -5,7 +5,7 @@
  * Les montants sont des NOMBRES (pas des chaînes) → sommes/formules Excel ok.
  *
  * LA STRUCTURE RENDUE EST CELLE DU SOCLE (`XlsxSheet` de
- * `@mister-guiiug/dev-wpa-config/xlsx`), pas une forme maison qu'il faudrait
+ * `@mister-guiiug/dev-pwa-config/xlsx`), pas une forme maison qu'il faudrait
  * traduire : `xlsxExport.ts` passe le tableau tel quel à `buildXlsx`. Le type
  * est donc IMPORTÉ, pas recopié — le jour où le contrat socle bouge, c'est ici
  * que la compilation le dit.
@@ -16,7 +16,7 @@
  * prévoit ce cas et demande alors d'omettre `header`, la feuille démarrant
  * directement à sa première ligne.
  */
-import type { XlsxSheet } from '@mister-guiiug/dev-wpa-config/xlsx';
+import type { XlsxSheet } from '@mister-guiiug/dev-pwa-config/xlsx';
 import type { JournalEntry, Season } from '../../shared/types/domain.ts';
 import { PAYMENT_METHOD_LABELS } from '../../shared/types/domain.ts';
 import { CATEGORIES, categoryLabel } from '../../shared/lib/categories.ts';

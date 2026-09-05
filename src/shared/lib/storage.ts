@@ -10,7 +10,7 @@
  * ci-dessous resterait stable.
  *
  * La mécanique enveloppe versionnée + chaîne de migrations + validation vient de
- * `dev-wpa-config/versioned-store` — promue depuis CE fichier même et son jumeau
+ * `dev-pwa-config/versioned-store` — promue depuis CE fichier même et son jumeau
  * `miss-genius/src/shared/lib/storage.ts`. Ce module reste la façade de l'app.
  *
  * COMPATIBILITÉ (trois invariants, prouvés par `storage.test.ts` sur des
@@ -35,14 +35,14 @@
  * jamais de destruction silencieuse — une version inconnue est mise de côté au
  * lieu d'être écrasée à la sauvegarde suivante.
  */
-import { createVersionedStore } from '@mister-guiiug/dev-wpa-config/versioned-store';
+import { createVersionedStore } from '@mister-guiiug/dev-pwa-config/versioned-store';
 import type { AppData } from '../types/domain.ts';
 import { appDataSchema } from './schema.ts';
 import { remapNonUuidSyncIds } from './migrateIds.ts';
 import { createInitialData, SCHEMA_VERSION } from './seed.ts';
 import { notifyError } from './toasts.ts';
 import { translate } from '../../i18n/index.ts';
-import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+import { createLogger } from '@mister-guiiug/dev-pwa-config/logger';
 
 const log = createLogger('storage');
 

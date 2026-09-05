@@ -2,7 +2,7 @@
  * Tests du GLUE applicatif autour de la file du socle : clé d'entité,
  * classification des erreurs et migration de l'ancien format d'entrées.
  * La mécanique de file (enfilage, drain, backoff, lettres mortes, fusion)
- * appartient au socle (`@mister-guiiug/dev-wpa-config/sync-queue`) et y est
+ * appartient au socle (`@mister-guiiug/dev-pwa-config/sync-queue`) et y est
  * testée ; elle n'est plus re-testée ici.
  */
 import { beforeEach, describe, expect, it } from 'vitest';

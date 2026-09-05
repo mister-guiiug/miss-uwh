@@ -3,13 +3,13 @@ import { Trash2 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { EVENT_KINDS, type EventKind } from '../../shared/types/domain.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
-import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Sheet } from '@mister-guiiug/dev-pwa-config/react/sheet';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import {
   SelectField,
   TextField,
-} from '@mister-guiiug/dev-wpa-config/react/field';
-import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
+} from '@mister-guiiug/dev-pwa-config/react/field';
+import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
 
 interface Props {
   open: boolean;

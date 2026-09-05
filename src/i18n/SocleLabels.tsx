@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { LabelsProvider } from '@mister-guiiug/dev-wpa-config/react/labels';
+import { LabelsProvider } from '@mister-guiiug/dev-pwa-config/react/labels';
 import { useI18n } from './index.ts';
 
 /**

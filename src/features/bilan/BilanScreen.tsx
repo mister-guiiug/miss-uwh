@@ -14,13 +14,13 @@ import {
 } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { useBilan } from '../../shared/hooks/useBilan.ts';
-import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 import { EventsSheet } from '../events/EventsSheet.tsx';
 import type { BilanLine } from '../../shared/lib/engine.ts';
 import { useI18n } from '../../i18n/index.ts';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 function Kpi({
   label,

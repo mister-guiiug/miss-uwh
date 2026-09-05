@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
-import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
+import { Sheet } from '@mister-guiiug/dev-pwa-config/react/sheet';
 import { I18nProvider } from './index.ts';
 import { SocleLabels } from './SocleLabels.tsx';
 

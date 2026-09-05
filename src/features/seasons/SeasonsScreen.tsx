@@ -9,14 +9,14 @@ import {
 import { useAppStore } from '../../store/useAppStore.ts';
 import { computeBilan } from '../../shared/lib/engine.ts';
 import type { Season } from '../../shared/types/domain.ts';
-import { Card } from '@mister-guiiug/dev-wpa-config/react/card';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
-import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
-import { TextField } from '@mister-guiiug/dev-wpa-config/react/field';
-import { ConfirmDialog } from '@mister-guiiug/dev-wpa-config/react/confirm-dialog';
+import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
+import { Sheet } from '@mister-guiiug/dev-pwa-config/react/sheet';
+import { TextField } from '@mister-guiiug/dev-pwa-config/react/field';
+import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 import { useI18n } from '../../i18n/index.ts';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 export function SeasonsScreen() {
   const { t } = useI18n();

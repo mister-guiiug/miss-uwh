@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import { ExternalLink, Plus, Target } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { type Strategy } from '../../shared/types/domain.ts';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 import { StrategySheet } from './StrategySheet.tsx';
 

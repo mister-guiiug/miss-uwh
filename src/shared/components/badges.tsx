@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '../lib/cn.ts';
 import { formatSignedEuro } from '../lib/format.ts';
-import { getDefaultLocale } from '@mister-guiiug/dev-wpa-config/format';
+import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
 type Tone = 'neutral' | 'credit' | 'debit' | 'warn' | 'primary';
 

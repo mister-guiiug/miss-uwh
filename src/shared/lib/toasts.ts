@@ -10,7 +10,7 @@ import { create } from 'zustand';
  * la couche composant.
  *
  * C'est précisément pour cette raison que l'app ne prend PAS `ToastProvider` /
- * `useToast` de `dev-wpa-config/react/toast` : `useToast()` est un hook, donc
+ * `useToast` de `dev-pwa-config/react/toast` : `useToast()` est un hook, donc
  * hors de portée de la persistance et de la synchro, qui sont les deux sources
  * de messages les plus importantes de cette app (« sauvegarde impossible »).
  * Le socle prévoit ce partage et publie sa zone d'affichage seule : l'app garde

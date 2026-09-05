@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
-import { useActionGuard } from '@mister-guiiug/dev-wpa-config/react/use-action-guard';
+import { useActionGuard } from '@mister-guiiug/dev-pwa-config/react/use-action-guard';
 import { getSupabase } from '../../lib/supabase.ts';
 import type { Role } from '../../auth/useAuth.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 import { Badge } from '../../shared/components/badges.tsx';
-import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 
 interface MemberRow {
   id: string;

@@ -1,6 +1,6 @@
 /**
  * Chargeur SheetJS partagé — pour l'IMPORT Excel, et lui seul depuis la
- * bascule de l'export sur `@mister-guiiug/dev-wpa-config/xlsx` (socle 3.24.0).
+ * bascule de l'export sur `@mister-guiiug/dev-pwa-config/xlsx` (socle 3.24.0).
  * Chargé PARESSEUSEMENT depuis le CDN officiel — hors bundle (pas d'impact
  * hors ligne ni sur l'audit de dépendances) : plus rien ne l'appelle tant que
  * l'utilisateur n'ouvre pas l'écran d'import, action ponctuelle et en ligne.

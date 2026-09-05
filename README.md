@@ -73,7 +73,7 @@ sur GitHub Pages) avec une **montée en sécurité optionnelle via Supabase**
 
 **Stack** : React 19, TypeScript ~6 strict (ES2025), Vite 7, Tailwind v4
 (`@tailwindcss/vite`), Vitest 3, vite-plugin-pwa, Zustand, Zod, lucide-react,
-`@supabase/supabase-js`. Conventions partagées via `@mister-guiiug/dev-wpa-config`.
+`@supabase/supabase-js`. Conventions partagées via `@mister-guiiug/dev-pwa-config`.
 
 ---
 
@@ -422,7 +422,7 @@ CODE FACTURE · MODE RGLT · N° PIECE · DEBITS · CREDIT · SOLDE · OBS`.
 ## 11. Développement
 
 ```bash
-# auth GitHub Packages (config partagée @mister-guiiug/dev-wpa-config)
+# auth GitHub Packages (config partagée @mister-guiiug/dev-pwa-config)
 export NODE_AUTH_TOKEN="$(gh auth token)"
 
 npm install

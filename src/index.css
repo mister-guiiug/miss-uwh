@@ -1,8 +1,8 @@
 @import 'tailwindcss';
-@import '@mister-guiiug/dev-wpa-config/tailwind-preset.css';
+@import '@mister-guiiug/dev-pwa-config/tailwind-preset.css';
 /* Habillage partagé des composants [data-dwc] (ici : FamilyApps). En
    `@layer components`, donc tout ce qui suit dans ce fichier l'emporte. */
-@import '@mister-guiiug/dev-wpa-config/components.css';
+@import '@mister-guiiug/dev-pwa-config/components.css';
 
 /*
  * Univers visuel « Miss UWH » aux couleurs du club (logo CHS) : bleu cobalt +
@@ -257,7 +257,7 @@ h3,
 
 /* Famille — « Nos autres applications » (composant partagé FamilyApps).
    La base (structure, couleurs, cible tactile) vient de
-   `@mister-guiiug/dev-wpa-config/components.css` via le contrat --dwc-*.
+   `@mister-guiiug/dev-pwa-config/components.css` via le contrat --dwc-*.
    Ne restent ici que les écarts VOULUS par rapport à cette base. */
 
 /* La Section fournit déjà son <h2>. */

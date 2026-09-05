@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { FileSpreadsheet } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { formatDateShort, formatSignedEuro } from '../../shared/lib/format.ts';
-import { Sheet } from '@mister-guiiug/dev-wpa-config/react/sheet';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Sheet } from '@mister-guiiug/dev-pwa-config/react/sheet';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { useI18n } from '../../i18n/index.ts';
 import {
   matchBankLines,

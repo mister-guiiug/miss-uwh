@@ -3,7 +3,7 @@
  *
  * La mécanique du format (échappement §3.3.11, pliage à 75 octets §3.1, CRLF,
  * `DTEND` exclusif d'une journée entière) appartient désormais à
- * `@mister-guiiug/dev-wpa-config/ical`, qui la teste chez lui. La retester ici
+ * `@mister-guiiug/dev-pwa-config/ical`, qui la teste chez lui. La retester ici
  * reviendrait à tester la même fonction deux fois.
  *
  * Restent les questions auxquelles le socle ne peut pas répondre à la place de
@@ -12,7 +12,7 @@
  * jour d'un agenda déjà importé. Ils lisent le `.ics` réellement produit.
  */
 import { describe, expect, it } from 'vitest';
-import { unescapeText, unfoldLines } from '@mister-guiiug/dev-wpa-config/ical';
+import { unescapeText, unfoldLines } from '@mister-guiiug/dev-pwa-config/ical';
 import type { ClubEvent } from '../../shared/types/domain.ts';
 import { buildIcs, clubEventToIcal } from './icalExport.ts';
 

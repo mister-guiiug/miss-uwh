@@ -1,6 +1,6 @@
 /**
  * File d'attente de synchronisation : instance APP de la file du SOCLE
- * (`@mister-guiiug/dev-wpa-config/sync-queue`), laquelle est la PROMOTION de
+ * (`@mister-guiiug/dev-pwa-config/sync-queue`), laquelle est la PROMOTION de
  * l'ancienne implémentation locale de ce dépôt — file persistante, drain
  * sérialisé (ordre préservé), backoff exponentiel dispersé, lettres mortes
  * rejouables, fusion par entité, plafond.
@@ -19,8 +19,8 @@ import {
   createSyncQueue,
   type SyncQueue,
   type SyncQueueEntry,
-} from '@mister-guiiug/dev-wpa-config/sync-queue';
-import { createStore } from '@mister-guiiug/dev-wpa-config/storage';
+} from '@mister-guiiug/dev-pwa-config/sync-queue';
+import { createStore } from '@mister-guiiug/dev-pwa-config/storage';
 import type { RemoteOp } from './syncBus.ts';
 
 /** Entrée de file (contrat du socle) portant une opération distante de l'app. */

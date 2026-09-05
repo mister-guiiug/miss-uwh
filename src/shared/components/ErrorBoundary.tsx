@@ -1,10 +1,10 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, Download, Home, RotateCcw } from 'lucide-react';
-import { recordError } from '@mister-guiiug/dev-wpa-config/react/observability';
+import { recordError } from '@mister-guiiug/dev-pwa-config/react/observability';
 import { STORAGE_KEY, unwrapSnapshot } from '../lib/storage.ts';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { useI18n } from '../../i18n/index.ts';
-import { createLogger } from '@mister-guiiug/dev-wpa-config/logger';
+import { createLogger } from '@mister-guiiug/dev-pwa-config/logger';
 
 const log = createLogger('components');
 

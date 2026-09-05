@@ -4,8 +4,8 @@ import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import type { Announcement } from '../../shared/types/domain.ts';
 import { useI18n } from '../../i18n/index.ts';
 import { formatDateShort } from '../../shared/lib/format.ts';
-import { Button } from '@mister-guiiug/dev-wpa-config/react/button';
-import { EmptyState } from '@mister-guiiug/dev-wpa-config/react/empty-state';
+import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
+import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 import { AnnouncementSheet } from './AnnouncementSheet.tsx';
 
 /** Annonces / actualités / convocations du club (épinglées en tête). */

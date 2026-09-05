@@ -6,7 +6,7 @@
  * Clermont Hockey Sub (26 écritures, 6 saisons, 2 événements, 2 récurrences,
  * 2 adhérents, journal d'audit), tel que la v1 puis la v2 l'ont écrit dans
  * `miss-uwh:data`. Ils sont écrits AVANT la bascule vers
- * `dev-wpa-config/versioned-store` et doivent passer des deux côtés.
+ * `dev-pwa-config/versioned-store` et doivent passer des deux côtés.
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { AppData } from '../types/domain.ts';

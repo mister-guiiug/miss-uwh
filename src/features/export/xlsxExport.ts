@@ -3,7 +3,7 @@
  * Compte, une feuille par catégorie, Evolution). Préparation des données pure
  * et testée (cf. buildWorkbook.ts), écriture par le socle.
  *
- * BASCULÉ SUR `@mister-guiiug/dev-wpa-config/xlsx` (socle 3.24.0). La PR #54
+ * BASCULÉ SUR `@mister-guiiug/dev-pwa-config/xlsx` (socle 3.24.0). La PR #54
  * avait REFUSÉ cette bascule, et le refus était juste : `buildXlsx` n'écrivait
  * alors qu'UNE feuille, là où cet export en produit au moins trois (Bilan,
  * Compte, Evolution), 19 sur le jeu de démonstration, 30 au maximum — une par
@@ -22,7 +22,7 @@
  * domaine tiers ni du réseau — l'export marche hors ligne. SheetJS reste
  * nécessaire à l'IMPORT, qui LIT des classeurs (cf. shared/lib/sheetjs.ts).
  */
-import { buildXlsx, downloadXlsx } from '@mister-guiiug/dev-wpa-config/xlsx';
+import { buildXlsx, downloadXlsx } from '@mister-guiiug/dev-pwa-config/xlsx';
 import type { AppData, Season } from '../../shared/types/domain.ts';
 import { buildWorkbookSheets } from './buildWorkbook.ts';
 

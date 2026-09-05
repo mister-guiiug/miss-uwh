@@ -1,7 +1,7 @@
 /**
  * Couche de synchronisation (mode Supabase, offline-first), adossée à la file
  * d'attente PERSISTANTE du SOCLE (`syncQueue.ts`, instance de
- * `@mister-guiiug/dev-wpa-config/sync-queue` — promue depuis ce dépôt).
+ * `@mister-guiiug/dev-pwa-config/sync-queue` — promue depuis ce dépôt).
  *
  * Lecture : `pullAll()` hydrate le store depuis le serveur (le serveur fait foi).
  * Écriture : chaque mutation locale est ENFILÉE (persistée) puis drainée vers
