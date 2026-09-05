@@ -7,6 +7,8 @@ import {
   Routes,
   useLocation,
 } from 'react-router-dom';
+import { AppFooter } from '@mister-guiiug/dev-pwa-config/react/app-footer';
+import { repoUrl } from '@mister-guiiug/dev-pwa-config/apps-catalog';
 import { useAppStore } from './store/useAppStore.ts';
 import { AuthProvider } from './auth/AuthContext.tsx';
 import { AuthGate } from './auth/AuthGate.tsx';
@@ -132,6 +134,16 @@ function Shell() {
           </Suspense>
         </ErrorBoundary>
       </main>
+      {/* HORS des routes : le code source et le soutien sont ainsi sur le
+          premier écran comme sur les Réglages — la règle famille. Rendus
+          depuis un écran, ils ne valaient que pour lui. L'URL du dépôt vient
+          du catalogue, plus d'une constante recopiée. */}
+      <AppFooter
+        className="no-print px-4 pb-4"
+        repoUrl={repoUrl('miss-uwh')}
+        sourceLabel={t('app.footer.source')}
+        sponsorLabel={t('app.footer.sponsor')}
+      />
       {lens && <LensNav lens={lens} />}
       <UpdatePrompt />
     </div>

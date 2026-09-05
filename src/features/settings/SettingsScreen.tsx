@@ -54,8 +54,6 @@ import {
   TextField,
 } from '@mister-guiiug/dev-pwa-config/react/field';
 import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
-import { AppFooter } from '@mister-guiiug/dev-pwa-config/react/app-footer';
-import { repoUrl } from '@mister-guiiug/dev-pwa-config/apps-catalog';
 import { FamilyApps } from '@mister-guiiug/dev-pwa-config/react';
 import { cn } from '../../shared/lib/cn.ts';
 import { useI18n } from '../../i18n/index.ts';
@@ -696,14 +694,9 @@ export function SettingsScreen() {
             {t('settings.noMatch', { query: query.trim() })}
           </p>
         )}
-        {/* L'URL du dépôt vient du catalogue famille, plus d'une constante
-            recopiée : une app renommée n'a plus qu'un endroit à corriger. */}
-        <AppFooter
-          className="no-print"
-          repoUrl={repoUrl('miss-uwh')}
-          sourceLabel={t('app.footer.source')}
-          sponsorLabel={t('app.footer.sponsor')}
-        />
+        {/* Le pied de page a été REMONTÉ dans la coquille (`App.tsx`), hors
+            des routes : les deux liens sont désormais sur le premier écran
+            comme ici. Rendu depuis cet écran, il ne valait que pour lui. */}
       </div>
 
       <ImportSheet open={importing} onClose={() => setImporting(false)} />
