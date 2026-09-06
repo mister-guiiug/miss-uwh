@@ -26,7 +26,7 @@
     "prepare": "husky || true"
   },
   "bundleBudget": {
-    "totalGzipKb": 267
+    "totalGzipKb": 269
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

@@ -48,6 +48,7 @@ import { RecurringSheet } from '../recurring/RecurringSheet.tsx';
 import { AdherentsSheet } from '../adherents/AdherentsSheet.tsx';
 import { DatabaseStatusCard } from './DatabaseStatusCard.tsx';
 import { AiSkillsCard } from './AiSkillsCard.tsx';
+import { DeleteAccountCard } from './DeleteAccountCard.tsx';
 import { applyUpdate } from '@mister-guiiug/dev-pwa-config/sw-update';
 import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
 import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
@@ -583,18 +584,25 @@ export function SettingsScreen() {
               />
             </button>
             {showDanger && (
-              <div className="mt-3 flex flex-col gap-2">
-                <p className="text-xs text-[var(--uwh-text-soft)]">
-                  {t('settings.dangerDesc')}
-                </p>
-                <Button
-                  variant="danger"
-                  className="self-start"
-                  onClick={() => setConfirmReset(true)}
-                >
-                  <Trash2 size={16} aria-hidden="true" />{' '}
-                  {t('settings.resetAll')}
-                </Button>
+              <div className="mt-3 flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <Button
+                    variant="danger"
+                    className="self-start"
+                    onClick={() => setConfirmReset(true)}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />{' '}
+                    {t('settings.resetAll')}
+                  </Button>
+                  <p className="text-xs text-[var(--uwh-text-soft)]">
+                    {t('settings.dangerDesc')}
+                  </p>
+                </div>
+                {/* Le compte n'existe qu'avec un backend : en mode local, l'app
+                    est entière et il n'y a rien à supprimer côté serveur. Les
+                    deux boutons se ressemblent ; c'est leur texte, et le geste
+                    exigé par le second, qui les séparent. */}
+                {IS_SUPABASE && <DeleteAccountCard clubName={club.name} />}
               </div>
             )}
           </Card>

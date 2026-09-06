@@ -335,7 +335,7 @@ const fr = {
       security:
         'securite mfa audit roles membres deconnexion rls authentification compte',
       advanced:
-        'avance application version mise a jour reinitialiser zone sensible cache',
+        'avance application version mise a jour reinitialiser zone sensible cache supprimer mon compte effacement rgpd',
       apps: 'nos autres applications famille apps decouvrir gratuites miss mister',
     },
     treasurer: 'Trésorier·ère',
@@ -390,6 +390,23 @@ const fr = {
     resetConfirmTitle: 'Tout réinitialiser ?',
     resetConfirmBody:
       "Toutes les écritures, saisons et l'audit local seront effacés sur cet appareil. Pensez à exporter une sauvegarde JSON avant.",
+    deleteAccount: 'Supprimer mon compte',
+    deleteAccountDesc:
+      "Définitif, et côté serveur : votre compte, votre adresse et vos rôles sont effacés. Les écritures du club sont conservées — l'association doit tenir ses comptes — mais votre signature y devient anonyme.",
+    deleteAccountOffline:
+      'Indisponible hors ligne : la suppression se fait sur le serveur.',
+    deleteAccountConfirmTitle: 'Supprimer votre compte ?',
+    deleteAccountConfirmBody:
+      "Votre compte, votre adresse et vos rôles seront effacés du serveur. C'est définitif : personne ne peut les restaurer, et vous perdrez l'accès à l'espace du club.",
+    deleteAccountType: 'Pour confirmer, retapez le nom du club : {club}',
+    deleteAccountMismatch:
+      'Le nom saisi ne correspond pas à celui du club. Rien n’a été supprimé.',
+    deleteAccountDone: 'Votre compte a été supprimé.',
+    deleteAccountAnonymised:
+      'Votre compte a été supprimé. Votre signature sur les écritures du club a été anonymisée.',
+    deleteAccountRefused: 'Suppression refusée : {reason}',
+    deleteAccountFailed:
+      "Impossible de supprimer le compte. Rien n'a été effacé.",
     searchPlaceholder: 'Rechercher un réglage…',
     searchAria: 'Rechercher un réglage',
     sectionsNav: 'Sections des réglages',
@@ -788,7 +805,8 @@ const en = {
         'integrations helloasso google calendar ical ai generation drills openai claude dues',
       security:
         'security mfa audit roles members sign out rls authentication account',
-      advanced: 'advanced application version update reset danger zone cache',
+      advanced:
+        'advanced application version update reset danger zone cache delete my account erasure gdpr',
       apps: 'our other apps family apps discover free miss mister',
     },
     treasurer: 'Treasurer',
@@ -842,6 +860,22 @@ const en = {
     resetConfirmTitle: 'Reset everything?',
     resetConfirmBody:
       'All entries, seasons and the local audit will be erased on this device. Remember to export a JSON backup first.',
+    deleteAccount: 'Delete my account',
+    deleteAccountDesc:
+      'Permanent, and server-side: your account, e-mail address and roles are erased. The club entries are kept — the association must keep its books — but your signature on them becomes anonymous.',
+    deleteAccountOffline:
+      'Unavailable offline: deletion happens on the server.',
+    deleteAccountConfirmTitle: 'Delete your account?',
+    deleteAccountConfirmBody:
+      'Your account, e-mail address and roles will be erased from the server. This is permanent: nobody can restore them, and you will lose access to the club space.',
+    deleteAccountType: 'To confirm, retype the club name: {club}',
+    deleteAccountMismatch:
+      'The name you typed does not match the club name. Nothing was deleted.',
+    deleteAccountDone: 'Your account has been deleted.',
+    deleteAccountAnonymised:
+      'Your account has been deleted. Your signature on the club entries has been anonymised.',
+    deleteAccountRefused: 'Deletion refused: {reason}',
+    deleteAccountFailed: 'Could not delete the account. Nothing was erased.',
     searchPlaceholder: 'Search a setting…',
     searchAria: 'Search a setting',
     sectionsNav: 'Settings sections',
