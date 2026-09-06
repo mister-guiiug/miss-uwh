@@ -89,6 +89,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message };
   }
 
+  async function signInWithLink(email: string) {
+    const sb = await getSupabase();
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: {
+        // Le retour du lien est calculé depuis l'origine SERVIE, jamais depuis
+        // une constante : le même bundle tourne en local et sur Pages. Cette
+        // adresse doit figurer dans la liste d'URL autorisées du projet
+        // Supabase (Authentication → URL Configuration), qui ne contient que
+        // localhost:3000 à la création — sinon le lien part et n'arrive nulle
+        // part. `flowType: 'pkce'` (lib/supabase.ts) renvoie `?code=`, que le
+        // HashRouter ne touche pas ; un jeton dans le fragment serait perdu.
+        emailRedirectTo: `${window.location.origin}${import.meta.env.BASE_URL}`,
+        // Les membres sont créés par le club : un lien envoyé à une adresse
+        // inconnue ne doit pas fabriquer un compte sans rôle.
+        shouldCreateUser: false,
+      },
+    });
+    return { error: error?.message };
+  }
+
   async function signOut() {
     const sb = await getSupabase();
     await sb.auth.signOut();
@@ -147,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         needsMfa,
         hasTotp,
         signIn,
+        signInWithLink,
         signOut,
         enrollTotp,
         verifyTotp,
