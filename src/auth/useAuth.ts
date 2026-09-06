@@ -32,6 +32,14 @@ export interface AuthValue {
   /** Session ouverte mais MFA (AAL2) requise pour ce compte. */
   needsMfa: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  /**
+   * Un lien à usage unique, par e-mail : l'application ne voit passer aucun
+   * secret et n'en stocke aucun. L'entrée par défaut depuis l'étape 5
+   * d'AMELIORATIONS.md ; le mot de passe reste possible, il n'est plus le
+   * défaut. Réservé aux comptes existants : les membres sont créés par le
+   * club, pas par un lien.
+   */
+  signInWithLink: (email: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   enrollTotp: () => Promise<TotpEnrollment | { error: string }>;
   verifyTotp: (factorId: string, code: string) => Promise<{ error?: string }>;
