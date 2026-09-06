@@ -170,9 +170,25 @@ nécessite le mode Supabase.
   conservé dans l'audit.
 - **Clôture / réouverture** : verrouillage au gel du solde ; **réouverture
   exceptionnelle avec motif obligatoire**, tracée en audit sécurité.
+  > Le chaînage par hash de l'audit sécurité cherchait `digest()` avec un
+  > `search_path` réduit à `public`, alors que pgcrypto vit dans `extensions` :
+  > **toute clôture ou réouverture levait** en mode Supabase. Découvert à la
+  > première exécution réelle des migrations (CI, 06/09/2026) et corrigé par
+  > [`0019`](supabase/migrations/0019_audit_chaine_digest.sql).
 - **Justificatifs** : bucket Supabase **privé** `justificatifs`, politiques d'accès par
   rôle ; en local, fichiers en data URL (rester léger).
 - **Données UE / RGPD** : région Supabase **Frankfurt (eu-central-1)** recommandée.
+- **Droit à l'effacement (RGPD art. 17)** : « Supprimer mon compte » dans la zone
+  sensible des réglages (mode Supabase). La RPC `delete_my_account()`
+  ([`0018`](supabase/migrations/0018_suppression_compte.sql)) efface la ligne
+  `auth.users`, l'adresse recopiée dans les journaux d'audit, et la ligne
+  `members` — **supprimée** si rien ne la référence, **anonymisée** si elle
+  signe des écritures, une clôture ou une ligne d'audit : les livres du club,
+  que l'association doit conserver, restent intacts. L'application dit laquelle
+  des deux a eu lieu. Le dernier `admin_technique` d'un club où d'autres membres
+  restent actifs est refusé — sinon plus personne ne pourrait attribuer un rôle.
+  Preuve : [`supabase/tests/suppression-compte.test.sql`](supabase/tests/suppression-compte.test.sql),
+  jouée en CI sur une pile jetable.
 - **Validation défensive** : front ET back rejouent les mêmes règles
   ([`entryValidation.ts`](src/features/journal/entryValidation.ts) + contraintes SQL
   `check (amount > 0)`, FK catégories, triggers). Jamais de confiance au client.
@@ -275,6 +291,11 @@ séances, exercices, stratégie, arbitrage — en cours.)_
       à la connexion ; **admin membres/rôles** (gardé admin, RLS serveur).
 - [x] **Justificatifs** : upload vers le bucket privé `justificatifs` + table
       `attachments` (RLS) ; **visionneuse par URL signée** ; mode local = data URL.
+- [x] **Supprimer son compte** (RGPD art. 17) : RPC `delete_my_account()` en
+      `security definer` (0018), carte « Zone sensible » avec confirmation par
+      recopie du nom du club, purge du miroir local puis déconnexion. En mode
+      local la carte n'est pas rendue : il n'y a pas de compte. Tests pgTAP en
+      CI sur une pile jetable (`.github/workflows/supabase-tests.yml`).
 
 > Les briques Supabase (sync, MFA, admin) sont **correctes par construction** et
 > typées, mais **à éprouver sur un projet Supabase réel** (cf. `supabase/README.md`).
