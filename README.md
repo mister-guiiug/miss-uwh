@@ -28,8 +28,10 @@ Donner au **trésorier** d'un petit club un outil aussi souple qu'un tableur mai
 - **clôture de saison verrouillée** et report du reliquat sur la saison suivante ;
 - **transparence et contrôle** : audit complet, suppression logique réversible,
   rôles (trésorier, président, contrôleur…) avec sécurité côté serveur ;
-- **migration immédiate depuis l'Excel existant** et exports PDF/CSV/Excel pour
-  l'assemblée générale.
+- **migration immédiate depuis l'Excel existant** et, pour l'assemblée générale,
+  des exports **CSV**, **Excel multi-feuilles** et un **bilan PDF** que le
+  trésorier partage depuis son téléphone (feuille de partage du système,
+  téléchargement à défaut) — l'impression de l'écran reste disponible à côté.
 
 Principe directeur : **local-first** (l'app marche seule, hors ligne, gratuitement
 sur GitHub Pages) avec une **montée en sécurité optionnelle via Supabase**
@@ -191,7 +193,8 @@ l'en-tête / les réglages). Le registre des espaces est déclaré une seule foi
 **Espace Finances**
 
 - **Bilan** — KPI (recettes, dépenses, solde créditeur, résultat d'exploitation),
-  trésorerie, recettes/dépenses par catégorie, **résultat par événement**, bouton PDF.
+  trésorerie, recettes/dépenses par catégorie, **résultat par événement**, bouton
+  **PDF** (fichier partagé ou téléchargé) et impression de l'écran.
 - **Journal** — liste chronologique inversée avec **solde courant**, recherche
   multicritères, filtre recette/dépense, feuille de saisie/édition.
 - **Saisie d'écriture** (bottom sheet) — catégorie (sens déduit), date, montant,
@@ -216,7 +219,8 @@ séances, exercices, stratégie, arbitrage — en cours.)_
 - **Membres & rôles** — écran d'administration (mode Supabase, rôle admin) : activation
   des comptes et attribution des rôles, arbitré par la RLS serveur.
 - **Réglages** — club, affichage, **statut backend**, exports (Journal/Bilan CSV,
-  sauvegarde JSON, PDF, **Excel multi-feuilles**), **import Excel**, restauration,
+  sauvegarde JSON, **bilan PDF**, **Excel multi-feuilles**), impression de l'écran,
+  **import Excel**, restauration,
   réinitialisation, et **intégrations** (HelloAsso, Google Agenda).
 
 ```
@@ -250,7 +254,9 @@ séances, exercices, stratégie, arbitrage — en cours.)_
 - [x] Multi-saisons : création, clôture/verrouillage, réouverture, report du reliquat.
 - [x] Audit local (métier/sécurité), corbeille restaurable, historisation (version).
 - [x] **Migration Excel** (feuille `Compte`) + jeu d'exemples réaliste 2025-2026.
-- [x] Exports CSV (journal & bilan), sauvegarde JSON, PDF (impression).
+- [x] Exports CSV (journal & bilan), sauvegarde JSON, **bilan PDF** (fichier
+      généré par le module `pdf` du socle, partagé via `navigator.share` ou
+      téléchargé) — l'impression de l'écran (`@media print`) reste offerte.
 - [x] PWA installable / hors ligne, FR, accessible (focus, aria, tactile ≥ 44px).
 - [x] Backend Supabase : schéma, **RLS RBAC**, audit serveur, storage, triggers.
 

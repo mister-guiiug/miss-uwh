@@ -4,6 +4,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Calculator,
+  FileDown,
   Lock,
   Printer,
   Scale,
@@ -19,6 +20,7 @@ import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 import { EventsSheet } from '../events/EventsSheet.tsx';
 import type { BilanLine } from '../../shared/lib/engine.ts';
+import { notifyError, notifySuccess } from '../../shared/lib/toasts.ts';
 import { useI18n } from '../../i18n/index.ts';
 import { getDefaultLocale } from '@mister-guiiug/dev-pwa-config/format';
 
@@ -109,9 +111,41 @@ export function BilanScreen() {
   const season = useAppStore(selectActiveSeason);
   const club = useAppStore(s => s.data.club);
   const showCompensated = useAppStore(s => s.data.settings.showCompensated);
+  const treasurer = useAppStore(s => s.data.club.treasurer);
   const { bilan, events } = useBilan();
   const hideCompensated = !showCompensated;
   const [manageEvents, setManageEvents] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  /**
+   * Le bilan en FICHIER : partagé si le téléphone sait le faire, téléchargé
+   * sinon. L'impression reste à côté — elle sert à sortir l'écran tel quel.
+   *
+   * Le générateur est chargé À LA DEMANDE : le Bilan est l'écran d'accueil de
+   * l'espace Finances, donc dans le chunk d'entrée ; y coller le générateur
+   * PDF ferait payer trois kilo-octets à chaque première ouverture, pour un
+   * bouton pressé une fois par an. Même parti pris que SheetJS (`sheetjs.ts`).
+   */
+  async function onSharePdf() {
+    setExporting(true);
+    try {
+      const { shareOrDownloadBilanPdf } = await import('../export/bilanPdf.ts');
+      const outcome = await shareOrDownloadBilanPdf({
+        clubName: club.name,
+        ...(treasurer ? { treasurer } : {}),
+        bilan,
+        events,
+        hideCompensated,
+      });
+      if (outcome === 'shared') notifySuccess(t('finances.bilan.pdfShared'));
+      else if (outcome === 'downloaded')
+        notifySuccess(t('finances.bilan.pdfDownloaded'));
+      else if (outcome === 'failed') notifyError(t('finances.bilan.pdfFailed'));
+      // « cancelled » : l'utilisateur a fermé la feuille de partage — rien à dire.
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -128,14 +162,24 @@ export function BilanScreen() {
             )}
           </p>
         </div>
-        <Button
-          variant="secondary"
-          onClick={() => window.print()}
-          aria-label={t('finances.bilan.printAria')}
-        >
-          <Printer size={18} aria-hidden="true" />
-          PDF
-        </Button>
+        <div className="no-print flex shrink-0 gap-2">
+          <Button
+            onClick={() => void onSharePdf()}
+            disabled={exporting}
+            aria-label={t('finances.bilan.sharePdfAria')}
+          >
+            <FileDown size={18} aria-hidden="true" />
+            {t('finances.bilan.sharePdf')}
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => window.print()}
+            aria-label={t('finances.bilan.printAria')}
+          >
+            <Printer size={18} aria-hidden="true" />
+            <span className="sr-only">{t('finances.bilan.print')}</span>
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

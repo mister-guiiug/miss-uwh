@@ -41,6 +41,8 @@ import {
   exportJsonBackup,
 } from '../export/exporters.ts';
 import { exportWorkbookXlsx } from '../export/xlsxExport.ts';
+import { useBilan } from '../../shared/hooks/useBilan.ts';
+import { notifyError, notifySuccess } from '../../shared/lib/toasts.ts';
 import { ImportSheet } from '../import/ImportSheet.tsx';
 import { RecurringSheet } from '../recurring/RecurringSheet.tsx';
 import { AdherentsSheet } from '../adherents/AdherentsSheet.tsx';
@@ -148,9 +150,30 @@ export function SettingsScreen() {
   const replaceData = useAppStore(s => s.replaceData);
   const resetAll = useAppStore(s => s.resetAll);
 
+  const { bilan, events } = useBilan();
+
   const { roles, signOut } = useAuth();
   const { t, locale, setLocale, locales } = useI18n();
   const isAdmin = roles.includes('admin_technique');
+
+  /**
+   * Le bilan de l'AG en PDF : partagé si possible, téléchargé sinon. Le
+   * générateur est chargé à la demande (cf. `BilanScreen`).
+   */
+  async function onBilanPdf() {
+    const { shareOrDownloadBilanPdf } = await import('../export/bilanPdf.ts');
+    const outcome = await shareOrDownloadBilanPdf({
+      clubName: club.name,
+      ...(club.treasurer ? { treasurer: club.treasurer } : {}),
+      bilan,
+      events,
+      hideCompensated: !showCompensated,
+    });
+    if (outcome === 'shared') notifySuccess(t('finances.bilan.pdfShared'));
+    else if (outcome === 'downloaded')
+      notifySuccess(t('finances.bilan.pdfDownloaded'));
+    else if (outcome === 'failed') notifyError(t('finances.bilan.pdfFailed'));
+  }
 
   const [importing, setImporting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -307,8 +330,8 @@ export function SettingsScreen() {
                 <Download size={16} aria-hidden="true" />{' '}
                 {t('settings.exportJson')}
               </Button>
-              <Button variant="secondary" onClick={() => window.print()}>
-                <Printer size={16} aria-hidden="true" />{' '}
+              <Button variant="secondary" onClick={() => void onBilanPdf()}>
+                <Download size={16} aria-hidden="true" />{' '}
                 {t('settings.exportPdf')}
               </Button>
               <Button
@@ -318,6 +341,17 @@ export function SettingsScreen() {
               >
                 <FileSpreadsheet size={16} aria-hidden="true" />{' '}
                 {t('settings.exportXlsx')}
+              </Button>
+              {/* L'impression est conservée : elle sort l'ÉCRAN tel qu'il est
+                  (feuille @media print), là où le bouton « Bilan PDF » produit
+                  un fichier à joindre à un courriel. */}
+              <Button
+                variant="ghost"
+                className="col-span-2"
+                onClick={() => window.print()}
+              >
+                <Printer size={16} aria-hidden="true" />{' '}
+                {t('settings.printScreen')}
               </Button>
             </div>
           </Card>

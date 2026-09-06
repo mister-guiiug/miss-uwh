@@ -50,6 +50,11 @@ export default defineConfig(({ command }) => {
               return 'react-vendor';
             }
             if (norm.includes('/react-router')) return 'router';
+            // Le générateur PDF du socle n'est tiré que par l'export du bilan,
+            // lui-même chargé à la demande. Sans cette ligne il tomberait dans
+            // `vendor`, chargé d'emblée : trois kilo-octets payés à chaque
+            // ouverture pour un bouton pressé une fois par an.
+            if (norm.includes('/dev-pwa-config/pdf')) return 'pdf';
             if (norm.includes('/zustand/')) return 'zustand';
             if (norm.includes('/zod/')) return 'zod';
             return 'vendor';
