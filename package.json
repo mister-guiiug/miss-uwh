@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build && pwa-bundle-budget",
     "build:analyze": "cross-env ANALYZE=1 npm run build",
-    "check:bundle": "node scripts/check-bundle-budget.mjs",
+    "check:bundle": "pwa-bundle-budget",
     "preview": "vite preview --base /miss-uwh/",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -26,7 +26,8 @@
     "prepare": "husky || true"
   },
   "bundleBudget": {
-    "totalGzipKb": 269
+    "_pourquoi": "Relevé de 269 à 303 le 06/09/2026. La borne n'avait jamais tranché en CI : le garde d'entrée des bins du socle était cassé (dev-pwa-config#219) et `pwa-bundle-budget`, branché en fin de `build`, restait muet. Les trois recalibrages du 02 au 06/09 (262 → 267 → 269) ont donc suivi des mesures LOCALES, qui sous-estiment la CI de 7 à 8 kB. Mesuré en CI sur `main` (run 34049674051, 4d5284b) : 275,3 kB, soit 6,3 kB AU-DESSUS de 269 — la PR Renovate qui montera le socle serait rouge sur son `build`. Alléger ne serait pas le bon levier : `measureBundle()` additionne TOUT le JS de `dist/assets`, chunks asynchrones compris ; le découpage déjà en place (supabase, zod, icons, un chunk par écran) sort du poids du chemin critique sans changer le total d'un octet. Baisser le total voudrait dire retirer du code ou une dépendance, pas différer leur chargement. 303 = 275,3 × 1,10 arrondi au supérieur : la formule du cliquet du socle (`pwa-bundle-budget --ratchet`), et la marge que #72 annonçait — « la mesure du jour plus environ 10 % » — sans jamais l'appliquer, 262 sur 258,5 mesurés ne laissant que 1,35 %. D'où trois réécritures en quatre jours. Les ≈ 28 kB rendus absorbent une montée de dépendance ordinaire ; si le bundle maigrit, `--ratchet` proposera de resserrer. MESURER EN CI, PAS EN LOCAL : gh run view <id> -R mister-guiiug/miss-uwh --log | grep -oE 'dist/assets/[A-Za-z0-9_.-]+\\.js +[0-9.]+ kB . gzip: +[0-9.]+ kB'",
+    "totalGzipKb": 303
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
