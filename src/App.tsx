@@ -139,6 +139,8 @@ function Shell() {
           depuis un écran, ils ne valaient que pour lui. L'URL du dépôt vient
           du catalogue, plus d'une constante recopiée. */}
       <AppFooter
+        version
+        issues
         className="no-print px-4 pb-4"
         repoUrl={repoUrl('miss-uwh')}
         sourceLabel={t('app.footer.source')}
