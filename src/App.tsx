@@ -147,7 +147,6 @@ function Shell() {
         sponsorLabel={t('app.footer.sponsor')}
       />
       {lens && <LensNav lens={lens} />}
-      <UpdatePrompt />
     </div>
   );
 }
@@ -267,6 +266,20 @@ export function App() {
       </AuthProvider>
       {/* Hors AuthGate : les toasts s'affichent aussi au login / à l'amorçage. */}
       <ToastViewport />
+      {/*
+        HORS DE LA PORTE, ET C'EST TOUT L'INTÉRÊT. Ce composant n'affiche pas
+        seulement le bandeau « nouvelle version » : c'est LUI qui appelle
+        `registerSW`. Rendu dans le gabarit d'écran, il vivait derrière
+        `AuthGate` ET derrière l'onboarding — donc AUCUN service worker n'était
+        enregistré tant qu'on ne s'était pas connecté, et rien n'était mis en
+        cache. Vérifié le 2026-09-10 sur la production : sur une visite sans
+        session, `navigator.serviceWorker.ready` n'aboutit jamais et un
+        rechargement hors ligne ne sert rien du tout.
+
+        À la racine, la mise en cache commence dès la première visite — y
+        compris pour qui hésite encore devant l'écran de connexion.
+      */}
+      <UpdatePrompt />
     </ErrorBoundary>
   );
 }
