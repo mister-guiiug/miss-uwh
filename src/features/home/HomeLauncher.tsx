@@ -13,6 +13,7 @@ import { formatEuro } from '../../shared/lib/format.ts';
 import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
+import { PwaInstallPrompt } from '@mister-guiiug/dev-pwa-config/react/pwa-install-prompt';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 
 /**
@@ -147,6 +148,14 @@ export function HomeLauncher() {
           </Link>
         ))}
       </div>
+
+      {/* ICI, ET PAS DANS LA COQUILLE : un bandeau global paraîtrait
+          par-dessus une tâche en cours ; sur l'accueil, l'utilisateur est au
+          repos. Ne rend rien tant qu'une installation n'est pas possible, ni
+          une fois l'application installée — et sur iOS, où l'événement natif
+          n'existe pas, donne la marche à suivre. Cadence du socle : au premier
+          lancement, puis une fois par mois, trois fois. */}
+      <PwaInstallPrompt />
     </div>
   );
 }
