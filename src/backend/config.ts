@@ -11,8 +11,7 @@
 import { supabase } from '../lib/supabase.ts';
 
 const declared = (import.meta.env.VITE_BACKEND ?? 'local') as
-  | 'local'
-  | 'supabase';
+  'local' | 'supabase';
 
 export const BACKEND: 'local' | 'supabase' =
   declared === 'supabase' && supabase.isConfigured() ? 'supabase' : 'local';
