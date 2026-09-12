@@ -284,8 +284,7 @@ describe('shareOrDownloadBilanPdf', () => {
     await expect(shareOrDownloadBilanPdf(input)).resolves.toBe('shared');
 
     const payload = share.mock.calls[0]?.[0] as
-      | { files?: File[]; title?: string }
-      | undefined;
+      { files?: File[]; title?: string } | undefined;
     expect(payload?.files).toHaveLength(1);
     expect(payload?.files?.[0]?.name).toBe('bilan-2025-2026-2026-06-15.pdf');
     expect(payload?.files?.[0]?.type).toBe('application/pdf');

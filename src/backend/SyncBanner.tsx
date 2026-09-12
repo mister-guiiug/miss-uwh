@@ -1,5 +1,6 @@
+import type { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
-import { CloudOff, Info, RefreshCw, TriangleAlert } from 'lucide-react';
+import { CloudOff, RefreshCw, TriangleAlert } from 'lucide-react';
 import { ConnectionBanner } from '@mister-guiiug/dev-pwa-config/react/connection-banner';
 import { useAppStore } from '../store/useAppStore.ts';
 import { useI18n } from '../i18n/index.ts';
@@ -76,7 +77,10 @@ export function SyncBanner() {
   const pending = sync.pending ?? 0;
 
   let background = 'var(--color-primary)';
-  let icon = <Info size={14} aria-hidden="true" className="shrink-0" />;
+  // Pas de valeur de départ, contrairement à ses voisines : les trois branches
+  // ci-dessous en posent une, la dernière comprise. Le `<Info>` d'origine
+  // n'atteignait jamais l'écran.
+  let icon: ReactElement;
   let message = t('sync.syncing');
   let showRetry = false;
 

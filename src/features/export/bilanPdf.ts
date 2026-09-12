@@ -357,8 +357,7 @@ export async function shareOrDownloadBilanPdf(
   const title = `Bilan ${input.bilan.season.label} - ${input.clubName}`;
 
   const nav = globalThis.navigator as
-    | (Navigator & { canShare?: (data?: unknown) => boolean })
-    | undefined;
+    (Navigator & { canShare?: (data?: unknown) => boolean }) | undefined;
 
   if (typeof nav?.share === 'function' && typeof File === 'function') {
     const file = new File([bytes as BlobPart], filename, {

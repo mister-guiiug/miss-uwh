@@ -113,7 +113,7 @@ export function parseBankCsv(text: string): BankLine[] {
     const date = toIso(c[iDate >= 0 ? iDate : 0] ?? '');
     if (!date) continue;
     const label = (c[iLabel >= 0 ? iLabel : 1] ?? '').trim();
-    let amount = 0;
+    let amount: number;
     if (iAmount >= 0) amount = toNumber(c[iAmount] ?? '');
     else {
       const debit = toNumber(c[iDebit >= 0 ? iDebit : 2] ?? '');
