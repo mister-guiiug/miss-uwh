@@ -22,6 +22,7 @@ export function UpdatePrompt() {
 
   return (
     <UpdatePromptBanner
+      checkEvery="1h"
       registerSW={registerSW}
       title={t('pwa.ready')}
       className="fixed inset-x-3 bottom-20 z-40 mx-auto max-w-md uwh-rise no-print"
