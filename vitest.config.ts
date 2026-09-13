@@ -29,11 +29,27 @@ export default defineConfig({
         'src/backend/syncQueue.ts',
         'src/features/journal/entryValidation.ts',
       ],
+      // Mesure du 13/09/2026, `syncQueue.ts` désormais couvert à 100 % :
+      // 94,98 / 82,96 / 97,80 / 96,93. Les planchers sont posés DEUX POINTS
+      // en dessous, et pas à la mesure exacte.
+      //
+      // C'est délibéré. `mister-footcoach` cale les siens au centième près, et
+      // sa CI est passée au rouge sans qu'une ligne bouge : Vite 8.3 embarque
+      // un Rolldown qui conserve davantage de commentaires à travers la
+      // transformation JSX, donc davantage de `/* istanbul ignore next */`
+      // survivent, donc des sous-arbres ENTIÈREMENT couverts sortent du
+      // rapport et le ratio baisse. Le même dépôt mesure jusqu'à 0,39 point
+      // d'écart entre un poste et le runner, avec des dénominateurs
+      // différents — ce n'est donc pas un arrondi.
+      //
+      // Deux points absorbent ce bruit d'outillage sans rien laisser passer
+      // d'une vraie régression. À monter quand la mesure monte, jamais à
+      // baisser pour faire passer le rouge au vert.
       thresholds: {
-        statements: 90,
-        branches: 75,
-        functions: 90,
-        lines: 90,
+        statements: 93,
+        branches: 80,
+        functions: 95,
+        lines: 95,
       },
     },
   },
