@@ -94,7 +94,7 @@ describe('UpdatePrompt', () => {
       screen.getByText('Une nouvelle version de Miss UWH est prête.')
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Recharger' })
+      screen.getByRole('button', { name: 'Mettre à jour' })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Plus tard' })
@@ -118,7 +118,7 @@ describe('UpdatePrompt', () => {
     expect(
       screen.getByText('A new version of Miss UWH is ready.')
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Reload' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Later' })).toBeInTheDocument();
   });
 });
