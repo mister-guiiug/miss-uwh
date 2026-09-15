@@ -15,10 +15,14 @@
 # public : sans lui, Dependabot ouvrait bien ses autres PR mais sortait rouge à
 # tous les coups.
 #
-# SECRET À CRÉER, DANS L'ONGLET DEPENDABOT ET PAS ACTIONS : Settings → Secrets
-# and variables → Dependabot → `DEPENDABOT_PACKAGES_TOKEN`, un PAT classique
-# portant le seul scope `read:packages`. Les deux réserves de secrets sont
-# distinctes ; un secret Actions du même nom resterait invisible d'ici.
+# LE SECRET EST POSÉ depuis le 15/09/2026 : `DEPENDABOT_PACKAGES_TOKEN`, dans
+# l'onglet DEPENDABOT du dépôt — pas Actions. Les deux réserves sont distinctes,
+# et un secret Actions du même nom resterait invisible d'ici : le premier
+# passage, avant qu'il existe, s'est arrêté sur `422 Secret Not Found` sans rien
+# ouvrir. C'est un PAT classique au seul scope `read:packages` ; le paquet du
+# socle est public sur GitHub Packages, aucun droit sur les dépôts n'est
+# nécessaire. S'il expire, ce job redeviendra rouge sans autre avertissement que
+# son propre journal.
 #
 # Les règles reprennent le préréglage Renovate du socle, pour que les deux
 # outils disent la même chose si Renovate est un jour installé : le socle seul
