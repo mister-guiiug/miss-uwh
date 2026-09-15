@@ -58,6 +58,40 @@ updates:
         update-types:
           - minor
           - patch
+    # CE QUE LE SOCLE FIGE PAR UNE PEER NON OPTIONNELLE NE SE MONTE PAS ICI.
+    #
+    # Le 15/09/2026, Dependabot a proposé TypeScript 7.0.2. Le socle 4.17.0
+    # déclare `peer typescript@"~6.0.3"` : `npm ci` est sorti en ERESOLVE,
+    # « Lockfile in sync » a échoué, et `main` avec. Une telle PR n'est pas
+    # discutable, elle est INAPPLICABLE — ces versions se montent dans le
+    # socle, pour le parc entier d'un coup.
+    #
+    # Liste relevée sur les peers NON optionnelles du socle 4.17.0 : les 22
+    # optionnelles ne plafonnent rien, et sur les 10 qui mordent, seules
+    # celles que cette app déclare EN DIRECT peuvent arriver par ici.
+    # Les mineurs et les correctifs continuent de passer.
+    ignore:
+      # `~6.0.3` : même un mineur sortirait de la plage. Les deux types.
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+      - dependency-name: eslint
+        update-types:
+          - version-update:semver-major
+      - dependency-name: '@eslint/js'
+        update-types:
+          - version-update:semver-major
+      - dependency-name: prettier
+        update-types:
+          - version-update:semver-major
+      - dependency-name: vitest
+        update-types:
+          - version-update:semver-major
+      # Doit suivre le majeur de vitest, sous peine de le désaccorder.
+      - dependency-name: '@vitest/coverage-v8'
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
