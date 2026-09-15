@@ -43,7 +43,20 @@
 
     <!-- Analytics (GTM/GA4) injecté par pwaSeoPlugin() — vide tant qu'aucun
          VITE_GTM_CONTAINER_ID / VITE_GA_MEASUREMENT_ID n'est configuré. -->
-    __ANALYTICS_HEAD__
+    <!--
+      LES MARQUEURS `__ANALYTICS_*__` ONT ÉTÉ RETIRÉS.
+
+      `pwaSeoPlugin` les remplaçait AU BUILD par le tag de Google dès
+      qu'un identifiant était posé — précédé d'un `consent default` tout
+      refusé, donc sans collecte, mais le script partait quand même au
+      chargement de la page.
+
+      `ConsentBanner`, monté depuis la campagne de mesure, fait le même
+      travail autrement : il n'injecte RIEN avant l'accord. Garder les deux
+      chemins ferait partir DEUX tags le jour où la variable serait posée.
+      Le socle porte deux réponses à la même question ; cette app
+      n'en garde qu'une.
+    -->
     <!-- Anti-FOUC : applique le thème avant le premier rendu. -->
     <script>
       (function () {
@@ -100,7 +113,6 @@
     <title>Miss UWH — Bilan comptable Hockey Subaquatique</title>
   </head>
   <body>
-    __ANALYTICS_BODY__
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
