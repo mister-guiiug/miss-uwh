@@ -1,0 +1,70 @@
+# Veille de dépendances : des PR groupées pour npm et les actions GitHub. Elle
+# ne bloque jamais la CI — préférée à `npm audit`, qui échoue de façon
+# intempestive sur des avis transitifs sans rapport.
+#
+# POURQUOI CE FICHIER REVIENT. Il avait été retiré le 18/07/2026 comme
+# « doublon de renovate ». Renovate est bien configuré — `renovate.json` étend
+# le préréglage du socle — mais il n'a jamais ouvert une seule PR ici : les
+# 20 PR de robot de ce dépôt sont TOUTES de Dependabot. Le doublon n'en était
+# pas un, et la veille est restée à l'arrêt deux mois.
+#
+# LE REGISTRE EST LA CORRECTION. La version précédente n'en déclarait aucun, et
+# chaque exécution finissait en `private_source_authentication_failure` sur
+# `@mister-guiiug/dev-wpa-config` — le socle, sous le nom qu'il portait avant
+# d'être renommé. `npm.pkg.github.com` exige un jeton, même pour un paquet
+# public : sans lui, Dependabot ouvrait bien ses autres PR mais sortait rouge à
+# tous les coups.
+#
+# SECRET À CRÉER, DANS L'ONGLET DEPENDABOT ET PAS ACTIONS : Settings → Secrets
+# and variables → Dependabot → `DEPENDABOT_PACKAGES_TOKEN`, un PAT classique
+# portant le seul scope `read:packages`. Les deux réserves de secrets sont
+# distinctes ; un secret Actions du même nom resterait invisible d'ici.
+#
+# Les règles reprennent le préréglage Renovate du socle, pour que les deux
+# outils disent la même chose si Renovate est un jour installé : le socle seul
+# dans sa PR, le reste groupé en mineur + patch, les actions groupées.
+version: 2
+
+registries:
+  socle-github-packages:
+    type: npm-registry
+    url: https://npm.pkg.github.com
+    token: ${{secrets.DEPENDABOT_PACKAGES_TOKEN}}
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    registries:
+      - socle-github-packages
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # Le socle est EXCLU du groupe, donc il arrive dans sa propre PR — comme
+      # chez Renovate. C'est lui qui entraîne le parc entier : sa montée doit
+      # se lire seule, sans être noyée dans dix autres lignes de lockfile.
+      minor-and-patch:
+        exclude-patterns:
+          - '@mister-guiiug/dev-pwa-config'
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      github-actions:
+        patterns:
+          - '*'
