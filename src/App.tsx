@@ -8,6 +8,8 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { AppFooter } from '@mister-guiiug/dev-pwa-config/react/app-footer';
+import { ConsentBanner } from '@mister-guiiug/dev-pwa-config/react/consent-banner';
+import { usePageViews } from '@mister-guiiug/dev-pwa-config/react/use-page-views';
 import { repoUrl } from '@mister-guiiug/dev-pwa-config/apps-catalog';
 import { useAppStore } from './store/useAppStore.ts';
 import { AuthProvider } from './auth/AuthContext.tsx';
@@ -98,6 +100,17 @@ function Shell() {
   const [alertsOpen, setAlertsOpen] = useState(false);
   const alerts = useAlerts();
 
+  /*
+   * UNE VUE DE PAGE PAR NAVIGATION. GA4 n'en envoie qu'une par chargement de
+   * document : sous `HashRouter`, toute la navigation de l'app serait
+   * invisible et la durée de session fausse. Le hook ne fait rien tant que le
+   * consentement n'est pas accordé — il se monte donc sans condition.
+   *
+   * `pathname` est le chemin DANS le hash (`/journal`, pas `#/journal`), ce que
+   * les rapports GA4 attendent.
+   */
+  usePageViews(pathname);
+
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
       {/* En-tête + bandeau de synchro dans un même bloc collant : le bandeau
@@ -138,6 +151,20 @@ function Shell() {
           premier écran comme sur les Réglages — la règle famille. Rendus
           depuis un écran, ils ne valaient que pour lui. L'URL du dépôt vient
           du catalogue, plus d'une constante recopiée. */}
+      {/*
+        EN FLUX, AU-DESSUS DU PIED DE PAGE, et pas en surcouche fixe : le
+        bandeau est une `region`, pas une boîte modale, et il ne doit rien
+        recouvrir. Il ne rend RIEN tant que `VITE_GA_MEASUREMENT_ID` n'est pas
+        posée sur le dépôt — poser la variable est donc le seul geste qui
+        active la mesure, et le seul qui fait apparaître la question.
+
+        Pas de `policyHref` : cette app n'a pas de page de confidentialité. Le
+        jour où elle en aura une, c'est ici que le lien se branche.
+      */}
+      <ConsentBanner
+        gaMeasurementId={import.meta.env.VITE_GA_MEASUREMENT_ID}
+        className="no-print mx-4 mb-3"
+      />
       <AppFooter
         version
         issues

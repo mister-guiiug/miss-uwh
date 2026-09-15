@@ -10,6 +10,12 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY?: string;
   /** DSN Sentry (optionnel) : vide = observabilité locale seule (no-op). */
   readonly VITE_SENTRY_DSN?: string;
+  /**
+   * Identifiant de mesure GA4 (`G-…`), propre à CETTE application. Absent, le
+   * bandeau de consentement ne rend rien et rien n'est mesuré : c'est le seul
+   * interrupteur.
+   */
+  readonly VITE_GA_MEASUREMENT_ID?: string;
 }
 
 interface ImportMeta {
