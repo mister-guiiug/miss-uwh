@@ -151,20 +151,6 @@ function Shell() {
           premier écran comme sur les Réglages — la règle famille. Rendus
           depuis un écran, ils ne valaient que pour lui. L'URL du dépôt vient
           du catalogue, plus d'une constante recopiée. */}
-      {/*
-        EN FLUX, AU-DESSUS DU PIED DE PAGE, et pas en surcouche fixe : le
-        bandeau est une `region`, pas une boîte modale, et il ne doit rien
-        recouvrir. Il ne rend RIEN tant que `VITE_GA_MEASUREMENT_ID` n'est pas
-        posée sur le dépôt — poser la variable est donc le seul geste qui
-        active la mesure, et le seul qui fait apparaître la question.
-
-        Pas de `policyHref` : cette app n'a pas de page de confidentialité. Le
-        jour où elle en aura une, c'est ici que le lien se branche.
-      */}
-      <ConsentBanner
-        gaMeasurementId={import.meta.env.VITE_GA_MEASUREMENT_ID}
-        className="no-print mx-4 mb-3"
-      />
       <AppFooter
         version
         issues
@@ -307,6 +293,29 @@ export function App() {
         compris pour qui hésite encore devant l'écran de connexion.
       */}
       <UpdatePrompt />
+      {/*
+        HORS DE LA PORTE, POUR LA MÊME RAISON QUE `UpdatePrompt` JUSTE AU-DESSUS.
+        Monté dans `Shell`, le bandeau vivait derrière `AuthGate` ET derrière
+        l'onboarding : un visiteur non connecté n'a JAMAIS vu la question.
+        Vérifié le 16/09/2026 sur la production — `[data-dwc="consent-banner"]`
+        absent du document sur l'écran de connexion. Cette app n'aurait donc
+        rien mesuré, sa variable posée ou non.
+
+        `sticky bottom-0` et non `fixed` : le bandeau reste DANS le flux, il ne
+        se superpose qu'à ce qui défile sous lui, et il ne piège pas le focus.
+        Une boîte modale pour obtenir un consentement est précisément la figure
+        que le RGPD nomme « dark pattern ». Sans ce calage il atterrirait en
+        bas du document, sous la ligne de flottaison de l'écran de connexion —
+        aussi invisible qu'avant, mais pour une autre raison.
+
+        Pas de `policyHref` : cette app n'a pas de page de confidentialité. Le
+        jour où elle en aura une, c'est ici que le lien se branche.
+      */}
+      <div className="no-print sticky bottom-0 mx-auto w-full max-w-2xl px-4 pb-3">
+        <ConsentBanner
+          gaMeasurementId={import.meta.env.VITE_GA_MEASUREMENT_ID}
+        />
+      </div>
     </ErrorBoundary>
   );
 }
