@@ -25,10 +25,13 @@ export default defineConfig(({ command }) => {
     define: {
       __APP_VERSION__: JSON.stringify(version),
     },
-    // `react/observability` charge Sentry par un import dynamique annoté
-    // `/* @vite-ignore */` : le peer est OPTIONNEL et n'est pas installé ici.
-    // Le pré-bundling de dev perd l'annotation et fait échouer la résolution
-    // (500 sur toute la page). Le build de prod n'est pas concerné.
+    // `react/observability` porte DEUX chemins de chargement : celui que
+    // `loader` fournit (analysable, utilisé ici depuis que la peer est
+    // installée) et un repli au spécificateur volontairement non analysable,
+    // annoté `/* @vite-ignore */`. Le second est toujours dans le module, et
+    // le pré-bundling de dev perd l'annotation : la résolution échoue, 500 sur
+    // toute la page. L'exclusion reste donc nécessaire. Le build de prod n'est
+    // pas concerné.
     optimizeDeps: {
       exclude: ['@mister-guiiug/dev-pwa-config/react/observability'],
     },
@@ -55,6 +58,12 @@ export default defineConfig(({ command }) => {
             // `vendor`, chargé d'emblée : trois kilo-octets payés à chaque
             // ouverture pour un bouton pressé une fois par an.
             if (norm.includes('/dev-pwa-config/pdf')) return 'pdf';
+            // Sentry est chargé par un `import()` que `loader` rend analysable.
+            // Sans cette ligne il tomberait dans `vendor`, qui est PRÉCHARGÉ :
+            // mesuré le 16/09/2026, 381,9 kB préchargés au lieu de 227,2 — pour
+            // un total gzip identique à 0,1 kB près. Le total ne voit pas la
+            // différence, `bundleBudget.preloadGzipKb` si.
+            if (norm.includes('/@sentry/')) return 'sentry';
             if (norm.includes('/zustand/')) return 'zustand';
             if (norm.includes('/zod/')) return 'zod';
             return 'vendor';
@@ -102,6 +111,18 @@ export default defineConfig(({ command }) => {
         ],
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2,webmanifest}'],
+          /*
+           * LE MORCEAU SENTRY HORS DU PRÉCACHE, sans quoi tout le découpage
+           * ci-dessus ne servirait à rien. `globPatterns` ramasse TOUT le JS
+           * émis, `import()` ou pas : mesuré le 16/09/2026, le précache passait
+           * de 1 264 à 1 728 KiB à la seule installation du paquet, soit 464 KiB
+           * bruts téléchargés par chaque visiteur — DSN posé ou non.
+           *
+           * Hors précache, il est cherché sur le réseau à la première erreur, et
+           * jamais si l'observabilité reste éteinte. Ne pas l'avoir hors ligne
+           * est sans conséquence : rapporter une erreur demande le réseau.
+           */
+          globIgnores: ['**/sentry-*.js'],
           navigateFallback: 'index.html',
           cleanupOutdatedCaches: true,
           maximumFileSizeToCacheInBytes: 4_000_000,
