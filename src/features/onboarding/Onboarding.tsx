@@ -4,10 +4,22 @@ import { useAppStore } from '../../store/useAppStore.ts';
 import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
 import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { TextField } from '@mister-guiiug/dev-pwa-config/react/field';
+import { usePageViews } from '@mister-guiiug/dev-pwa-config/react/use-page-views';
 import { useI18n } from '../../i18n/index.ts';
 
 /** Première installation : nom du club, saison de départ, reliquat d'ouverture. */
 export function Onboarding() {
+  /*
+   * CETTE APP A DEUX PORTES, et l'onboarding est la seconde. `usePageViews`
+   * vit dans `Inner`, derrière le routeur : ni l'écran de connexion ni
+   * celui-ci ne l'atteignent. La garde `expectEcranEntreeCable` a trouvé
+   * celle-ci — le correctif de la connexion, posé d'abord, ne la couvrait pas.
+   *
+   * La vue est déclarée par l'écran, pas par une condition posée au-dessus de
+   * la porte : il y en a deux, et une condition dupliquée devrait les suivre
+   * toutes les deux.
+   */
+  usePageViews('/onboarding');
   const setupClub = useAppStore(s => s.setupClub);
   const club = useAppStore(s => s.data.club);
   const season = useAppStore(s =>
