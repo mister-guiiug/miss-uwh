@@ -3,6 +3,7 @@ import { Waves } from 'lucide-react';
 import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
 import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { TextField } from '@mister-guiiug/dev-pwa-config/react/field';
+import { usePageViews } from '@mister-guiiug/dev-pwa-config/react/use-page-views';
 import { useI18n } from '../i18n/index.ts';
 import { useAuth } from './useAuth.ts';
 
@@ -18,6 +19,20 @@ type Mode = 'link' | 'password';
  * MFA, elle, intervient APRÈS la session, quel que soit le chemin.
  */
 export function LoginPage() {
+  /*
+   * L'ÉCRAN DE CONNEXION EST UNE VUE DE PAGE, et c'est ici qu'elle se déclare.
+   *
+   * `usePageViews` vit dans `Inner`, derrière `AuthGate` : hors session, le
+   * routeur n'est pas monté et le hook ne s'exécute jamais. Mesuré en
+   * production le 16/09/2026, socle 4.20.0 en place : consentement accordé,
+   * bandeau parti, ZÉRO vue. Sur une app à connexion, c'est l'essentiel du
+   * trafic qui ne comptait pas.
+   *
+   * La vue est déclarée par l'écran plutôt que par une condition posée
+   * au-dessus de la porte : une condition dupliquée finit par diverger de la
+   * porte qu'elle imite.
+   */
+  usePageViews('/connexion');
   const { signIn, signInWithLink } = useAuth();
   const { t } = useI18n();
   const [mode, setMode] = useState<Mode>('link');
