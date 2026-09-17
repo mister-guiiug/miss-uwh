@@ -379,7 +379,6 @@ const fr = {
     securityDesc:
       "Le mode Supabase active l'authentification, le contrôle d'accès par rôle côté serveur (RLS), la MFA pour les rôles sensibles, l'audit serveur et le stockage chiffré des justificatifs. Voir le README pour la configuration.",
     application: 'Application',
-    version: 'Miss UWH v{version}',
     forceUpdate: 'Forcer la mise à jour',
     forceUpdateDesc:
       'Récupère la dernière version (vide les caches et recharge). Vos données locales ne sont pas effacées.',
@@ -849,7 +848,6 @@ const en = {
     securityDesc:
       'Supabase mode enables authentication, server-side role-based access control (RLS), MFA for sensitive roles, server audit and encrypted storage of receipts. See the README for setup.',
     application: 'Application',
-    version: 'Miss UWH v{version}',
     forceUpdate: 'Force update',
     forceUpdateDesc:
       'Fetches the latest version (clears caches and reloads). Your local data is not erased.',

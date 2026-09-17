@@ -549,9 +549,6 @@ export function SettingsScreen() {
                 <h3 className="font-display font-bold">
                   {t('settings.application')}
                 </h3>
-                <p className="text-xs text-[var(--uwh-text-soft)]">
-                  {t('settings.version', { version: __APP_VERSION__ })}
-                </p>
               </div>
               <Button variant="secondary" onClick={() => void applyUpdate()}>
                 <RotateCw size={16} aria-hidden="true" />{' '}
