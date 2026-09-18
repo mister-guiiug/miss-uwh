@@ -260,9 +260,6 @@ const fr = {
     interrupted: 'Synchronisation interrompue',
     interruptedError: 'Synchronisation interrompue : {error}',
   },
-  pwa: {
-    ready: 'Une nouvelle version de Miss UWH est prête.',
-  },
   alerts: {
     aria: 'Alertes',
     title: 'À faire',
@@ -730,9 +727,6 @@ const en = {
     incomplete: 'Sync incomplete: {error}',
     interrupted: 'Sync interrupted',
     interruptedError: 'Sync interrupted: {error}',
-  },
-  pwa: {
-    ready: 'A new version of Miss UWH is ready.',
   },
   alerts: {
     aria: 'Alerts',
