@@ -27,15 +27,15 @@
     "prepare": "husky || true"
   },
   "bundleBudget": {
-    "_pourquoi": "Relevé de 269 à 303 le 06/09/2026. La borne n'avait jamais tranché en CI : le garde d'entrée des bins du socle était cassé (dev-pwa-config#219) et `pwa-bundle-budget`, branché en fin de `build`, restait muet. Les trois recalibrages du 02 au 06/09 (262 → 267 → 269) ont donc suivi des mesures LOCALES, qui sous-estiment la CI de 7 à 8 kB. Mesuré en CI sur `main` (run 34049674051, 4d5284b) : 275,3 kB, soit 6,3 kB AU-DESSUS de 269 — la PR Renovate qui montera le socle serait rouge sur son `build`. Alléger ne serait pas le bon levier : `measureBundle()` additionne TOUT le JS de `dist/assets`, chunks asynchrones compris ; le découpage déjà en place (supabase, zod, icons, un chunk par écran) sort du poids du chemin critique sans changer le total d'un octet. Baisser le total voudrait dire retirer du code ou une dépendance, pas différer leur chargement. 303 = 275,3 × 1,10 arrondi au supérieur : la formule du cliquet du socle (`pwa-bundle-budget --ratchet`), et la marge que #72 annonçait — « la mesure du jour plus environ 10 % » — sans jamais l'appliquer, 262 sur 258,5 mesurés ne laissant que 1,35 %. D'où trois réécritures en quatre jours. Les ≈ 28 kB rendus absorbent une montée de dépendance ordinaire ; si le bundle maigrit, `--ratchet` proposera de resserrer. MESURER EN CI, PAS EN LOCAL : gh run view <id> -R mister-guiiug/miss-uwh --log | grep -oE 'dist/assets/[A-Za-z0-9_.-]+\\.js +[0-9.]+ kB . gzip: +[0-9.]+ kB' — RELEVÉ DE 303 À 489 LE 16/09/2026 : @sentry/react ajoute 151,1 kB gzip dans un morceau ASYNCHRONE, hors du chemin critique et hors du précache du service worker, mais le total les compte quand même. 444,3 kB mesurés, 489 = mesure + 10 %. La borne qui garde le chemin critique est désormais preloadGzipKb.",
-    "totalGzipKb": 489,
+    "_pourquoi": "Relevé de 269 à 303 le 06/09/2026. La borne n'avait jamais tranché en CI : le garde d'entrée des bins du socle était cassé (dev-pwa-config#219) et `pwa-bundle-budget`, branché en fin de `build`, restait muet. Les trois recalibrages du 02 au 06/09 (262 → 267 → 269) ont donc suivi des mesures LOCALES, qui sous-estiment la CI de 7 à 8 kB. Mesuré en CI sur `main` (run 34049674051, 4d5284b) : 275,3 kB, soit 6,3 kB AU-DESSUS de 269 — la PR Renovate qui montera le socle serait rouge sur son `build`. Alléger ne serait pas le bon levier : `measureBundle()` additionne TOUT le JS de `dist/assets`, chunks asynchrones compris ; le découpage déjà en place (supabase, zod, icons, un chunk par écran) sort du poids du chemin critique sans changer le total d'un octet. Baisser le total voudrait dire retirer du code ou une dépendance, pas différer leur chargement. 303 = 275,3 × 1,10 arrondi au supérieur : la formule du cliquet du socle (`pwa-bundle-budget --ratchet`), et la marge que #72 annonçait — « la mesure du jour plus environ 10 % » — sans jamais l'appliquer, 262 sur 258,5 mesurés ne laissant que 1,35 %. D'où trois réécritures en quatre jours. Les ≈ 28 kB rendus absorbent une montée de dépendance ordinaire ; si le bundle maigrit, `--ratchet` proposera de resserrer. MESURER EN CI, PAS EN LOCAL : gh run view <id> -R mister-guiiug/miss-uwh --log | grep -oE 'dist/assets/[A-Za-z0-9_.-]+\\.js +[0-9.]+ kB . gzip: +[0-9.]+ kB' — RELEVÉ DE 303 À 489 LE 16/09/2026 : @sentry/react ajoute 151,1 kB gzip dans un morceau ASYNCHRONE, hors du chemin critique et hors du précache du service worker, mais le total les compte quand même. 444,3 kB mesurés, 489 = mesure + 10 %. La borne qui garde le chemin critique est désormais preloadGzipKb. — RELEVÉ DE 489 À 547 LE 19/09/2026 : `posthog-js` entre avec l'ADR 0012 (le parc quitte GA4). 496,7 kB mesurés, 547 = mesure + 10 %, la formule maison. LE MORCEAU EST DIFFÉRÉ ET LE RESTE : `manualChunks` gagne une ligne `posthog`, sans quoi la bibliothèque tombait dans `vendor`, qui est PRÉCHARGÉ — 274,4 kB préchargés au lieu de 227,2, donc téléchargée chez un visiteur qui REFUSE. Ce n'est pas qu'une question de poids : l'ADR promet que rien n'est chargé avant l'accord. Corrigé, le préchargé retombe à 225,7 kB, sous les 227,2 d'avant — la borne `preloadGzipKb` ne bouge donc pas, et c'est elle qui a vu le problème, pas le total.",
+    "totalGzipKb": 547,
     "_pourquoiPreload": "Posé le 16/09/2026 avec l'adoption de Sentry, socle 4.18.0. LE TOTAL NE SUFFIT PLUS : il monte de 293,1 à 444,3 kB par la seule installation du SDK, alors que le chemin critique ne bouge pas (227,1 → 227,2). Sans cette seconde borne, 151 kB de mou couvriraient toute régression. Mesuré 227,2 kB, budget à +10 %.",
     "preloadGzipKb": 250
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
-    "@mister-guiiug/dev-pwa-config": "^4.21.3",
+    "@mister-guiiug/dev-pwa-config": "^6.0.1",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
@@ -63,6 +63,7 @@
     "@sentry/react": "^10.75.0",
     "@supabase/supabase-js": "^2.116.0",
     "lucide-react": "^1.47.0",
+    "posthog-js": "^1.434.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router-dom": "^7.18.4",
