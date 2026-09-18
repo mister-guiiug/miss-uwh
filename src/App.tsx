@@ -101,13 +101,16 @@ function Shell() {
   const alerts = useAlerts();
 
   /*
-   * UNE VUE DE PAGE PAR NAVIGATION. GA4 n'en envoie qu'une par chargement de
-   * document : sous `HashRouter`, toute la navigation de l'app serait
-   * invisible et la durée de session fausse. Le hook ne fait rien tant que le
-   * consentement n'est pas accordé — il se monte donc sans condition.
+   * UNE VUE DE PAGE PAR NAVIGATION — ni zéro, ni deux. Sans ce hook, sous
+   * `HashRouter`, toute la navigation de l'app serait invisible et la durée de
+   * session fausse. Et si on laissait PostHog compter lui-même, chaque
+   * navigation serait comptée DEUX fois : il envoie une vue au chargement ET à
+   * chaque changement d'historique. Le socle pose donc
+   * `capture_pageview: false` et laisse ce hook faire seul. Il ne fait rien
+   * tant que le consentement n'est pas accordé — il se monte sans condition.
    *
-   * `pathname` est le chemin DANS le hash (`/journal`, pas `#/journal`), ce que
-   * les rapports GA4 attendent.
+   * `pathname` est le chemin DANS le hash (`/journal`, pas `#/journal`) : c'est
+   * lui qui part en `$pathname`.
    */
   usePageViews(pathname);
 
@@ -313,7 +316,8 @@ export function App() {
       */}
       <div className="no-print sticky bottom-0 mx-auto w-full max-w-2xl px-4 pb-3">
         <ConsentBanner
-          gaMeasurementId={import.meta.env.VITE_GA_MEASUREMENT_ID}
+          posthogKey={import.meta.env.VITE_POSTHOG_KEY}
+          loader={() => import('posthog-js/dist/module.slim.js')}
         />
       </div>
     </ErrorBoundary>

@@ -64,6 +64,15 @@ export default defineConfig(({ command }) => {
             // un total gzip identique à 0,1 kB près. Le total ne voit pas la
             // différence, `bundleBudget.preloadGzipKb` si.
             if (norm.includes('/@sentry/')) return 'sentry';
+            // ET POSTHOG POUR LA MÊME RAISON, EN PLUS GRAVE. Sentry préchargé
+            // coûtait du poids ; PostHog préchargé casse une PROMESSE : l'ADR
+            // 0012 dit que rien n'est chargé avant l'accord, et le socle ne
+            // l'appelle qu'après. Sans cette ligne, la bibliothèque tombe dans
+            // `vendor`, qui est PRÉCHARGÉ — elle serait donc téléchargée chez
+            // un visiteur qui refuse. Mesuré le 19/09/2026 : 274,4 kB
+            // préchargés au lieu de 227,2. C'est `preloadGzipKb` qui l'a vu,
+            // pas le total.
+            if (norm.includes('/posthog-js/')) return 'posthog';
             if (norm.includes('/zustand/')) return 'zustand';
             if (norm.includes('/zod/')) return 'zod';
             return 'vendor';
@@ -92,10 +101,10 @@ export default defineConfig(({ command }) => {
       // depuis l'ancienne meta statique (Google Fonts + Supabase https/wss).
       cspPlugin({
         dev: command === 'serve',
-        // `analytics` ouvre les hôtes de Google Tag Manager et de GA4. Sans
-        // lui, le script que `ConsentBanner` injecte APRÈS l'accord serait
-        // refusé par la politique — et l'échec ne se verrait qu'en console,
-        // sur le site déployé, une fois le consentement donné.
+        // `analytics` ouvre les hôtes de PostHog — le nuage EUROPÉEN (ADR
+        // 0012). Sans lui, l'ingestion que `ConsentBanner` déclenche APRÈS
+        // l'accord serait refusée par la politique — et l'échec ne se verrait
+        // qu'en console, sur le site déployé, une fois le consentement donné.
         analytics: true,
         connectSrc: ["'self'", 'https://*.supabase.co', 'wss://*.supabase.co'],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
