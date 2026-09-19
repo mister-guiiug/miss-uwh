@@ -16,6 +16,7 @@ import {
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { useBilan } from '../../shared/hooks/useBilan.ts';
 import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
+import { GESTES, trackEvent } from '@mister-guiiug/dev-pwa-config/analytics';
 import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Badge, Money } from '../../shared/components/badges.tsx';
 import { EventsSheet } from '../events/EventsSheet.tsx';
@@ -137,6 +138,22 @@ export function BilanScreen() {
         events,
         hideCompensated,
       });
+      /*
+       * L'ISSUE, PAS LE CLIC. `shareOrDownloadBilanPdf` rend quatre sorties, et
+       * elles ne disent pas la même chose : `shared` veut dire que la feuille
+       * du système a pris le relais, `downloaded` que le navigateur n'en avait
+       * pas et a téléchargé, `failed` que rien n'est sorti. Compter le clic
+       * mélangerait les trois — et masquerait précisément les échecs.
+       *
+       * `cancelled` ne compte rien : l'utilisateur a fermé la feuille de
+       * partage, c'est un non-geste.
+       *
+       * Aucun nom de club, aucun trésorier, aucun montant : le format et
+       * l'issue suffisent à savoir si l'export sert et s'il marche.
+       */
+      if (outcome !== 'cancelled') {
+        trackEvent(GESTES.EXPORT, { format: 'pdf', issue: outcome });
+      }
       if (outcome === 'shared') notifySuccess(t('finances.bilan.pdfShared'));
       else if (outcome === 'downloaded')
         notifySuccess(t('finances.bilan.pdfDownloaded'));

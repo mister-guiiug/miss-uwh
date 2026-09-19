@@ -25,6 +25,7 @@ import {
 } from '../../backend/attachments.ts';
 import { createUuid } from '../../shared/lib/id.ts';
 import { Sheet } from '@mister-guiiug/dev-pwa-config/react/sheet';
+import { GESTES, trackEvent } from '@mister-guiiug/dev-pwa-config/analytics';
 import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import {
   SelectField,
@@ -134,6 +135,25 @@ export function EntrySheet({ open, entry, onClose }: Props) {
     };
     if (entry) updateEntry(entry.id, input);
     else addEntry(input);
+    /*
+     * L'ÉCRITURE COMPTABLE, LE GESTE QUI FAIT VIVRE L'APP — et le seul détail
+     * qui l'accompagne est `sens` (recette ou dépense), qui est déjà une
+     * énumération du domaine.
+     *
+     * NI LE MONTANT, NI LE LIBELLÉ, NI LA PIÈCE. Un montant est une donnée
+     * comptable d'un club identifiable ; une observation est du texte saisi.
+     * Savoir COMBIEN d'écritures sont passées suffit à savoir si l'app sert —
+     * savoir lesquelles ne regarde personne d'autre que le trésorier.
+     *
+     * POSÉ ICI, ET NON DANS LE STORE : `addEntry` est aussi appelée par
+     * l'import et par la restauration de sauvegarde. Mesurer au niveau du
+     * store compterait une reprise de données comme cent gestes d'utilisateur.
+     */
+    trackEvent(GESTES.CREATION, {
+      objet: 'ecriture',
+      sens,
+      modifiee: Boolean(entry),
+    });
     onClose();
   }
 
