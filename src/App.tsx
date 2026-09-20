@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import {
   HashRouter,
   Navigate,
@@ -43,25 +43,43 @@ import { lensById } from './shared/lib/lenses.ts';
 import { BilanScreen } from './features/bilan/BilanScreen.tsx';
 import { useI18n, type TKey } from './i18n/index.ts';
 
+// CHAQUE IMPORT D'UN ÉCRAN DE LA BARRE EST NOMMÉ, parce qu'il sert DEUX FOIS :
+// à `lazy` ci-dessous, et au préchargement à l'inactivité de
+// `usePrechargeLesOngletsDuLens`. Deux `import()` du même spécificateur ne
+// téléchargent qu'une fois — le registre de modules dédoublonne — mais encore
+// faut-il que ce soit LITTÉRALEMENT le même spécificateur, sinon le bundler
+// émet deux morceaux et le préchargement ne sert plus à rien.
+const chargeJournal = () => import('./features/journal/JournalScreen.tsx');
+const chargeCategories = () =>
+  import('./features/categories/CategoriesScreen.tsx');
+const chargeSeasons = () => import('./features/seasons/SeasonsScreen.tsx');
+const chargeSynthese = () => import('./features/synthese/SyntheseScreen.tsx');
+
+/**
+ * Les quatre écrans PARESSEUX qu'un onglet de `LensNav` peut atteindre — et eux
+ * seuls. Ce sont les onglets du lens Finances ; les autres lens rendent des
+ * écrans déjà présents dans le bundle d'entrée. `AuditScreen`, `SettingsScreen`
+ * et `MembersRolesScreen` restent dehors : on y arrive depuis l'en-tête ou
+ * depuis les Réglages, pas d'un onglet de la barre.
+ */
+const CHARGEURS_DES_ONGLETS = [
+  chargeJournal,
+  chargeCategories,
+  chargeSynthese,
+  chargeSeasons,
+];
+
 const JournalScreen = lazy(() =>
-  import('./features/journal/JournalScreen.tsx').then(m => ({
-    default: m.JournalScreen,
-  }))
+  chargeJournal().then(m => ({ default: m.JournalScreen }))
 );
 const CategoriesScreen = lazy(() =>
-  import('./features/categories/CategoriesScreen.tsx').then(m => ({
-    default: m.CategoriesScreen,
-  }))
+  chargeCategories().then(m => ({ default: m.CategoriesScreen }))
 );
 const SeasonsScreen = lazy(() =>
-  import('./features/seasons/SeasonsScreen.tsx').then(m => ({
-    default: m.SeasonsScreen,
-  }))
+  chargeSeasons().then(m => ({ default: m.SeasonsScreen }))
 );
 const SyntheseScreen = lazy(() =>
-  import('./features/synthese/SyntheseScreen.tsx').then(m => ({
-    default: m.SyntheseScreen,
-  }))
+  chargeSynthese().then(m => ({ default: m.SyntheseScreen }))
 );
 const AuditScreen = lazy(() =>
   import('./features/audit/AuditScreen.tsx').then(m => ({
@@ -86,7 +104,69 @@ const GLOBAL_TITLE_KEYS: Record<string, TKey> = {
   '/members': 'app.titles.members',
 };
 
-function Shell() {
+/** `navigator.connection` n'est pas dans les types du DOM : il reste un brouillon. */
+type NavigateurEconome = Navigator & { connection?: { saveData?: boolean } };
+
+/**
+ * PRÉCHARGE LES ONGLETS DU LENS DÈS QUE LE FIL PRINCIPAL SOUFFLE.
+ *
+ * Sans préchargement, le morceau d'un écran n'est demandé qu'AU CLIC : un
+ * aller-retour réseau complet, payé au pire moment. Mesuré à froid le
+ * 20/09/2026 sur deux sites publiés du parc, première visite, service worker
+ * pas encore installé : 133 ms sur mister-settle, 161 ms sur mister-molkky.
+ *
+ * CE QUE CETTE APP N'A PAS BESOIN DE CORRIGER, ET POURQUOI. Sur six dépôts du
+ * parc, ces millisecondes sont MUETTES : react-router 7 enveloppe tout
+ * changement d'URL dans `startTransition`, et React 19 garde alors l'écran déjà
+ * affiché plutôt que de montrer le repli de `Suspense`. Ici, non — et c'est un
+ * effet de bord heureux du `key={pathname}` posé sur `ErrorBoundary` pour
+ * isoler les erreurs par route : la frontière `Suspense` qu'elle contient est
+ * RE-MONTÉE à chaque navigation, et le repli d'une frontière neuve paraît même
+ * au sein d'une transition. Le « Chargement… » répond donc au clic. Un test le
+ * verrouille (`App.nav.test.tsx`) : retirer ce `key` rendrait le clic muet sans
+ * qu'aucun autre test ne s'en aperçoive.
+ *
+ * Reste l'attente elle-même, que le préchargement supprime. Il n'entre PAS dans
+ * `bundleBudget.preloadGzipKb` : ce budget ne compte que ce qui est
+ * `modulepreload` dans le document, et un `import()` tardif n'y entre pas.
+ */
+function usePrechargeLesOngletsDuLens() {
+  useEffect(() => {
+    // `saveData` : le visiteur a demandé qu'on épargne son forfait.
+    if ((navigator as NavigateurEconome).connection?.saveData) return;
+
+    let annule = false;
+    const precharge = () => {
+      if (annule) return;
+      // Un échec ici est sans conséquence : au clic, `lazy` redemandera le
+      // morceau et c'est LUI qui portera l'erreur, dans son propre `Suspense`.
+      for (const charge of CHARGEURS_DES_ONGLETS) void charge().catch(() => {});
+    };
+
+    // `requestIdleCallback` manque encore à Safari avant la 17 ; le repli
+    // minuté vaut mieux que rien.
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(precharge, { timeout: 3000 });
+      return () => {
+        annule = true;
+        window.cancelIdleCallback?.(id);
+      };
+    }
+    const id = window.setTimeout(precharge, 1200);
+    return () => {
+      annule = true;
+      window.clearTimeout(id);
+    };
+  }, []);
+}
+
+/**
+ * Exportée POUR ÊTRE ÉPROUVÉE : `App.nav.test.tsx` la monte face à un écran
+ * dont il décide lui-même de l'arrivée, ce qu'on ne peut pas faire à travers
+ * `App` sans mettre la main dans le registre de modules.
+ */
+export function Shell() {
+  usePrechargeLesOngletsDuLens();
   const lens = useActiveLens();
   const { t } = useI18n();
   const { pathname } = useLocation();
