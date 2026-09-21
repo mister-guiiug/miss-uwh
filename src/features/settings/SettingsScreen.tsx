@@ -617,6 +617,13 @@ export function SettingsScreen() {
             currentAppId="miss-uwh"
             showSource={false}
             showSponsor={false}
+            // Les deux réglages que `index.css` posait en CSS : la Section
+            // fournit déjà son <h2>, et la carte Réglages est trop étroite
+            // pour deux colonnes.
+            showTitle={false}
+            layout="list"
+            // Dix-neuf cartes d'affilée : repliées par catégorie, sept lignes.
+            groupBy="category"
           />
         </div>
       ),
