@@ -260,27 +260,12 @@ h3,
    `@mister-guiiug/dev-pwa-config/components.css` via le contrat --dwc-*.
    Ne restent ici que les écarts VOULUS par rapport à cette base. */
 
-/* La Section fournit déjà son <h2>. */
-.uwh-family [data-dwc='family-apps-title'] {
-  display: none;
-}
-
-/* Liste verticale plutôt que la grille par défaut : la carte Réglages est
-   étroite, deux colonnes y tronqueraient les descriptions. */
-.uwh-family [data-dwc='family-app-list'] {
-  display: flex;
-  flex-direction: column;
-}
-
-.uwh-family [data-dwc='family-app'] {
-  transition:
-    border-color 0.15s,
-    transform 0.15s;
-}
-
-.uwh-family [data-dwc='family-app']:hover {
-  transform: translateY(-1px);
-}
+/* Les deux règles que portaient les commentaires suivants sont devenues des
+   props, apportées par dev-pwa-config#335 : `showTitle={false}`, parce que la
+   Section fournit déjà son <h2>, et `layout="list"`, parce que la carte
+   Réglages est étroite. Cette app avait raison avant les autres — sa remarque
+   sur les deux colonnes est l'argument même qui a fait entrer la prop dans le
+   paquet, après qu'on l'a retrouvé dans douze autres feuilles. */
 
 /* Icône de repli en teinte douce plutôt qu'en aplat de primaire. */
 .uwh-family span[data-dwc='family-app-icon'] {
@@ -295,39 +280,7 @@ h3,
   line-height: 1.4;
 }
 
-/* Badge de maturité en pastille pleine. Couleurs foncées pour tenir le
-   contraste AA sur les fonds teintés clairs. */
-.uwh-family [data-dwc='maturity'] {
-  font-size: 0.62rem;
-  font-weight: 700;
-}
-
-.uwh-family [data-maturity='stable'] {
-  background: rgba(34, 160, 90, 0.14);
-  color: #166534;
-  border-color: rgba(34, 160, 90, 0.3);
-}
-
-.uwh-family [data-maturity='beta'] {
-  background: rgba(210, 150, 20, 0.16);
-  color: #854d0e;
-  border-color: rgba(210, 150, 20, 0.32);
-}
-
-.uwh-family [data-maturity='alpha'] {
-  background: rgba(150, 90, 210, 0.14);
-  color: #6d28d9;
-  border-color: rgba(150, 90, 210, 0.3);
-}
-
-:root[data-theme='dark'] .uwh-family [data-maturity='stable'] {
-  color: #4ade80;
-}
-
-:root[data-theme='dark'] .uwh-family [data-maturity='beta'] {
-  color: #fbbf24;
-}
-
-:root[data-theme='dark'] .uwh-family [data-maturity='alpha'] {
-  color: #c084fc;
-}
+/* Les couleurs de maturité viennent désormais du paquet : mélangées vers la
+   couleur de texte de l'app, elles sont mesurées sur trente-six palettes — ce
+   que la pastille pleine et ses trois teintes en dur, doublées de trois
+   surcharges sombres, ne pouvaient pas suivre. */
