@@ -117,7 +117,7 @@ export default defineConfig(({ command }) => {
         themeColor: { light: '#f3f6fc', dark: '#0a1626' },
         siteName: 'Miss UWH',
         basePath,
-        logoPath: '/icons/icon-192.png',
+        logoPath: '/icons/icon-512.png',
       }),
       // CSP durcie : script-src par hash SHA-256 des scripts inline (anti-FOUC +
       // bascule media des polices), plus de 'unsafe-inline'. Directives portées
