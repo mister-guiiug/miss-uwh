@@ -65,16 +65,26 @@ export function LoginPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center gap-6 px-5">
-      <div className="flex items-center gap-2 text-primary">
-        <Waves size={28} aria-hidden="true" />
-        <span className="font-display text-2xl font-bold">Miss UWH</span>
-      </div>
+      {/* LE NOM DE L'APP EST LE TITRE DE LA PAGE, et ce qu'on y fait le suit.
+          C'est le premier écran de tout visiteur, et le seul que voit un
+          moteur : relevé du 23/09/2026, son h1 était « Connexion », et rien
+          ne disait ce qu'était l'app. Le formulaire garde son titre, un cran
+          plus bas. */}
+      <header className="flex flex-col items-center gap-2 text-center">
+        <div className="flex items-center gap-2 text-primary">
+          <Waves size={28} aria-hidden="true" />
+          <h1 className="font-display text-2xl font-bold">Miss UWH</h1>
+        </div>
+        <p className="text-sm text-[var(--uwh-text-soft)]">
+          {t('auth.tagline')}
+        </p>
+      </header>
       <Card className="w-full">
         {sentTo ? (
           <div className="flex flex-col gap-4">
-            <h1 className="font-display text-lg font-bold">
+            <h2 className="font-display text-lg font-bold">
               {t('auth.linkSentTitle')}
-            </h1>
+            </h2>
             <p role="status" className="text-sm">
               {t('auth.linkSent', { email: sentTo })}
             </p>
@@ -88,9 +98,9 @@ export function LoginPage() {
           </div>
         ) : (
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
-            <h1 className="font-display text-lg font-bold">
+            <h2 className="font-display text-lg font-bold">
               {t('auth.title')}
-            </h1>
+            </h2>
             <TextField
               label={t('auth.email')}
               type="email"

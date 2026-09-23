@@ -214,6 +214,9 @@ const fr = {
   },
   auth: {
     title: 'Connexion',
+    /** Sous le nom de l'app, devant la connexion : ce qu'on y fait. */
+    tagline:
+      'Gestion de club de hockey subaquatique : adhérents, cotisations, entraînements, tournois et comptabilité de saison.',
     email: 'Email',
     password: 'Mot de passe',
     signingIn: 'Connexion…',
@@ -683,6 +686,8 @@ const en = {
   },
   auth: {
     title: 'Sign in',
+    tagline:
+      'Underwater hockey club management: members, dues, training, tournaments and season accounts.',
     email: 'Email',
     password: 'Password',
     signingIn: 'Signing in…',
