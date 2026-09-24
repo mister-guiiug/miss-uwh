@@ -1,0 +1,36 @@
+# VICE : audit de sécurité en SECOND AVIS, non bloquant. Pilote du parc.
+#
+# Pourquoi ici d'abord : aucune app du parc n'a autant de RLS. Dix-neuf
+# migrations Supabase, dix rôles, des tables de trésorerie et de personnes
+# (adhérents, tuteurs), une suppression de compte. pgTAP (`supabase-tests.yml`)
+# éprouve ce que les politiques FONT ; VICE relit ce que les migrations
+# OUBLIENT — une table sans `enable row level security`, une fonction
+# `security definer`, un `grant` trop large — et, en plus, les secrets écrits
+# en dur, `npm audit` et les droits des workflows.
+#
+# Le réutilisable du socle éteint ce que l'action fait par défaut : le badge
+# commité sur `main` (refusé par « Protect main »), le commentaire sur chaque
+# PR, et l'échec sous un score de 70 qu'aucun dépôt du parc n'a encore
+# calibré. Restent le résumé du job et l'onglet Security, catégorie `vice`,
+# où chaque constat se trie — ou se rejette avec sa raison.
+#
+# Le pilote sert à LIRE ce signal sur de vraies migrations avant de l'étendre
+# au parc : ce que VICE voit que pgTAP ne voit pas, et ce qu'il accuse à tort.
+name: VICE
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# `security-events: write` est exigé par le réutilisable, même sans SARIF : un
+# appelant qui accorde moins fait échouer l'appel au démarrage
+# (`startup_failure`, sans journal).
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  vice:
+    uses: mister-guiiug/dev-pwa-config/.github/workflows/pwa-vice.yml@v6
