@@ -7,6 +7,7 @@ import { cspPlugin } from '@mister-guiiug/dev-pwa-config/vite-csp';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { readFileSync } from 'node:fs';
 import { versionPlugin } from '@mister-guiiug/dev-pwa-config/vite-version';
+import { NAVIGATE_FALLBACK_DENY_FILES } from '@mister-guiiug/dev-pwa-config/vite-pwa';
 
 const analyze = process.env.ANALYZE === '1';
 const { version } = JSON.parse(readFileSync('./package.json', 'utf-8')) as {
@@ -142,6 +143,8 @@ export default defineConfig(({ command }) => {
           'icons/apple-touch-icon.png',
         ],
         workbox: {
+          // Un fichier (sitemap.xml, llms.txt…) va au réseau, pas à index.html.
+          navigateFallbackDenylist: [NAVIGATE_FALLBACK_DENY_FILES],
           globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2,webmanifest}'],
           /*
            * LE MORCEAU SENTRY HORS DU PRÉCACHE, sans quoi tout le découpage
