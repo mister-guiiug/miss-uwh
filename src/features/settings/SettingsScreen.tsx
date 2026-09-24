@@ -60,6 +60,8 @@ import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialo
 import { FamilyApps } from '@mister-guiiug/dev-pwa-config/react';
 import { cn } from '../../shared/lib/cn.ts';
 import { useI18n } from '../../i18n/index.ts';
+import { AppFooter } from '@mister-guiiug/dev-pwa-config/react/app-footer';
+import { repoUrl } from '@mister-guiiug/dev-pwa-config/apps-catalog';
 
 /** Minuscule + sans accents, pour une recherche tolérante. */
 function norm(s: string): string {
@@ -740,10 +742,18 @@ export function SettingsScreen() {
             {t('settings.noMatch', { query: query.trim() })}
           </p>
         )}
-        {/* Le pied de page a été REMONTÉ dans la coquille (`App.tsx`), hors
-            des routes : les deux liens sont désormais sur le premier écran
-            comme ici. Rendu depuis cet écran, il ne valait que pour lui. */}
       </div>
+
+      {/* Le code source, le soutien et le signalement : ici et sur l'accueil,
+          nulle part ailleurs (règle famille du 06/09/2026). */}
+      <AppFooter
+        version
+        issues
+        className="no-print px-4 pb-4"
+        repoUrl={repoUrl('miss-uwh')}
+        sourceLabel={t('app.footer.source')}
+        sponsorLabel={t('app.footer.sponsor')}
+      />
 
       <ImportSheet open={importing} onClose={() => setImporting(false)} />
       <RecurringSheet open={recurring} onClose={() => setRecurring(false)} />

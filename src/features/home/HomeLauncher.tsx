@@ -15,6 +15,8 @@ import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
 import { PwaInstallPrompt } from '@mister-guiiug/dev-pwa-config/react/pwa-install-prompt';
 import { useI18n, type TKey } from '../../i18n/index.ts';
+import { AppFooter } from '@mister-guiiug/dev-pwa-config/react/app-footer';
+import { repoUrl } from '@mister-guiiug/dev-pwa-config/apps-catalog';
 
 /**
  * Carte de synthèse trésorier de la saison active : trésorerie, solde, et
@@ -156,6 +158,17 @@ export function HomeLauncher() {
           n'existe pas, donne la marche à suivre. Cadence du socle : au premier
           lancement, puis une fois par mois, trois fois. */}
       <PwaInstallPrompt />
+
+      {/* Le code source, le soutien et le signalement : ici et dans les
+          Réglages, nulle part ailleurs (règle famille du 06/09/2026). */}
+      <AppFooter
+        version
+        issues
+        className="no-print px-4 pb-4"
+        repoUrl={repoUrl('miss-uwh')}
+        sourceLabel={t('app.footer.source')}
+        sponsorLabel={t('app.footer.sponsor')}
+      />
     </div>
   );
 }
