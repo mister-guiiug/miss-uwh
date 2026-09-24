@@ -7,11 +7,9 @@ import {
   Routes,
   useLocation,
 } from 'react-router-dom';
-import { AppFooter } from '@mister-guiiug/dev-pwa-config/react/app-footer';
 import { ConsentBanner } from '@mister-guiiug/dev-pwa-config/react/consent-banner';
 import { usePageViews } from '@mister-guiiug/dev-pwa-config/react/use-page-views';
 import { useIdlePrefetch } from '@mister-guiiug/dev-pwa-config/react/use-prefetch';
-import { repoUrl } from '@mister-guiiug/dev-pwa-config/apps-catalog';
 import { useAppStore } from './store/useAppStore.ts';
 import { AuthProvider } from './auth/AuthContext.tsx';
 import { AuthGate } from './auth/AuthGate.tsx';
@@ -207,18 +205,8 @@ export function Shell() {
           </Suspense>
         </ErrorBoundary>
       </main>
-      {/* HORS des routes : le code source et le soutien sont ainsi sur le
-          premier écran comme sur les Réglages — la règle famille. Rendus
-          depuis un écran, ils ne valaient que pour lui. L'URL du dépôt vient
-          du catalogue, plus d'une constante recopiée. */}
-      <AppFooter
-        version
-        issues
-        className="no-print px-4 pb-4"
-        repoUrl={repoUrl('miss-uwh')}
-        sourceLabel={t('app.footer.source')}
-        sponsorLabel={t('app.footer.sponsor')}
-      />
+      {/* PAS DE PIED DE PAGE ICI : la règle famille (06/09/2026) le veut sur
+          l'accueil (HomeLauncher) et les Réglages seulement. */}
       {lens && <LensNav lens={lens} />}
     </div>
   );
