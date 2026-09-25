@@ -262,6 +262,50 @@ const fr = {
     incomplete: 'Synchronisation incomplète : {error}',
     interrupted: 'Synchronisation interrompue',
     interruptedError: 'Synchronisation interrompue : {error}',
+    rejectedCount: '{n} opération(s) refusée(s) par le serveur',
+    deadGeneric:
+      'Synchronisation refusée par le serveur : {what}. Détails et nouvel essai dans Réglages → État de la base de données.',
+    deadConflict:
+      '{what} : l’écriture a été modifiée ailleurs entre-temps, votre modification n’a pas été enregistrée. Choisissez quoi garder dans Réglages → État de la base de données.',
+    deadForbidden:
+      '{what} : refusée, vos droits ne permettent pas de modifier cette écriture. Choisissez quoi garder dans Réglages → État de la base de données.',
+    queueFull:
+      'File de synchronisation saturée : {what} n’a pas pu être mis en attente. Réessayez une fois la connexion rétablie.',
+    op: {
+      entry: 'Écriture « {label} »',
+      entryUpdate: 'Modification de l’écriture « {label} »',
+      entryImport: 'Import de {n} écriture(s)',
+      season: 'Saison {label}',
+      seasonClose: 'Clôture de saison',
+      seasonReopen: 'Réouverture de saison',
+      event: 'Événement financier « {name} »',
+      eventDelete: 'Suppression d’un événement financier',
+      recurring: 'Modèle récurrent « {label} »',
+      recurringDelete: 'Suppression d’un modèle récurrent',
+      adherent: 'Adhérent·e {name}',
+      adherentDelete: 'Suppression d’un·e adhérent·e',
+      guardian: 'Responsable légal « {name} »',
+      guardianDelete: 'Suppression d’un responsable légal',
+      clubEvent: 'Événement « {title} »',
+      clubEventDelete: 'Suppression d’un événement',
+      announcement: 'Annonce « {title} »',
+      announcementDelete: 'Suppression d’une annonce',
+      tournament: 'Tournoi « {name} »',
+      tournamentDelete: 'Suppression d’un tournoi',
+      session: 'Séance du {date}',
+      sessionDelete: 'Suppression d’une séance',
+      exercise: 'Exercice « {name} »',
+      exerciseDelete: 'Suppression d’un exercice',
+      strategy: 'Stratégie « {name} »',
+      strategyDelete: 'Suppression d’une stratégie',
+      referee: 'Arbitre « {name} »',
+      refereeDelete: 'Suppression d’un arbitre',
+      album: 'Album photo « {title} »',
+      albumDelete: 'Suppression d’un album photo',
+      category: 'Catégorie « {label} »',
+      categoryDelete: 'Suppression de la catégorie {code}',
+      aiConfig: 'Instructions IA communes du club',
+    },
   },
   alerts: {
     aria: 'Alertes',
@@ -433,7 +477,29 @@ const fr = {
     localSpace: 'Espace local utilisé',
     of: 'sur {quota}',
     rejectedDesc:
-      'Opérations refusées — vos autres modifications continuent de se synchroniser. Réessayez après correction, ou abandonnez-les.',
+      'Opérations refusées — vos autres modifications continuent de se synchroniser. Réessayez après correction, ou abandonnez-les. Une écriture modifiée ailleurs n’est jamais renvoyée telle quelle : elle attend votre choix.',
+    conflictReason:
+      'Modifiée ailleurs entre-temps : votre modification n’a pas été enregistrée, rien n’a été écrasé.',
+    forbiddenReason:
+      'Refusée : vos droits ne permettent pas de modifier cette écriture, ou elle n’existe plus sur le serveur.',
+    keepServer: 'Garder la version du serveur',
+    reapply: 'Réappliquer ma modification',
+    keptServer: 'Version du serveur rétablie : {what}.',
+    keptServerGone:
+      'Cette écriture n’existe plus sur le serveur pour vous : elle a été retirée de cet appareil.',
+    reapplied: 'Modification réappliquée sur la version du serveur.',
+    reapplyQueued:
+      'Modification remise en file : elle partira avec la prochaine synchronisation.',
+    reapplyConflict:
+      'L’écriture a encore changé pendant l’envoi : rien n’a été écrasé, choisissez de nouveau.',
+    reapplyForbidden:
+      'Modification refusée : vos droits ne permettent pas de modifier cette écriture.',
+    reapplyRefused:
+      'Le serveur a refusé la modification. Le détail est dans la liste.',
+    reapplyGone:
+      'Cette écriture n’existe plus sur le serveur pour vous : rien à réappliquer.',
+    resolveFailed:
+      'Serveur injoignable : rien n’a changé. Réessayez une fois connecté.',
     andMore: '… et {n} autre(s)',
     discard: 'Abandonner',
     syncNow: 'Synchroniser maintenant',
@@ -443,7 +509,7 @@ const fr = {
   },
   ai: {
     title: 'Génération IA',
-    desc: "Génère des exercices d'entraînement par IA (onglet Entraînements → Exercices → « IA »). Votre clé est utilisée directement depuis cet appareil.",
+    desc: "Génère des exercices d'entraînement (Entraînements → Exercices → « IA ») et lit les justificatifs pour pré-remplir une écriture (Journal → écriture → « Lire le justificatif »). Votre clé est utilisée directement depuis cet appareil.",
     provider: 'Fournisseur',
     apiKey: 'Clé API (cet appareil)',
     hideKey: 'Masquer la clé',
@@ -455,7 +521,7 @@ const fr = {
     apiUrlEndpoint: "URL de l'API (endpoint)",
     apiUrlOptional: "URL de l'API (optionnel)",
     hintOpenai:
-      'OpenAI, OpenRouter, Mistral, Groq… (compatible /chat/completions).',
+      'OpenAI, OpenRouter, Mistral ou Groq (compatibles /chat/completions) : les seuls points d’accès que la politique de sécurité de l’app laisse joindre.',
     hintAnthropic: "Laisser vide pour l'API Anthropic officielle.",
     userSkills: 'Vos instructions (cet appareil)',
     userSkillsPlaceholder:
@@ -471,6 +537,25 @@ const fr = {
       'Défini par un·e responsable (admin / entraîneur / président). Lecture seule.',
     saveForAll: 'Enregistrer pour tous',
     savedToast: 'Contexte commun du club enregistré.',
+    errors: {
+      noKey:
+        'Aucune clé API configurée. Renseignez-la dans Réglages → Génération IA.',
+      noModel:
+        'Indiquez un modèle (ex. « gpt-4o ») dans Réglages → Génération IA.',
+      endpoint:
+        'Ce point d’accès ({origin}) n’est pas autorisé par la politique de sécurité de l’app. Fournisseurs acceptés : Anthropic, OpenAI, OpenRouter, Mistral, Groq.',
+      network: 'Fournisseur d’IA injoignable : vérifiez la connexion.',
+      auth: 'Clé API refusée. Vérifiez la clé dans Réglages → Génération IA.',
+      rate: 'Quota ou limite de débit atteint chez le fournisseur. Réessayez plus tard.',
+      notFound:
+        'Modèle ou point d’accès introuvable. Vérifiez le modèle et l’URL dans les Réglages.',
+      unavailable:
+        'Le fournisseur d’IA est momentanément indisponible. Réessayez.',
+      http: 'Le fournisseur d’IA a refusé la requête (HTTP {status}).',
+      unreadable: 'Réponse de l’IA illisible (JSON attendu).',
+      pdfUnsupported:
+        'Ce fournisseur ne lit pas les PDF : seul Claude (Anthropic) le fait. Photographiez le justificatif, ou changez de fournisseur.',
+    },
   },
   system: {
     storageCorrupt:
@@ -732,6 +817,50 @@ const en = {
     incomplete: 'Sync incomplete: {error}',
     interrupted: 'Sync interrupted',
     interruptedError: 'Sync interrupted: {error}',
+    rejectedCount: '{n} operation(s) rejected by the server',
+    deadGeneric:
+      'Sync rejected by the server: {what}. Details and retry in Settings → Database status.',
+    deadConflict:
+      '{what}: the entry was changed elsewhere in the meantime, your change was not saved. Choose what to keep in Settings → Database status.',
+    deadForbidden:
+      '{what}: rejected, your rights do not allow changing this entry. Choose what to keep in Settings → Database status.',
+    queueFull:
+      'Sync queue full: {what} could not be queued. Try again once the connection is back.',
+    op: {
+      entry: 'Entry "{label}"',
+      entryUpdate: 'Change to entry "{label}"',
+      entryImport: 'Import of {n} entry(ies)',
+      season: 'Season {label}',
+      seasonClose: 'Season closing',
+      seasonReopen: 'Season reopening',
+      event: 'Financial event "{name}"',
+      eventDelete: 'Deletion of a financial event',
+      recurring: 'Recurring template "{label}"',
+      recurringDelete: 'Deletion of a recurring template',
+      adherent: 'Member {name}',
+      adherentDelete: 'Deletion of a member',
+      guardian: 'Guardian "{name}"',
+      guardianDelete: 'Deletion of a guardian',
+      clubEvent: 'Event "{title}"',
+      clubEventDelete: 'Deletion of an event',
+      announcement: 'Announcement "{title}"',
+      announcementDelete: 'Deletion of an announcement',
+      tournament: 'Tournament "{name}"',
+      tournamentDelete: 'Deletion of a tournament',
+      session: 'Session of {date}',
+      sessionDelete: 'Deletion of a session',
+      exercise: 'Drill "{name}"',
+      exerciseDelete: 'Deletion of a drill',
+      strategy: 'Strategy "{name}"',
+      strategyDelete: 'Deletion of a strategy',
+      referee: 'Referee "{name}"',
+      refereeDelete: 'Deletion of a referee',
+      album: 'Photo album "{title}"',
+      albumDelete: 'Deletion of a photo album',
+      category: 'Category "{label}"',
+      categoryDelete: 'Deletion of category {code}',
+      aiConfig: 'Club-wide AI instructions',
+    },
   },
   alerts: {
     aria: 'Alerts',
@@ -899,7 +1028,27 @@ const en = {
     localSpace: 'Local space used',
     of: 'of {quota}',
     rejectedDesc:
-      'Rejected operations — your other changes keep syncing. Try again after fixing, or discard them.',
+      'Rejected operations — your other changes keep syncing. Try again after fixing, or discard them. An entry changed elsewhere is never sent again as is: it waits for your choice.',
+    conflictReason:
+      'Changed elsewhere in the meantime: your change was not saved, nothing was overwritten.',
+    forbiddenReason:
+      'Rejected: your rights do not allow changing this entry, or it no longer exists on the server.',
+    keepServer: 'Keep the server version',
+    reapply: 'Reapply my change',
+    keptServer: 'Server version restored: {what}.',
+    keptServerGone:
+      'This entry no longer exists on the server for you: it was removed from this device.',
+    reapplied: 'Change reapplied on top of the server version.',
+    reapplyQueued: 'Change queued again: it will go with the next sync.',
+    reapplyConflict:
+      'The entry changed again while sending: nothing was overwritten, choose again.',
+    reapplyForbidden:
+      'Change rejected: your rights do not allow changing this entry.',
+    reapplyRefused: 'The server rejected the change. Details are in the list.',
+    reapplyGone:
+      'This entry no longer exists on the server for you: nothing to reapply.',
+    resolveFailed:
+      'Server unreachable: nothing changed. Try again once connected.',
     andMore: '… and {n} more',
     discard: 'Discard',
     syncNow: 'Sync now',
@@ -909,7 +1058,7 @@ const en = {
   },
   ai: {
     title: 'AI generation',
-    desc: 'Generates training drills with AI (Training tab → Drills → "AI"). Your key is used directly from this device.',
+    desc: 'Generates training drills (Training → Drills → "AI") and reads receipts to prefill an entry (Journal → entry → "Read the receipt"). Your key is used directly from this device.',
     provider: 'Provider',
     apiKey: 'API key (this device)',
     hideKey: 'Hide key',
@@ -921,7 +1070,7 @@ const en = {
     apiUrlEndpoint: 'API URL (endpoint)',
     apiUrlOptional: 'API URL (optional)',
     hintOpenai:
-      'OpenAI, OpenRouter, Mistral, Groq… (compatible with /chat/completions).',
+      'OpenAI, OpenRouter, Mistral or Groq (compatible with /chat/completions): the only endpoints the app security policy allows.',
     hintAnthropic: 'Leave empty for the official Anthropic API.',
     userSkills: 'Your instructions (this device)',
     userSkillsPlaceholder: 'E.g. I favor playful drills for young players.',
@@ -935,6 +1084,22 @@ const en = {
     sharedReadonly: 'Set by a lead (admin / coach / president). Read-only.',
     saveForAll: 'Save for everyone',
     savedToast: 'Club shared context saved.',
+    errors: {
+      noKey: 'No API key configured. Enter it in Settings → AI generation.',
+      noModel: 'Enter a model (e.g. "gpt-4o") in Settings → AI generation.',
+      endpoint:
+        'This endpoint ({origin}) is not allowed by the app security policy. Accepted providers: Anthropic, OpenAI, OpenRouter, Mistral, Groq.',
+      network: 'AI provider unreachable: check the connection.',
+      auth: 'API key rejected. Check the key in Settings → AI generation.',
+      rate: 'Quota or rate limit reached at the provider. Try again later.',
+      notFound:
+        'Model or endpoint not found. Check the model and URL in Settings.',
+      unavailable: 'The AI provider is temporarily unavailable. Try again.',
+      http: 'The AI provider rejected the request (HTTP {status}).',
+      unreadable: 'Unreadable AI response (JSON expected).',
+      pdfUnsupported:
+        'This provider cannot read PDFs: only Claude (Anthropic) can. Take a photo of the receipt, or change provider.',
+    },
   },
   system: {
     storageCorrupt:

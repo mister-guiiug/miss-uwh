@@ -1,17 +1,32 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import {
   CheckCircle2,
   CloudOff,
   Database,
   RefreshCw,
+  Server,
   Trash2,
   TriangleAlert,
+  Undo2,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore.ts';
 import { BACKEND, IS_SUPABASE } from '../../backend/config.ts';
-import { discardDeadOps, retryDeadOps, retrySync } from '../../backend/sync.ts';
+import {
+  discardDeadOps,
+  keepServerVersion,
+  reapplyMyChange,
+  retryDeadOps,
+  retrySync,
+  type EntryRecovery,
+} from '../../backend/sync.ts';
 import { describeRemoteOp } from '../../backend/syncBus.ts';
-import { deadItems } from '../../backend/syncQueue.ts';
+import { deadItems, type QueueItem } from '../../backend/syncQueue.ts';
+import { entryRejectionOf } from '../../backend/entryPatch.ts';
+import {
+  notifyError,
+  notifyInfo,
+  notifySuccess,
+} from '../../shared/lib/toasts.ts';
 import { Card } from '@mister-guiiug/dev-pwa-config/react/card';
 import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
@@ -81,6 +96,89 @@ function SyncStateBadge({ state }: { state: string }) {
   }
 }
 
+/** Le message de chaque issue de « Réappliquer ma modification ». */
+const REAPPLY_MESSAGE: Record<Exclude<EntryRecovery, 'done'>, TKey> = {
+  pending: 'database.reapplyQueued',
+  gone: 'database.reapplyGone',
+  conflict: 'database.reapplyConflict',
+  forbidden: 'database.reapplyForbidden',
+  refused: 'database.reapplyRefused',
+};
+
+/**
+ * Une opération refusée. Pour la MODIFICATION d'une écriture refusée par la
+ * concurrence optimiste — conflit (40001) ou refus de droits (42501) —, la
+ * raison est dite en clair et les deux mêmes gestes sont proposés sur place :
+ * garder la version du serveur, ou réappliquer ma modification sur elle.
+ * Après un refus de droits, « Réappliquer » sert quand un rôle a changé : il
+ * repart de la version ACTUELLE du serveur, là où « Réessayer » renverrait la
+ * version d'avant — et tomberait en conflit si l'écriture a bougé depuis.
+ * Les deux boutons de chaque ligne sont décrits par le libellé de la ligne :
+ * plusieurs lignes portent les mêmes boutons, un lecteur d'écran doit savoir
+ * de QUELLE écriture il s'agit.
+ */
+function DeadItemRow({
+  item,
+  busy,
+  onKeepServer,
+  onReapply,
+}: {
+  item: QueueItem;
+  busy: boolean;
+  onKeepServer: (entryId: string, what: string) => void;
+  onReapply: (entryId: string) => void;
+}) {
+  const { t } = useI18n();
+  const descId = useId();
+  const what = describeRemoteOp(item.payload, t);
+  const entryId = item.payload.kind === 'entry.update' ? item.payload.id : null;
+  const rejection = entryId ? entryRejectionOf(item.lastError) : null;
+
+  return (
+    <li className="text-xs">
+      <span id={descId} className="font-semibold">
+        {what}
+      </span>
+      {rejection ? (
+        <span className="block break-words text-[var(--uwh-text-soft)]">
+          {t(
+            rejection === 'conflict'
+              ? 'database.conflictReason'
+              : 'database.forbiddenReason'
+          )}
+        </span>
+      ) : (
+        item.lastError && (
+          <span className="block break-words text-[var(--uwh-text-soft)]">
+            {item.lastError}
+          </span>
+        )
+      )}
+      {entryId && rejection && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            aria-describedby={descId}
+            loading={busy}
+            onClick={() => onKeepServer(entryId, what)}
+          >
+            <Server size={14} aria-hidden="true" /> {t('database.keepServer')}
+          </Button>
+          <Button
+            size="sm"
+            aria-describedby={descId}
+            loading={busy}
+            onClick={() => onReapply(entryId)}
+          >
+            <Undo2 size={14} aria-hidden="true" /> {t('database.reapply')}
+          </Button>
+        </div>
+      )}
+    </li>
+  );
+}
+
 /** Ligne label/valeur compacte, pensée pour les petits écrans (retours à la ligne ok). */
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -108,6 +206,8 @@ export function DatabaseStatusCard() {
   const [storage, setStorage] = useState<{ usage: number; quota: number }>();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  /** L'écriture dont un geste de récupération est en cours. */
+  const [resolving, setResolving] = useState<string>();
 
   useEffect(() => {
     if (!navigator.storage?.estimate) return;
@@ -132,6 +232,35 @@ export function DatabaseStatusCard() {
       await (dead.length > 0 ? retryDeadOps() : retrySync());
     } finally {
       setRetrying(false);
+    }
+  }
+
+  // La relecture du serveur lève hors ligne : rien n'a alors été retiré ni
+  // remplacé, et c'est ce que dit le message.
+  async function onKeepServer(entryId: string, what: string) {
+    setResolving(entryId);
+    try {
+      const outcome = await keepServerVersion(entryId);
+      if (outcome === 'gone') notifyInfo(t('database.keptServerGone'));
+      else notifySuccess(t('database.keptServer', { what }));
+    } catch {
+      notifyError(t('database.resolveFailed'));
+    } finally {
+      setResolving(undefined);
+    }
+  }
+
+  async function onReapply(entryId: string) {
+    setResolving(entryId);
+    try {
+      const outcome = await reapplyMyChange(entryId);
+      if (outcome === 'done') notifySuccess(t('database.reapplied'));
+      else if (outcome === 'pending') notifyInfo(t(REAPPLY_MESSAGE.pending));
+      else notifyError(t(REAPPLY_MESSAGE[outcome]));
+    } catch {
+      notifyError(t('database.resolveFailed'));
+    } finally {
+      setResolving(undefined);
     }
   }
 
@@ -217,18 +346,20 @@ export function DatabaseStatusCard() {
           <p className="mb-2 text-xs font-semibold text-[var(--uwh-text-soft)]">
             {t('database.rejectedDesc')}
           </p>
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-3">
             {dead.slice(0, 8).map(item => (
-              <li key={item.id} className="text-xs">
-                <span className="font-semibold">
-                  {describeRemoteOp(item.payload)}
-                </span>
-                {item.lastError && (
-                  <span className="block break-words text-[var(--uwh-text-soft)]">
-                    {item.lastError}
-                  </span>
-                )}
-              </li>
+              <DeadItemRow
+                key={item.id}
+                item={item}
+                busy={
+                  item.payload.kind === 'entry.update' &&
+                  resolving === item.payload.id
+                }
+                onKeepServer={(entryId, what) =>
+                  void onKeepServer(entryId, what)
+                }
+                onReapply={entryId => void onReapply(entryId)}
+              />
             ))}
             {dead.length > 8 && (
               <li className="text-xs text-[var(--uwh-text-soft)]">

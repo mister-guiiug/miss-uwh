@@ -14,11 +14,7 @@ import {
 } from '@mister-guiiug/dev-pwa-config/react/field';
 import { notifySuccess } from '../../shared/lib/toasts.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
-import {
-  generateExercises,
-  type GeneratedExercise,
-  type GenerateRequest,
-} from './aiExercises.ts';
+import type { GeneratedExercise, GenerateRequest } from './aiExercises.ts';
 
 interface Props {
   open: boolean;
@@ -68,14 +64,24 @@ export function AiGenerateSheet({ open, onClose }: Props) {
     setResults(null);
     setSelected(new Set());
     const req: GenerateRequest = { count, category, level, theme };
+    // La génération et le client d'IA partagé sont chargés AU GESTE, comme le
+    // PDF du bilan : ce client sert aussi à lire les justificatifs, et rien de
+    // lui n'a à peser sur le premier chargement de l'app.
+    let generation: typeof import('./aiExercises.ts') | undefined;
     try {
-      const drafts = await generateExercises(req, ai, sharedSkills);
+      generation = await import('./aiExercises.ts');
+      const drafts = await generation.generateExercises(req, ai, sharedSkills);
       setResults(drafts);
       // Tout sélectionné par défaut.
       setSelected(new Set(drafts.map((_, i) => i)));
     } catch (e) {
+      // Une erreur du fournisseur a un code, donc une traduction ; les autres
+      // gardent leur message.
       setError(
-        e instanceof Error ? e.message : t('entrainements.aiGenerate.genError')
+        generation?.describeAiError(e, t) ??
+          (e instanceof Error
+            ? e.message
+            : t('entrainements.aiGenerate.genError'))
       );
     } finally {
       setBusy(false);

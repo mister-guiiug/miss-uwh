@@ -30,6 +30,16 @@ export type { Locale, Messages };
 /** Union typée des clés de traduction (pour les libellés stockés en données). */
 export type TKey = Parameters<ReturnType<typeof useI18n>['t']>[0];
 
+/**
+ * Un traducteur : le `t` d'un composant, ou `translate` hors React. Les modules
+ * sans état (libellés d'opérations, messages d'erreur d'IA) le REÇOIVENT, pour
+ * servir tels quels à l'écran comme aux toasts de la couche de synchro.
+ */
+export type Translate = (
+  key: TKey,
+  params?: Record<string, string | number>
+) => string;
+
 /** Locale courante lue hors React (persistance localStorage). Repli sur `fr`. */
 function currentLocale(): Locale {
   try {

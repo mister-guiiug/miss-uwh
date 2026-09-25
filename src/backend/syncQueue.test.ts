@@ -7,15 +7,24 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RemoteOp } from './syncBus.ts';
+import { EntryWriteRejected, type EntryUpdateOp } from './entryPatch.ts';
 import {
   clearAll,
+  consolidateDeadEntryUpdates,
+  deadEntryUpdate,
   deadItems,
   entityKey,
   getSyncQueue,
   isTransient,
   migrateLegacyItems,
+  pendingEntryUpdates,
+  rebaseEntryUpdates,
+  requeueRetryable,
   setQueueObserver,
   setQueueTransport,
+  takeEntryUpdates,
+  withPendingPatch,
+  type QueueItem,
 } from './syncQueue.ts';
 
 const QUEUE_KEY = 'miss-uwh:syncqueue';
@@ -37,7 +46,7 @@ function op(
 }
 
 /**
- * Les trente-deux opérations du bus et la clé attendue de chacune.
+ * Les trente-trois opérations du bus et la clé attendue de chacune.
  *
  * Toutes portent le MÊME identifiant `x` : c'est ce qui rend lisibles les deux
  * invariants éprouvés plus bas — un `upsert` et son `delete` doivent retomber
@@ -52,6 +61,9 @@ function op(
  */
 const CAS: ReadonlyArray<readonly [RemoteOp, string | null]> = [
   [op('entry.upsert', { entry: { id: 'x' } }), 'entry:x'],
+  // La modification a SA clé : elle ne doit jamais remplacer, dans la file,
+  // la création encore en attente de la même écriture.
+  [op('entry.update', { id: 'x' }), 'entry.update:x'],
   [op('entry.bulkUpsert', { entries: [] }), null],
   [op('season.upsert', { season: { id: 'x' } }), 'season:x'],
   [op('season.close', { id: 'x' }), null],
@@ -127,8 +139,9 @@ describe('entityKey', () => {
       cle => cle !== null
     );
 
-    // Seize familles d'entités, treize d'entre elles avec upsert + delete.
-    expect(new Set(cles).size).toBe(16);
+    // Dix-sept clés : seize familles d'entités, treize d'entre elles avec
+    // upsert + delete, et la modification d'écriture à part de sa création.
+    expect(new Set(cles).size).toBe(17);
   });
 
   it('lots et changements d’état ne fusionnent jamais', () => {
@@ -384,5 +397,275 @@ describe('getSyncQueue', () => {
     expect(envoyees).toEqual([SEASON_CLOSE]);
     expect(file.pending()).toBe(0);
     expect(deadItems()).toHaveLength(0);
+  });
+});
+
+/**
+ * LES GESTES PAR ÉCRITURE DE LA CONCURRENCE OPTIMISTE. La file du socle
+ * fusionne par REMPLACEMENT et ne connaît que des gestes de groupe sur les
+ * lettres mortes ; une modification d'écriture est un DIFF, jugé contre une
+ * version. Ce qui suit éprouve les cinq endroits où les deux ne s'accordent
+ * pas d'eux-mêmes — chacun, faute de ce code, perdrait ou écraserait une
+ * modification sans un mot.
+ */
+describe('modifications d’écritures (OCC)', () => {
+  const update = (
+    id: string,
+    expectedVersion: number,
+    patch: EntryUpdateOp['patch']
+  ): EntryUpdateOp => ({
+    kind: 'entry.update',
+    id,
+    label: `Écriture ${id}`,
+    expectedVersion,
+    patch,
+  });
+
+  /** Envoie la file ; chaque envoi rend le résultat que le test lui dicte. */
+  function transportRendant(...issues: Array<Error | null>): RemoteOp[] {
+    const envoyees: RemoteOp[] = [];
+    setQueueTransport(operation => {
+      envoyees.push(operation);
+      const issue = issues.shift() ?? null;
+      return issue ? Promise.reject(issue) : Promise.resolve();
+    });
+    return envoyees;
+  }
+
+  const conflit = () =>
+    new EntryWriteRejected('conflict', 'Conflit de version (rechargez).');
+
+  beforeEach(() => {
+    setQueueTransport(null);
+    setQueueObserver({});
+    clearAll();
+  });
+
+  afterEach(() => {
+    clearAll();
+    setQueueTransport(null);
+    setQueueObserver({});
+  });
+
+  describe('withPendingPatch', () => {
+    it('laisse passer telle quelle une opération qui n’est pas une modification', () => {
+      const close: RemoteOp = { kind: 'season.close', id: 's1' };
+      expect(withPendingPatch(close, getSyncQueue().list())).toBe(close);
+    });
+
+    it('rien n’attend sur cette écriture : l’opération part telle quelle', () => {
+      getSyncQueue().enqueue(update('autre', 1, { label: 'x' }));
+      const op = update('e1', 1, { amount: 12 });
+      expect(withPendingPatch(op, getSyncQueue().list())).toBe(op);
+    });
+
+    it('fusionne avec la modification qui attend : aucun champ ne se perd', () => {
+      // Sans la fusion, la file remplaçait la première modification par la
+      // seconde : le libellé changé d'abord partait à la trappe.
+      const file = getSyncQueue();
+      file.enqueue(update('e1', 3, { label: 'Libellé', observation: 'o' }));
+      const fusion = withPendingPatch(
+        update('e1', 3, { amount: 12, observation: null }),
+        file.list()
+      );
+      expect(fusion).toEqual(
+        update('e1', 3, { label: 'Libellé', amount: 12, observation: null })
+      );
+      file.enqueue(fusion);
+      expect(file.list().map(item => item.payload)).toEqual([fusion]);
+    });
+
+    it('garde la version la PLUS ANCIENNE : c’est contre elle que le patch doit être jugé', () => {
+      const file = getSyncQueue();
+      file.enqueue(update('e1', 2, { label: 'fait sur la v2' }));
+      const fusion = withPendingPatch(
+        update('e1', 5, { amount: 1 }),
+        file.list()
+      );
+      expect(fusion).toMatchObject({ expectedVersion: 2 });
+    });
+
+    it('ignore une modification relancée sans clé (lettre morte revenue en file)', () => {
+      const relancee: QueueItem = {
+        id: 'r1',
+        key: null,
+        payload: update('e1', 1, { label: 'refusée' }),
+        attempts: 0,
+        enqueuedAt: '2026-09-25T00:00:00.000Z',
+      };
+      const op = update('e1', 1, { amount: 3 });
+      expect(withPendingPatch(op, [relancee])).toBe(op);
+    });
+  });
+
+  it('un refus de modification part en lettre morte d’emblée, quel que soit son texte', async () => {
+    // Le texte ressemble à une panne réseau : sans le classement explicite
+    // d'`EntryWriteRejected`, la file le rejouerait en boucle.
+    transportRendant(new EntryWriteRejected('forbidden', 'network timeout'));
+    getSyncQueue().enqueue(update('e1', 1, { label: 'x' }));
+
+    await getSyncQueue().flush();
+
+    expect(getSyncQueue().pending()).toBe(0);
+    expect(deadItems()).toHaveLength(1);
+    expect(deadItems()[0]?.attempts).toBe(1);
+  });
+
+  describe('une écriture, une lettre morte', () => {
+    it('deux refus sur la même écriture fusionnent, et la lettre perd sa clé', async () => {
+      transportRendant(conflit(), conflit());
+      const file = getSyncQueue();
+      file.enqueue(update('e1', 1, { label: 'A', observation: 'o' }));
+      await file.flush();
+      file.enqueue(update('e1', 1, { amount: 9, observation: null }));
+      await file.flush();
+
+      const morte = deadEntryUpdate('e1');
+      expect(deadItems()).toHaveLength(1);
+      expect(morte?.key).toBeNull();
+      expect(morte?.payload).toEqual(
+        update('e1', 1, { label: 'A', amount: 9, observation: null })
+      );
+      expect(morte?.lastError).toContain('[40001]');
+    });
+
+    it('garde la plus ancienne des versions attendues', () => {
+      const mortes = [
+        update('e1', 4, { label: 'A' }),
+        update('e1', 2, { amount: 1 }),
+      ].map((payload, i): QueueItem => ({
+        id: `m${i}`,
+        key: 'entry.update:e1',
+        payload,
+        attempts: 1,
+        enqueuedAt: '2026-09-25T00:00:00.000Z',
+        lastError: '[40001] Conflit',
+      }));
+      localStorage.setItem('miss-uwh:syncdead', JSON.stringify(mortes));
+
+      consolidateDeadEntryUpdates('e1');
+
+      expect(deadItems()).toHaveLength(1);
+      expect(deadEntryUpdate('e1')?.payload).toMatchObject({
+        expectedVersion: 2,
+        patch: { label: 'A', amount: 1 },
+      });
+    });
+
+    it('ne touche ni aux autres écritures ni aux autres opérations', async () => {
+      transportRendant(
+        conflit(),
+        new Error('permission denied (RLS)'),
+        conflit()
+      );
+      const file = getSyncQueue();
+      file.enqueue(update('e1', 1, { label: 'A' }));
+      file.enqueue({ kind: 'season.close', id: 's1' });
+      file.enqueue(update('e2', 1, { label: 'B' }));
+      await file.flush();
+
+      expect(deadItems().map(item => item.payload.kind)).toEqual([
+        'entry.update',
+        'season.close',
+        'entry.update',
+      ]);
+      // Une seule lettre par écriture : rien n'a été réécrit.
+      consolidateDeadEntryUpdates('e1');
+      consolidateDeadEntryUpdates('inconnue');
+      expect(deadItems()).toHaveLength(3);
+    });
+  });
+
+  describe('rebaseEntryUpdates', () => {
+    it('reprend les modifications parties de la version quittée — en attente ET refusées', async () => {
+      transportRendant(conflit());
+      const file = getSyncQueue();
+      file.enqueue(update('e1', 3, { label: 'refusée' }));
+      await file.flush();
+      file.enqueue(update('e1', 3, { amount: 1 }));
+      file.enqueue(update('e2', 3, { amount: 2 }));
+
+      rebaseEntryUpdates('e1', 3, 4);
+
+      expect(
+        pendingEntryUpdates('e1').map(i => i.payload.expectedVersion)
+      ).toEqual([4]);
+      expect(deadEntryUpdate('e1')?.payload.expectedVersion).toBe(4);
+      // L'autre écriture n'a pas bougé.
+      expect(pendingEntryUpdates('e2')[0]?.payload.expectedVersion).toBe(3);
+    });
+
+    it('ne reprend QUE la version quittée : une autre version n’est pas de notre fait', () => {
+      const file = getSyncQueue();
+      file.enqueue(update('e1', 2, { label: 'x' }));
+
+      rebaseEntryUpdates('e1', 3, 4);
+
+      expect(pendingEntryUpdates('e1')[0]?.payload.expectedVersion).toBe(2);
+    });
+  });
+
+  it('takeEntryUpdates retire refusées ET en attente, dans l’ordre où elles ont été faites', async () => {
+    const etats: Array<{ pending: number; dead: number }> = [];
+    setQueueObserver({ onChange: etat => etats.push(etat) });
+    transportRendant(conflit());
+    const file = getSyncQueue();
+    file.enqueue(update('e1', 1, { label: 'refusée' }));
+    await file.flush();
+    file.enqueue(update('e1', 1, { amount: 5 }));
+    file.enqueue({ kind: 'season.close', id: 's1' });
+
+    const retirees = takeEntryUpdates('e1');
+
+    expect(retirees.map(op => op.patch)).toEqual([
+      { label: 'refusée' },
+      { amount: 5 },
+    ]);
+    expect(deadItems()).toHaveLength(0);
+    expect(file.list().map(item => item.payload.kind)).toEqual([
+      'season.close',
+    ]);
+    // L'indicateur des Réglages voit l'état réel.
+    expect(etats.at(-1)).toEqual({ pending: 1, dead: 0 });
+    // Rien pour une écriture sans modification.
+    expect(takeEntryUpdates('inconnue')).toEqual([]);
+  });
+
+  describe('requeueRetryable (« Réessayer »)', () => {
+    it('relance les refus ordinaires et laisse les conflits attendre une décision', async () => {
+      transportRendant(
+        conflit(),
+        new EntryWriteRejected('forbidden', 'Droits insuffisants'),
+        new Error('permission denied (RLS)')
+      );
+      const file = getSyncQueue();
+      file.enqueue(update('e1', 1, { label: 'conflit' }));
+      file.enqueue(update('e2', 1, { label: 'droits' }));
+      file.enqueue({ kind: 'event.delete', id: 'ev1' });
+      await file.flush();
+      expect(deadItems()).toHaveLength(3);
+
+      const relancees = requeueRetryable();
+
+      expect(relancees).toBe(2);
+      expect(file.list().map(item => item.payload.kind)).toEqual([
+        'entry.update',
+        'event.delete',
+      ]);
+      expect(deadItems().map(item => item.payload)).toEqual([
+        update('e1', 1, { label: 'conflit' }),
+      ]);
+    });
+
+    it('sans conflit, c’est la relance du socle, telle quelle', async () => {
+      transportRendant(new Error('permission denied (RLS)'));
+      const file = getSyncQueue();
+      file.enqueue({ kind: 'event.delete', id: 'ev1' });
+      await file.flush();
+
+      expect(requeueRetryable()).toBe(1);
+      expect(file.pending()).toBe(1);
+      expect(deadItems()).toHaveLength(0);
+    });
   });
 });

@@ -73,6 +73,40 @@ export const financesFr = {
     openFailed: 'Ouverture impossible.',
     deleteFailed: 'Suppression impossible.',
   },
+  receipt: {
+    title: 'Lire le justificatif',
+    hint: 'L’IA lit la date, le montant et le libellé, et propose une catégorie. Rien n’est enregistré sans vous.',
+    takePhoto: 'Photographier',
+    chooseFile: 'Choisir un fichier',
+    noKey: 'Pour lire un justificatif, configurez d’abord une clé d’IA.',
+    configure: 'Réglages → Génération IA',
+    reading: 'Lecture du justificatif…',
+    filled:
+      'Pré-rempli par l’IA (confiance {confidence} %) : vérifiez chaque champ avant d’enregistrer.',
+    filledUncertain:
+      'Lecture incertaine (confiance {confidence} %) : vérifiez chaque champ avant d’enregistrer.',
+    filledNoConfidence:
+      'Pré-rempli par l’IA : vérifiez chaque champ avant d’enregistrer.',
+    pickCategoryDebit: 'Dépense détectée : choisissez la catégorie.',
+    pickCategoryCredit: 'Recette détectée : choisissez la catégorie.',
+    chooseCategory: '— Catégorie à choisir —',
+    noticeTitle: 'Envoyer le justificatif à l’IA ?',
+    noticeBody:
+      'Pour être lu, le justificatif part chez {provider} ({host}), avec votre clé, directement depuis cet appareil. Les photos sont réduites et débarrassées de leurs métadonnées (lieu, appareil) avant l’envoi ; un PDF part tel quel. Cette question ne reviendra pas tant que le fournisseur reste le même.',
+    noticeConfirm: 'Envoyer',
+    errors: {
+      unsupportedType:
+        'Format non pris en charge : choisissez une photo (JPEG, PNG, WebP) ou un PDF.',
+      tooLarge:
+        'Fichier trop lourd pour être lu : recadrez la photo, ou ne gardez que la page utile du PDF.',
+      imageUnreadable:
+        'Impossible de lire cette image. Essayez une photo JPEG ou PNG.',
+      empty:
+        'Rien de lisible sur ce justificatif : saisissez l’écriture à la main.',
+      http: 'Le fournisseur d’IA a refusé la requête (HTTP {status}) : le modèle configuré lit-il les images ?',
+      failed: 'Lecture impossible. Saisissez l’écriture à la main.',
+    },
+  },
   categories: {
     toComplete: 'à compléter',
     entryCount: '{n} écriture(s)',
@@ -257,6 +291,37 @@ export const financesEn = {
     uploadFailed: 'Upload failed (check your connection).',
     openFailed: 'Could not open the file.',
     deleteFailed: 'Could not delete the file.',
+  },
+  receipt: {
+    title: 'Read the receipt',
+    hint: 'AI reads the date, amount and label, and suggests a category. Nothing is saved without you.',
+    takePhoto: 'Take a photo',
+    chooseFile: 'Choose a file',
+    noKey: 'To read a receipt, first set up an AI key.',
+    configure: 'Settings → AI generation',
+    reading: 'Reading the receipt…',
+    filled:
+      'Prefilled by AI ({confidence}% confidence): check every field before saving.',
+    filledUncertain:
+      'Uncertain reading ({confidence}% confidence): check every field before saving.',
+    filledNoConfidence: 'Prefilled by AI: check every field before saving.',
+    pickCategoryDebit: 'Expense detected: choose the category.',
+    pickCategoryCredit: 'Income detected: choose the category.',
+    chooseCategory: '— Choose a category —',
+    noticeTitle: 'Send the receipt to the AI?',
+    noticeBody:
+      'To be read, the receipt goes to {provider} ({host}), with your key, directly from this device. Photos are downsized and stripped of their metadata (location, device) before sending; a PDF goes as is. This question will not come back as long as the provider stays the same.',
+    noticeConfirm: 'Send',
+    errors: {
+      unsupportedType:
+        'Unsupported format: choose a photo (JPEG, PNG, WebP) or a PDF.',
+      tooLarge:
+        'File too heavy to be read: crop the photo, or keep only the useful page of the PDF.',
+      imageUnreadable: 'Could not read this image. Try a JPEG or PNG photo.',
+      empty: 'Nothing readable on this receipt: enter the entry by hand.',
+      http: 'The AI provider rejected the request (HTTP {status}): does the configured model read images?',
+      failed: 'Could not read it. Enter the entry by hand.',
+    },
   },
   categories: {
     toComplete: 'to complete',

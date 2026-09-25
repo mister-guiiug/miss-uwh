@@ -41,6 +41,7 @@ import type {
   Tournament,
   TournamentStatus,
 } from '../shared/types/domain.ts';
+import type { EntryPatch } from './entryPatch.ts';
 
 // ── Formes des lignes Postgres (cf. supabase/migrations/0001_schema.sql) ──
 export interface EntryRow {
@@ -144,6 +145,44 @@ export function entryToRow(
     components: e.components ?? null,
     deleted_at: epochToIso(e.deletedAt),
   };
+}
+
+/**
+ * La colonne de chaque champ d'un patch. `satisfies` rend l'oubli impossible :
+ * un champ ajouté à `EntryPatch` sans sa colonne ne compile pas — il partirait
+ * sinon vers une RPC qui l'ignorerait sans un mot.
+ */
+const PATCH_COLUMNS = {
+  label: 'label',
+  amount: 'amount',
+  categoryCode: 'category_code',
+  date: 'date',
+  sens: 'sens',
+  method: 'method',
+  reconciled: 'reconciled',
+  pieceRef: 'piece_ref',
+  invoiceCode: 'invoice_code',
+  observation: 'observation',
+  eventId: 'event_id',
+  components: 'components',
+  deletedAt: 'deleted_at',
+} as const satisfies Record<keyof EntryPatch, string>;
+
+/**
+ * `p_patch` de `update_entry_checked` (0021) : colonnes Postgres, date de
+ * suppression en ISO. Une clé absente du patch reste absente — le serveur
+ * laisse alors la colonne en place ; une clé à `null` part à `null` — le
+ * serveur vide la colonne facultative.
+ */
+export function entryPatchToRpc(patch: EntryPatch): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const field of Object.keys(PATCH_COLUMNS) as (keyof EntryPatch)[]) {
+    const value = patch[field];
+    if (value === undefined) continue;
+    out[PATCH_COLUMNS[field]] =
+      field === 'deletedAt' ? epochToIso(patch.deletedAt ?? undefined) : value;
+  }
+  return out;
 }
 
 // ── Saisons ──────────────────────────────────────────────────────────

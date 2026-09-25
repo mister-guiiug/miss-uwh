@@ -10,9 +10,15 @@
  * socle. Échec PERMANENT (rejet serveur, ex. RLS) → lettre morte, sans bloquer
  * la file.
  *
- * Conflits : upsert idempotent (UUID client) → dernier-écrivain-gagne ; après un
- * drain complet à la reconnexion, on re-`pullAll()` pour réconcilier les
- * changements d'autres utilisateurs. Le store local reste utilisable hors ligne.
+ * Conflits : une CRÉATION est un upsert idempotent (UUID client). Toute
+ * MODIFICATION d'une écriture du journal passe par `update_entry_checked`, avec
+ * la version que le client a vue : si le serveur a bougé entre-temps, rien
+ * n'est écrasé — l'opération rejoint les opérations refusées, et les Réglages
+ * proposent de garder la version du serveur ou de réappliquer la sienne
+ * (`keepServerVersion`, `reapplyMyChange`). Les autres entités restent en
+ * dernier-écrivain-gagne. Après un drain complet à la reconnexion, on
+ * re-`pullAll()` pour réconcilier les changements d'autres utilisateurs. Le
+ * store local reste utilisable hors ligne.
  */
 import type { AppData } from '../shared/types/domain.ts';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -20,6 +26,7 @@ import { useAppStore } from '../store/useAppStore.ts';
 import type { SyncStatus } from '../store/types.ts';
 import { SCHEMA_VERSION, createEmptyData } from '../shared/lib/seed.ts';
 import { notifyError } from '../shared/lib/toasts.ts';
+import { translate, type TKey } from '../i18n/index.ts';
 import { getSupabase } from '../lib/supabase.ts';
 import { setCurrentClubId } from './clubContext.ts';
 import {
@@ -28,10 +35,25 @@ import {
   type RemoteOp,
 } from './syncBus.ts';
 import {
+  EntryWriteRejected,
+  applyEntryPatch,
+  entryRejectionOf,
+  mergeEntryPatches,
+  type EntryPatch,
+  type EntryRejection,
+  type EntryUpdateOp,
+} from './entryPatch.ts';
+import {
+  deadEntryUpdate,
   getSyncQueue,
   isTransient,
+  pendingEntryUpdates,
+  rebaseEntryUpdates,
+  requeueRetryable,
   setQueueObserver,
   setQueueTransport,
+  takeEntryUpdates,
+  withPendingPatch,
 } from './syncQueue.ts';
 import * as repo from './supabaseRepository.ts';
 
@@ -162,11 +184,32 @@ export async function pullAll(): Promise<void> {
   }
 }
 
+/**
+ * Une modification d'écriture a abouti : le serveur l'a fait passer de la
+ * version attendue à `version`.
+ *  - Les modifications de la même écriture faites PENDANT l'envoi partaient de
+ *    l'ancienne version : elles partent désormais de la nouvelle, sans quoi
+ *    notre propre modification leur serait opposée en conflit.
+ *  - La version locale devient celle du serveur : la modification suivante,
+ *    faite sur cet appareil, partira avec elle.
+ */
+async function applyEntryUpdate(op: EntryUpdateOp): Promise<void> {
+  const version = await repo.updateEntryChecked(
+    op.id,
+    op.expectedVersion,
+    op.patch
+  );
+  rebaseEntryUpdates(op.id, op.expectedVersion, version);
+  useAppStore.getState().acknowledgeEntryVersion(op.id, version);
+}
+
 /** Transport de la file : pousse une opération vers le repository Supabase. */
 async function applyOp(op: RemoteOp): Promise<void> {
   switch (op.kind) {
     case 'entry.upsert':
       return repo.upsertEntry(op.entry);
+    case 'entry.update':
+      return applyEntryUpdate(op);
     case 'entry.bulkUpsert':
       return repo.upsertEntries(op.entries);
     case 'season.upsert':
@@ -237,7 +280,7 @@ function reportQueueStatus(): void {
   const dead = q.deadLetters().length;
   const pending = q.pending();
   if (dead > 0)
-    setStatus('error', `${dead} opération(s) refusée(s) par le serveur`);
+    setStatus('error', translate('sync.rejectedCount', { n: dead }));
   else if (pending > 0)
     // Des modifications attendent le réseau : état normal du hors ligne,
     // PAS une erreur (elles repartiront seules à la reconnexion).
@@ -245,11 +288,18 @@ function reportQueueStatus(): void {
   else setStatus('ready');
 }
 
+/** Le message d'une lettre morte : un conflit et un refus de droits se disent. */
+const DEAD_MESSAGE: Record<EntryRejection | 'other', TKey> = {
+  conflict: 'sync.deadConflict',
+  forbidden: 'sync.deadForbidden',
+  other: 'sync.deadGeneric',
+};
+
 /** Signale qu'une opération vient de partir en lettre morte (toast persistant). */
-function notifyDeadLetter(op: RemoteOp): void {
+function notifyDeadLetter(op: RemoteOp, error: unknown): void {
+  const reason = error instanceof EntryWriteRejected ? error.reason : 'other';
   notifyError(
-    `Synchronisation refusée par le serveur : ${describeRemoteOp(op)}. ` +
-      'Détails et nouvel essai dans Réglages → État de la base de données.'
+    translate(DEAD_MESSAGE[reason], { what: describeRemoteOp(op, translate) })
   );
 }
 
@@ -262,7 +312,7 @@ setQueueObserver({
   // Le socle notifie après chaque évolution de la file (fin de drain comprise) :
   // c'est lui qui rapporte l'état final ready / offline / error.
   onChange: () => reportQueueStatus(),
-  onDead: op => notifyDeadLetter(op),
+  onDead: (op, error) => notifyDeadLetter(op, error),
 });
 
 /**
@@ -360,11 +410,14 @@ function unsubscribeRealtime(): void {
 /** Branche le push (enfilage + drain), l'écoute des reconnexions et le Realtime. */
 export function startSync(): void {
   setRemoteHandler(op => {
-    if (getSyncQueue().enqueue(op) === null)
+    const queue = getSyncQueue();
+    // Une modification d'écriture FUSIONNE avec celle qui attend déjà : la file
+    // remplace l'entrée de même clé, et un diff remplacé est un diff perdu.
+    if (queue.enqueue(withPendingPatch(op, queue.list())) === null)
       // Plafond du socle atteint : refuser VISIBLEMENT plutôt que perdre en
       // silence — l'utilisateur peut réessayer une fois la file drainée.
       notifyError(
-        `File de synchronisation saturée : ${describeRemoteOp(op)} n'a pas pu être mis en attente. Réessayez une fois la connexion rétablie.`
+        translate('sync.queueFull', { what: describeRemoteOp(op, translate) })
       );
     void drain();
   });
@@ -401,9 +454,11 @@ export async function retrySync(): Promise<void> {
 /**
  * Réglages : redonne leur chance aux opérations refusées (lettres mortes) —
  * utile après correction côté serveur (droits, données) — puis réconcilie.
+ * Les conflits de version restent de côté : ils attendent une décision, pas
+ * un nouvel essai (cf. `requeueRetryable`).
  */
 export async function retryDeadOps(): Promise<void> {
-  getSyncQueue().requeueDead();
+  requeueRetryable();
   await retrySync();
 }
 
@@ -411,4 +466,63 @@ export async function retryDeadOps(): Promise<void> {
 export function discardDeadOps(): void {
   // L'observateur (`onChange`) recalcule le statut après la purge.
   getSyncQueue().clearDead();
+}
+
+// ── Récupération d'une modification refusée (Réglages) ───────────────
+
+/**
+ * L'issue d'un geste de récupération :
+ *  - `done` : fait, l'écriture est à jour des deux côtés ;
+ *  - `pending` : remise en file, elle partira avec la synchronisation ;
+ *  - `gone` : l'écriture n'existe plus sur le serveur, ou plus pour vous ;
+ *  - `conflict` / `forbidden` / `refused` : le serveur a de nouveau refusé.
+ */
+export type EntryRecovery =
+  'done' | 'pending' | 'gone' | 'conflict' | 'forbidden' | 'refused';
+
+/**
+ * « Garder la version du serveur » : on relit l'écriture et l'appareil s'y
+ * aligne. Les modifications locales de cette écriture — refusées comme en
+ * attente — sont abandonnées : c'est le choix qui vient d'être fait. Relire
+ * d'abord : hors ligne, la lecture lève et RIEN n'a été retiré.
+ */
+export async function keepServerVersion(
+  entryId: string
+): Promise<'done' | 'gone'> {
+  const server = await repo.fetchEntry(entryId);
+  takeEntryUpdates(entryId);
+  useAppStore.getState().hydrateEntry(entryId, server);
+  return server ? 'done' : 'gone';
+}
+
+/**
+ * « Réappliquer ma modification » : on relit la version du serveur, on y pose
+ * ce que l'utilisateur avait changé — et seulement cela : c'est un diff, les
+ * autres champs gardent la valeur du serveur —, puis la RPC repart avec la
+ * version relue. Si l'écriture a encore bougé entre la lecture et l'envoi, la
+ * RPC refuse de nouveau : rien n'est écrasé, la décision revient à
+ * l'utilisateur.
+ */
+export async function reapplyMyChange(entryId: string): Promise<EntryRecovery> {
+  const server = await repo.fetchEntry(entryId);
+  if (!server) return 'gone';
+  const mine = takeEntryUpdates(entryId);
+  if (mine.length === 0) return 'done';
+  const patch = mine.reduce<EntryPatch>(
+    (acc, op) => mergeEntryPatches(acc, op.patch),
+    {}
+  );
+  const local = applyEntryPatch(server, patch);
+  useAppStore.getState().hydrateEntry(entryId, local);
+  getSyncQueue().enqueue({
+    kind: 'entry.update',
+    id: entryId,
+    label: local.label,
+    expectedVersion: server.version,
+    patch,
+  });
+  await drain();
+  const refused = deadEntryUpdate(entryId);
+  if (refused) return entryRejectionOf(refused.lastError) ?? 'refused';
+  return pendingEntryUpdates(entryId).length > 0 ? 'pending' : 'done';
 }

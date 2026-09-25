@@ -2,10 +2,10 @@
  * Génération d'exercices d'entraînement par IA, côté navigateur (BYOK — la clé
  * de l'utilisateur, stockée sur l'appareil, appelle directement le fournisseur).
  *
- * Deux fournisseurs via `fetch` (pas de SDK : budget de bundle serré, et l'appel
- * direct navigateur exige de toute façon des en-têtes spécifiques) :
- *  - Anthropic  : POST /v1/messages (en-tête d'accès navigateur dédié) ;
- *  - OpenAI-compatible : POST /chat/completions (OpenAI, OpenRouter, Mistral…).
+ * Les fournisseurs, leurs en-têtes, leurs formats et leurs erreurs vivent dans
+ * `shared/lib/aiClient.ts`, partagé avec la lecture des justificatifs. Il ne
+ * reste ici que ce qui est propre aux exercices : le prompt et la lecture de la
+ * réponse.
  *
  * Le prompt combine la « partie fixe pour tous » (config club synchronisée),
  * la « partie variable par utilisateur » (skills locaux) et la requête. La
@@ -18,6 +18,16 @@ import {
   type Exercise,
   type ExerciseCategory,
 } from '../../shared/types/domain.ts';
+import {
+  callAi,
+  describeAiError,
+  extractJson,
+} from '../../shared/lib/aiClient.ts';
+
+// Réexportés : l'extraction a rejoint le client partagé (ses tests restent
+// ici), et l'écran, qui charge ce module au geste, y trouve la traduction des
+// erreurs sans importer le client lui-même.
+export { describeAiError, extractJson };
 
 /** Brouillon d'exercice généré (sans id ni saison — affectés au commit). */
 export type GeneratedExercise = Omit<Exercise, 'id' | 'seasonId'>;
@@ -33,13 +43,7 @@ export interface GenerateRequest {
   theme?: string;
 }
 
-const DEFAULT_ANTHROPIC_MODEL = 'claude-opus-4-8';
-const ANTHROPIC_VERSION = '2023-06-01';
 const MAX_TOKENS = 4096;
-
-function trimSlash(url: string): string {
-  return url.replace(/\/+$/, '');
-}
 
 /** Prompt système : contrat de sortie + skills communs (fixes) + perso (variables). */
 function buildSystemPrompt(ai: AiSettings, sharedSkills?: string): string {
@@ -67,116 +71,6 @@ function buildUserPrompt(req: GenerateRequest): string {
   if (req.level?.trim()) lines.push(`Niveau / public : ${req.level.trim()}.`);
   if (req.theme?.trim()) lines.push(`Thème / objectif : ${req.theme.trim()}.`);
   return lines.join(' ');
-}
-
-/** Message d'erreur lisible selon le code HTTP du fournisseur. */
-function httpErrorMessage(status: number, raw: string): string {
-  if (status === 401 || status === 403)
-    return 'Clé API refusée. Vérifiez la clé dans Réglages → Génération IA.';
-  if (status === 429)
-    return 'Quota ou limite de débit atteint chez le fournisseur. Réessayez plus tard.';
-  if (status === 404)
-    return 'Modèle ou endpoint introuvable. Vérifiez le modèle et l’URL dans les Réglages.';
-  if (status >= 500)
-    return 'Le fournisseur d’IA est momentanément indisponible. Réessayez.';
-  const snippet = raw.slice(0, 200).trim();
-  return `Échec de la génération (HTTP ${status})${snippet ? ` : ${snippet}` : ''}.`;
-}
-
-async function callAnthropic(
-  ai: AiSettings,
-  system: string,
-  user: string,
-  signal?: AbortSignal
-): Promise<string> {
-  const base = ai.baseUrl?.trim()
-    ? trimSlash(ai.baseUrl.trim())
-    : 'https://api.anthropic.com';
-  const res = await fetch(`${base}/v1/messages`, {
-    method: 'POST',
-    signal,
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': ai.apiKey ?? '',
-      'anthropic-version': ANTHROPIC_VERSION,
-      // Autorise l'appel direct depuis un navigateur (BYOK).
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: ai.model?.trim() || DEFAULT_ANTHROPIC_MODEL,
-      max_tokens: MAX_TOKENS,
-      system,
-      messages: [{ role: 'user', content: user }],
-    }),
-  });
-  if (!res.ok) throw new Error(httpErrorMessage(res.status, await res.text()));
-  const data = (await res.json()) as {
-    content?: { type: string; text?: string }[];
-  };
-  return (data.content ?? [])
-    .filter(b => b.type === 'text')
-    .map(b => b.text ?? '')
-    .join('');
-}
-
-async function callOpenAi(
-  ai: AiSettings,
-  system: string,
-  user: string,
-  signal?: AbortSignal
-): Promise<string> {
-  if (!ai.model?.trim())
-    throw new Error(
-      'Indiquez un modèle (ex. « gpt-4o ») dans Réglages → Génération IA.'
-    );
-  const base = ai.baseUrl?.trim()
-    ? trimSlash(ai.baseUrl.trim())
-    : 'https://api.openai.com/v1';
-  const res = await fetch(`${base}/chat/completions`, {
-    method: 'POST',
-    signal,
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${ai.apiKey ?? ''}`,
-    },
-    body: JSON.stringify({
-      model: ai.model.trim(),
-      max_tokens: MAX_TOKENS,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(httpErrorMessage(res.status, await res.text()));
-  const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  return data.choices?.[0]?.message?.content ?? '';
-}
-
-/**
- * Extrait l'objet JSON d'une réponse modèle, tolérant aux clôtures Markdown
- * (```json) et au texte parasite avant/après.
- */
-export function extractJson(text: string): unknown {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = (fenced ? fenced[1]! : text).trim();
-  try {
-    return JSON.parse(candidate);
-  } catch {
-    // Repli : du premier { (ou [) jusqu'au dernier } (ou ]).
-    const start = candidate.search(/[{[]/);
-    const end = Math.max(
-      candidate.lastIndexOf('}'),
-      candidate.lastIndexOf(']')
-    );
-    if (start >= 0 && end > start) {
-      return JSON.parse(candidate.slice(start, end + 1));
-    }
-    throw new Error('Réponse IA illisible (JSON attendu).');
-  }
 }
 
 const CATEGORY_SET = new Set<string>(EXERCISE_CATEGORIES);
@@ -238,15 +132,14 @@ export async function generateExercises(
   sharedSkills?: string,
   signal?: AbortSignal
 ): Promise<GeneratedExercise[]> {
-  if (!ai.apiKey?.trim())
-    throw new Error(
-      'Aucune clé API configurée. Renseignez-la dans Réglages → Génération IA.'
-    );
-  const system = buildSystemPrompt(ai, sharedSkills);
-  const user = buildUserPrompt(req);
-  const text =
-    ai.provider === 'anthropic'
-      ? await callAnthropic(ai, system, user, signal)
-      : await callOpenAi(ai, system, user, signal);
+  const text = await callAi(
+    ai,
+    {
+      system: buildSystemPrompt(ai, sharedSkills),
+      user: buildUserPrompt(req),
+      maxTokens: MAX_TOKENS,
+    },
+    signal
+  );
   return parseExercises(text);
 }
