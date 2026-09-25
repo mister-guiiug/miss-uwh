@@ -192,6 +192,23 @@ nécessite le mode Supabase.
 - **Validation défensive** : front ET back rejouent les mêmes règles
   ([`entryValidation.ts`](src/features/journal/entryValidation.ts) + contraintes SQL
   `check (amount > 0)`, FK catégories, triggers). Jamais de confiance au client.
+- **Concurrence optimiste des écritures** : toute modification d'une écriture
+  existante passe par la RPC `update_entry_checked`, avec la version que
+  l'appareil a vue. La fonction est `security invoker` depuis
+  [`0020`](supabase/migrations/0020_occ_droits.sql) — son `update` subit la RLS
+  d'`entries`, un simple membre ne modifie rien — et couvre depuis
+  [`0021`](supabase/migrations/0021_occ_champs.sql) tous les champs que le
+  formulaire modifie. Version périmée : refus `40001`, rien n'est écrasé.
+  Preuves : [`occ-droits.test.sql`](supabase/tests/occ-droits.test.sql) et
+  [`occ-champs.test.sql`](supabase/tests/occ-champs.test.sql).
+- **IA « apportez votre clé »** : la clé reste sur l'appareil, l'appel part
+  directement du navigateur chez le fournisseur. La CSP (`connect-src`) ne
+  laisse joindre que les origines listées dans
+  [`aiOrigins.ts`](src/shared/lib/aiOrigins.ts) (Anthropic, OpenAI, OpenRouter,
+  Mistral, Groq), et le client refuse d'avance un autre point d'accès. Avant la
+  lecture d'un justificatif, l'app dit où part l'image et attend l'accord ; la
+  photo est réduite et débarrassée de ses métadonnées (lieu, appareil) avant
+  l'envoi.
 
 Détails et mise en place : [`supabase/README.md`](supabase/README.md).
 
@@ -216,13 +233,18 @@ l'en-tête / les réglages). Le registre des espaces est déclaré une seule foi
 - **Saisie d'écriture** (bottom sheet) — catégorie (sens déduit), date, montant,
   libellé, mode de règlement, n° pièce, code facture, **événement**, **composantes
   tarifaires** (inscriptions/licences/assurances), observation, **pièces jointes**.
+  À la création, **« Lire le justificatif »** (photo ou fichier) : l'IA configurée
+  dans les Réglages lit date, montant, libellé et propose une catégorie ; le
+  formulaire est pré-rempli, l'utilisateur relit et enregistre.
 - **Catégories** — totaux et statut « à compléter » par catégorie, détail des écritures.
 - **Synthèse** — donuts recettes/dépenses par catégorie + évolution multi-saisons (SVG pur).
 - **Saisons** — liste, activation, **clôture/verrouillage**, **réouverture** (motif),
   **report du reliquat**, comparaison des soldes.
 
 **Espace Adhérents** — membres (personnes), **familles & tuteurs**, encadrement,
-**cotisations** (payé/impayé) avec **import HelloAsso** des adhésions.
+**cotisations** (payé/impayé) avec **import HelloAsso** des adhésions, et
+**export des rappels d'échéances** (licences, certificats médicaux) vers un
+agenda (`.ics`).
 
 **Espace Vie du club** — **agenda d'événements** (avec **import Google Agenda** iCal),
 tournois, annonces, **galerie** (liens Google Photos). _(Espace Entraînements —
@@ -234,7 +256,10 @@ séances, exercices, stratégie, arbitrage — en cours.)_
   (restaurables).
 - **Membres & rôles** — écran d'administration (mode Supabase, rôle admin) : activation
   des comptes et attribution des rôles, arbitré par la RLS serveur.
-- **Réglages** — club, affichage, **statut backend**, exports (Journal/Bilan CSV,
+- **Réglages** — club, affichage, **statut backend** (opérations refusées ; une
+  modification d'écriture refusée — **modifiée ailleurs**, ou hors de vos
+  droits — propose « Garder la version du serveur » ou « Réappliquer ma
+  modification »), exports (Journal/Bilan CSV,
   sauvegarde JSON, **bilan PDF**, **Excel multi-feuilles**), impression de l'écran,
   **import Excel**, restauration,
   réinitialisation, et **intégrations** (HelloAsso, Google Agenda).
@@ -352,11 +377,57 @@ séances, exercices, stratégie, arbitrage — en cours.)_
 - [x] **Rebrand** aux couleurs du club (logo CHS) : bleu cobalt + doré, thèmes clair/sombre.
 - [x] Polices Google Fonts en chargement **non bloquant** (corrige l'avertissement FOUC).
 
+**Concurrence, justificatifs, échéances (septembre 2026)**
+
+- [x] **Tests e2e Playwright en CI** : `ci.yml` passe `run-e2e: true` au workflow
+      famille, qui joue sur Chromium les specs taguées `@critical` ou `@a11y` —
+      l'ancienne mention « le workflow CI famille saute l'e2e » était périmée.
+      Deux parcours ajoutés : [`justificatif.spec.ts`](e2e/justificatif.spec.ts)
+      et [`echeances.spec.ts`](e2e/echeances.spec.ts).
+- [x] **Adaptateur Supabase des récurrences et des adhérents** — il existait
+      déjà : tables `recurrings` et `adherents`
+      ([`0006`](supabase/migrations/0006_registres.sql), RLS + audit), lues par
+      `pullAll`, poussées par [`sync.ts`](src/backend/sync.ts)
+      (`recurring.upsert`/`delete`, `adherent.upsert`/`delete`).
+- [x] **Adoption client de l'OCC** : une modification d'écriture (édition,
+      pointage, suppression logique, restauration) part en diff vers
+      `update_entry_checked`, avec la version vue ; les créations restent des
+      upserts. Hors ligne, les modifications d'une même écriture fusionnent en
+      un seul envoi ; après un succès, la version rendue par le serveur devient
+      la version locale. Conflit (`40001`) ou refus de droits (`42501`) :
+      l'opération rejoint les refusées des Réglages, avec sa raison et ses
+      gestes (cf. [`entryPatch.ts`](src/backend/entryPatch.ts),
+      [`sync.occ.test.ts`](src/backend/sync.occ.test.ts)).
+      [`0021`](supabase/migrations/0021_occ_champs.sql) étend la RPC aux champs
+      que le formulaire modifie (`sens`, mode, pièce, facture, événement,
+      composantes).
+- [x] **OCR des justificatifs** par l'IA « apportez votre clé » déjà configurée
+      pour les exercices (client partagé :
+      [`aiClient.ts`](src/shared/lib/aiClient.ts)) : image réduite par le module
+      `image` du socle, bloc image chez Anthropic, `image_url` chez un
+      fournisseur compatible OpenAI, PDF chez Anthropic seulement ; sortie JSON
+      lue défensivement ([`receiptOcr.ts`](src/features/journal/receiptOcr.ts)).
+      Pré-remplissage, jamais d'enregistrement automatique.
+- [x] **Rappels d'échéances** : export `.ics` des licences et certificats
+      médicaux à venir des adhérents de la saison active, par le module `ical`
+      du socle — un événement d'une journée par échéance, deux rappels (un mois
+      avant à 9 h, la veille à 9 h), `UID` stable adhérent + nature + date
+      ([`deadlinesIcs.ts`](src/features/export/deadlinesIcs.ts)). Google Agenda
+      ignore les rappels d'un fichier importé ; Apple Calendar et Outlook les
+      honorent — l'app le dit avant l'export.
+- [x] **CSP** : les fournisseurs d'IA entrent dans `connect-src`. La génération
+      d'exercices était bloquée en production depuis la pose de la CSP
+      (25/07/2026), qui ne nommait que Supabase.
+
 **Restant**
 
-- [ ] Tests e2e Playwright (le workflow CI famille saute l'e2e).
-- [ ] Adoption client de l'OCC + adaptateur Supabase pour récurrences/adhérents.
-- [ ] OCR des justificatifs ; rappels d'échéances (licences/assurances).
+- [ ] **Échéances d'assurance** : le modèle n'a pas de date d'échéance
+      d'assurance — les assurances n'existent que comme composantes tarifaires
+      d'une écriture (R1, D2). Elles n'entrent donc pas dans l'export ; il
+      faudrait d'abord ajouter la donnée au registre des adhérents.
+- [ ] **Concurrence optimiste des autres entités** (saisons, adhérents,
+      récurrences…) : dernier-écrivain-gagne par upsert, seule l'écriture du
+      journal est protégée par sa version.
 
 ---
 
@@ -388,6 +459,15 @@ await supabase.from('entries').insert({
   sens: 'credit',
   amount: 647,
   method: 'helloasso',
+});
+
+// Modifier une écriture à VERSION ATTENDUE (ce que fait l'app) : 40001 si
+// quelqu'un l'a modifiée entre-temps, 42501 hors droits ; sinon la nouvelle
+// version. Une clé absente du patch laisse la colonne en place.
+const { data: version } = await supabase.rpc('update_entry_checked', {
+  p_id: id,
+  p_expected_version: 3,
+  p_patch: { label: 'HelloAsso inscriptions', amount: 660 },
 });
 
 // Suppression LOGIQUE (jamais de DELETE physique → refusé par RLS)

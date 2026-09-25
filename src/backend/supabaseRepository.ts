@@ -2,10 +2,13 @@
  * Repository Supabase — accès données de la comptabilité, arbitré par RLS côté
  * serveur. Construit sur les mappers PURS (`supabaseMappers.ts`).
  *
- * Deux familles :
+ * Trois familles :
  *  - `fetch*` : pull complet (hydratation du store local à la connexion) ;
  *  - `upsert*` / `deleteEvent` : push idempotent (les ids sont des UUID générés
- *    côté client, donc `on conflict (id)` fait insert OU update).
+ *    côté client, donc `on conflict (id)` fait insert OU update) — pour les
+ *    écritures du journal, la CRÉATION seulement ;
+ *  - `updateEntryChecked` : toute MODIFICATION d'une écriture existante, par
+ *    la RPC à version attendue (concurrence optimiste, 0020 + 0021).
  *
  * Le client vient de la fabrique du socle (`lib/supabase.ts`) : il est
  * ASYNCHRONE (SDK importé dynamiquement au premier appel) — chaque fonction
@@ -38,11 +41,17 @@ import type {
 import { getSupabase } from '../lib/supabase.ts';
 import { getCurrentClubId } from './clubContext.ts';
 import {
+  EntryWriteRejected,
+  entryRejectionFromCode,
+  type EntryPatch,
+} from './entryPatch.ts';
+import {
   adherentToUpsertRow,
   aiConfigToUpsertRow,
   announcementToUpsertRow,
   clubEventToUpsertRow,
   customCategoryToUpsertRow,
+  entryPatchToRpc,
   entryToUpsertRow,
   eventToRow,
   exerciseToUpsertRow,
@@ -174,6 +183,22 @@ export async function fetchEntries(): Promise<JournalEntry[]> {
     await sb.from('entries').select('*').order('date')
   ) as EntryRow[];
   return rows.map(rowToEntry);
+}
+
+/**
+ * UNE écriture, relue telle que le serveur la tient — pour la récupération
+ * d'un conflit. `null` si elle n'existe pas, ou plus pour cet utilisateur (RLS).
+ * Les justificatifs n'y sont pas : ils vivent dans leur propre table.
+ */
+export async function fetchEntry(id: string): Promise<JournalEntry | null> {
+  const sb = await getSupabase();
+  const { data, error } = await sb
+    .from('entries')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? rowToEntry(data as EntryRow) : null;
 }
 
 export async function fetchAudit(): Promise<AuditEvent[]> {
@@ -511,6 +536,40 @@ export async function deleteCustomCategory(code: string): Promise<void> {
   unwrap(
     await sb.from('categories').delete().eq('code', code).eq('custom', true)
   );
+}
+
+/**
+ * Modification VÉRIFIÉE d'une écriture existante : la RPC la verrouille, la
+ * compare à la version que le client a vue, puis applique le patch sous la RLS
+ * d'`entries` (0020). Rend la NOUVELLE version.
+ *
+ * Un conflit (40001) ou un refus (42501) lève `EntryWriteRejected` : la file ne
+ * les rejoue pas, et la récupération des Réglages sait les distinguer. Toute
+ * autre erreur garde sa classification ordinaire (réseau → rejeu).
+ */
+export async function updateEntryChecked(
+  id: string,
+  expectedVersion: number,
+  patch: EntryPatch
+): Promise<number> {
+  const sb = await getSupabase();
+  const { data, error } = await sb.rpc('update_entry_checked', {
+    p_id: id,
+    p_expected_version: expectedVersion,
+    p_patch: entryPatchToRpc(patch),
+  });
+  if (error) {
+    const rejection = entryRejectionFromCode(error.code);
+    throw rejection
+      ? new EntryWriteRejected(rejection, error.message)
+      : new Error(error.message);
+  }
+  const version = Number(data);
+  if (!Number.isInteger(version))
+    throw new Error(
+      'Réponse inattendue de update_entry_checked : version absente.'
+    );
+  return version;
 }
 
 /** Clôture via RPC : le serveur calcule le solde et vérifie le rôle (0005). */

@@ -67,6 +67,17 @@ export interface SystemActions {
   setSyncStatus: (status: SyncStatus) => void;
   /** Remplace l'état depuis un pull serveur (sans trace d'audit locale). */
   hydrate: (data: AppData) => void;
+  /**
+   * La RPC `update_entry_checked` a rendu la nouvelle version d'une écriture :
+   * la version locale la prend (jamais en arrière), sans toucher au contenu.
+   */
+  acknowledgeEntryVersion: (id: string, version: number) => void;
+  /**
+   * Remplace UNE écriture par sa relecture serveur (récupération d'un
+   * conflit) ; `null` la retire de l'appareil. Sans audit ni synchro : c'est
+   * le serveur qui parle. Les justificatifs locaux sont conservés.
+   */
+  hydrateEntry: (id: string, entry: JournalEntry | null) => void;
   logSecurity: (action: string, summary: string) => void;
   replaceData: (data: AppData) => void;
   resetAll: (clubName?: string, seasonLabel?: string, opening?: number) => void;

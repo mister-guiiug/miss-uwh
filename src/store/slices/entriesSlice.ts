@@ -6,6 +6,8 @@ import {
   getCurrentActor,
   isLocked,
   remote,
+  remoteEntryUpdate,
+  versionAfterEdit,
 } from '../storeHelpers.ts';
 import { createLogger } from '@mister-guiiug/dev-pwa-config/logger';
 
@@ -14,6 +16,11 @@ const log = createLogger('slices');
 /**
  * Écritures du journal : cœur comptable. Toutes les mutations respectent le
  * verrou de clôture (`isLocked`) ; les suppressions sont logiques (`deletedAt`).
+ *
+ * Vers le serveur, une CRÉATION part en upsert (`entry.upsert`,
+ * `entry.bulkUpsert`) ; une MODIFICATION — édition, pointage, suppression
+ * logique, restauration — part en diff à version attendue (`entry.update`,
+ * cf. `remoteEntryUpdate`).
  */
 export const createEntriesSlice: StoreSlice<EntriesActions> = (set, get) => ({
   addEntry: input => {
@@ -90,9 +97,9 @@ export const createEntriesSlice: StoreSlice<EntriesActions> = (set, get) => ({
         ...patch,
         updatedAt: Date.now(),
         updatedBy: getCurrentActor(),
-        version: before.version + 1,
+        version: versionAfterEdit(before.version),
       };
-      remote({ kind: 'entry.upsert', entry: after });
+      remoteEntryUpdate(before, after);
       return {
         data: commitAudited(
           {
@@ -103,7 +110,7 @@ export const createEntriesSlice: StoreSlice<EntriesActions> = (set, get) => ({
             action: 'entry.update',
             category: 'metier',
             target: 'entry',
-            summary: `Modification de l'écriture « ${after.label} » (v${after.version}).`,
+            summary: `Modification de l'écriture « ${after.label} » (v${before.version + 1}).`,
             targetId: id,
             before,
             after,
@@ -122,9 +129,9 @@ export const createEntriesSlice: StoreSlice<EntriesActions> = (set, get) => ({
         reconciledAt: reconciled ? Date.now() : undefined,
         updatedAt: Date.now(),
         updatedBy: getCurrentActor(),
-        version: before.version + 1,
+        version: versionAfterEdit(before.version),
       };
-      remote({ kind: 'entry.upsert', entry: after });
+      remoteEntryUpdate(before, after);
       return {
         data: commitAudited(
           {
@@ -154,9 +161,9 @@ export const createEntriesSlice: StoreSlice<EntriesActions> = (set, get) => ({
         observation: reason
           ? `${before.observation ? before.observation + ' — ' : ''}Suppression : ${reason}`
           : before.observation,
-        version: before.version + 1,
+        version: versionAfterEdit(before.version),
       };
-      remote({ kind: 'entry.upsert', entry: after });
+      remoteEntryUpdate(before, after);
       return {
         data: commitAudited(
           {
@@ -183,11 +190,11 @@ export const createEntriesSlice: StoreSlice<EntriesActions> = (set, get) => ({
       const { deletedAt: _d, deletedBy: _b, ...rest } = before;
       const after: JournalEntry = {
         ...rest,
-        version: before.version + 1,
+        version: versionAfterEdit(before.version),
         updatedAt: Date.now(),
         updatedBy: getCurrentActor(),
       };
-      remote({ kind: 'entry.upsert', entry: after });
+      remoteEntryUpdate(before, after);
       return {
         data: commitAudited(
           {

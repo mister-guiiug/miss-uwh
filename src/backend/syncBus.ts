@@ -25,10 +25,25 @@ import type {
   TrainingSession,
   Tournament,
 } from '../shared/types/domain.ts';
+import type { Translate } from '../i18n/index.ts';
+import type { EntryPatch } from './entryPatch.ts';
 
 export type RemoteOp =
+  /** CRÉATION d'une écriture (upsert idempotent sur l'UUID client). */
   | { kind: 'entry.upsert'; entry: JournalEntry }
   | { kind: 'entry.bulkUpsert'; entries: JournalEntry[] }
+  /**
+   * MODIFICATION d'une écriture existante : un diff, et la version que le
+   * client a vue — la RPC `update_entry_checked` refuse (40001) si le serveur
+   * a bougé depuis. `label` ne sert qu'à nommer l'écriture à l'utilisateur.
+   */
+  | {
+      kind: 'entry.update';
+      id: string;
+      label: string;
+      expectedVersion: number;
+      patch: EntryPatch;
+    }
   | { kind: 'season.upsert'; season: Season }
   | { kind: 'season.close'; id: string }
   | { kind: 'season.reopen'; id: string; reason: string }
@@ -75,73 +90,79 @@ export function emitRemote(op: RemoteOp): void {
 /**
  * Libellé lisible d'une opération (file d'attente / lettres mortes des
  * Réglages) : l'utilisateur doit comprendre QUELLE donnée n'a pas pu être
- * synchronisée sans connaître le vocabulaire technique.
+ * synchronisée sans connaître le vocabulaire technique. Le traducteur est
+ * PASSÉ plutôt qu'importé : ce module reste sans état ni dépendance à l'i18n,
+ * et le même libellé sert au toast (hors React) comme à la carte des Réglages.
  */
-export function describeRemoteOp(op: RemoteOp): string {
+export function describeRemoteOp(op: RemoteOp, t: Translate): string {
   switch (op.kind) {
     case 'entry.upsert':
-      return `Écriture « ${op.entry.label} »`;
+      return t('sync.op.entry', { label: op.entry.label });
+    case 'entry.update':
+      return t('sync.op.entryUpdate', { label: op.label });
     case 'entry.bulkUpsert':
-      return `Import de ${op.entries.length} écriture(s)`;
+      return t('sync.op.entryImport', { n: op.entries.length });
     case 'season.upsert':
-      return `Saison ${op.season.label}`;
+      return t('sync.op.season', { label: op.season.label });
     case 'season.close':
-      return 'Clôture de saison';
+      return t('sync.op.seasonClose');
     case 'season.reopen':
-      return 'Réouverture de saison';
+      return t('sync.op.seasonReopen');
     case 'event.upsert':
-      return `Événement financier « ${op.event.name} »`;
+      return t('sync.op.event', { name: op.event.name });
     case 'event.delete':
-      return 'Suppression d’un événement financier';
+      return t('sync.op.eventDelete');
     case 'recurring.upsert':
-      return `Modèle récurrent « ${op.recurring.label} »`;
+      return t('sync.op.recurring', { label: op.recurring.label });
     case 'recurring.delete':
-      return 'Suppression d’un modèle récurrent';
+      return t('sync.op.recurringDelete');
     case 'adherent.upsert':
-      return `Adhérent·e ${op.adherent.firstName} ${op.adherent.lastName}`;
+      return t('sync.op.adherent', {
+        name: `${op.adherent.firstName} ${op.adherent.lastName}`,
+      });
     case 'adherent.delete':
-      return 'Suppression d’un·e adhérent·e';
+      return t('sync.op.adherentDelete');
     case 'guardian.upsert':
-      return `Responsable légal « ${op.guardian.name} »`;
+      return t('sync.op.guardian', { name: op.guardian.name });
     case 'guardian.delete':
-      return 'Suppression d’un responsable légal';
+      return t('sync.op.guardianDelete');
     case 'clubevent.upsert':
-      return `Événement « ${op.clubEvent.title} »`;
+      return t('sync.op.clubEvent', { title: op.clubEvent.title });
     case 'clubevent.delete':
-      return 'Suppression d’un événement';
+      return t('sync.op.clubEventDelete');
     case 'announcement.upsert':
-      return `Annonce « ${op.announcement.title} »`;
+      return t('sync.op.announcement', { title: op.announcement.title });
     case 'announcement.delete':
-      return 'Suppression d’une annonce';
+      return t('sync.op.announcementDelete');
     case 'tournament.upsert':
-      return `Tournoi « ${op.tournament.name} »`;
+      return t('sync.op.tournament', { name: op.tournament.name });
     case 'tournament.delete':
-      return 'Suppression d’un tournoi';
+      return t('sync.op.tournamentDelete');
     case 'session.upsert':
-      return `Séance du ${op.session.date}`;
+      return t('sync.op.session', { date: op.session.date });
     case 'session.delete':
-      return 'Suppression d’une séance';
+      return t('sync.op.sessionDelete');
     case 'exercise.upsert':
-      return `Exercice « ${op.exercise.name} »`;
+      return t('sync.op.exercise', { name: op.exercise.name });
     case 'exercise.delete':
-      return 'Suppression d’un exercice';
+      return t('sync.op.exerciseDelete');
     case 'strategy.upsert':
-      return `Stratégie « ${op.strategy.name} »`;
+      return t('sync.op.strategy', { name: op.strategy.name });
     case 'strategy.delete':
-      return 'Suppression d’une stratégie';
+      return t('sync.op.strategyDelete');
     case 'referee.upsert':
-      return `Arbitre « ${op.referee.name} »`;
+      return t('sync.op.referee', { name: op.referee.name });
     case 'referee.delete':
-      return 'Suppression d’un arbitre';
+      return t('sync.op.refereeDelete');
     case 'album.upsert':
-      return `Album photo « ${op.album.title} »`;
+      return t('sync.op.album', { title: op.album.title });
     case 'album.delete':
-      return 'Suppression d’un album photo';
+      return t('sync.op.albumDelete');
     case 'category.upsert':
-      return `Catégorie « ${op.category.label} »`;
+      return t('sync.op.category', { label: op.category.label });
     case 'category.delete':
-      return `Suppression de la catégorie ${op.code}`;
+      return t('sync.op.categoryDelete', { code: op.code });
     case 'aiconfig.upsert':
-      return 'Instructions IA communes du club';
+      return t('sync.op.aiConfig');
   }
 }

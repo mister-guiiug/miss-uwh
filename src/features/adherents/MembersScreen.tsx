@@ -1,13 +1,20 @@
 import { useMemo, useState } from 'react';
-import { Search, UserPlus, Users } from 'lucide-react';
+import { CalendarClock, Search, UserPlus, Users } from 'lucide-react';
 import { useAppStore, selectActiveSeason } from '../../store/useAppStore.ts';
 import { type Adherent, type MemberRole } from '../../shared/types/domain.ts';
 import { useI18n, type TKey } from '../../i18n/index.ts';
 import { Button } from '@mister-guiiug/dev-pwa-config/react/button';
 import { Badge } from '../../shared/components/badges.tsx';
 import { EmptyState } from '@mister-guiiug/dev-pwa-config/react/empty-state';
+import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
 import { VirtualList } from '../../shared/components/VirtualList.tsx';
-import { expiryStatus, worstExpiry } from '../../shared/lib/expiry.ts';
+import {
+  expiryStatus,
+  upcomingDeadlines,
+  worstExpiry,
+  type Deadline,
+} from '../../shared/lib/expiry.ts';
+import { notifyError, notifySuccess } from '../../shared/lib/toasts.ts';
 import { MemberSheet } from './MemberSheet.tsx';
 
 /** Pastilles d'alerte d'un membre : cotisation due + échéances licence/CM. */
@@ -32,6 +39,80 @@ function MemberBadges({ a }: { a: Adherent }) {
 }
 
 /**
+ * « Rappels d'échéances dans votre agenda » : ce que l'export contient, ce que
+ * les agendas en font — Google Agenda ignore les rappels d'un fichier importé,
+ * Apple Calendar et Outlook les honorent : l'utilisateur doit le savoir AVANT
+ * d'importer. Sans échéance à venir, la boîte le dit et se ferme.
+ */
+function DeadlinesDialog({
+  deadlines,
+  onClose,
+}: {
+  /** `null` : boîte fermée. */
+  deadlines: Deadline[] | null;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+  const season = useAppStore(selectActiveSeason);
+  const club = useAppStore(s => s.data.club.name);
+  const [busy, setBusy] = useState(false);
+  const empty = deadlines !== null && deadlines.length === 0;
+
+  async function onExport() {
+    if (!deadlines) return;
+    setBusy(true);
+    try {
+      // Chargé au geste : l'export n'entre pas dans le premier chargement.
+      const { downloadDeadlinesIcs } =
+        await import('../export/deadlinesIcs.ts');
+      downloadDeadlinesIcs(deadlines, { club, season: season.label }, t);
+      notifySuccess(t('adherents.deadlines.exported', { n: deadlines.length }));
+      onClose();
+    } catch {
+      notifyError(t('adherents.deadlines.failed'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <ConfirmDialog
+      open={deadlines !== null}
+      title={t('adherents.deadlines.dialogTitle')}
+      loading={busy}
+      {...(empty
+        ? {
+            cancelLabel: null,
+            confirmLabel: t('common.close'),
+            onConfirm: onClose,
+          }
+        : {
+            confirmLabel: t('adherents.deadlines.download'),
+            onConfirm: () => void onExport(),
+            onCancel: onClose,
+          })}
+    >
+      {empty ? (
+        <p>{t('adherents.deadlines.none', { season: season.label })}</p>
+      ) : (
+        <>
+          <p>
+            {t('adherents.deadlines.dialogBody', {
+              n: deadlines?.length ?? 0,
+              season: season.label,
+            })}
+          </p>
+          <p className="mt-2">{t('adherents.deadlines.dialogApps')}</p>
+          <p className="mt-2 text-xs text-[var(--uwh-text-soft)]">
+            {t('adherents.deadlines.dialogInsurance')}
+          </p>
+        </>
+      )}
+    </ConfirmDialog>
+  );
+}
+
+/**
  * Registre des personnes du club (espace Adhérents). Réutilisé pour « Membres »
  * (tous) et « Encadrement » (filtré sur le rôle encadrant) via `roleFilter`.
  */
@@ -42,6 +123,8 @@ export function MembersScreen({ roleFilter }: { roleFilter?: MemberRole }) {
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<Adherent | null>(null);
   const [creating, setCreating] = useState(false);
+  /** Les échéances à exporter, figées à l'ouverture de la boîte. */
+  const [deadlines, setDeadlines] = useState<Deadline[] | null>(null);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -67,10 +150,25 @@ export function MembersScreen({ roleFilter }: { roleFilter?: MemberRole }) {
             ? t('adherents.members.countCoaches', { n: rows.length })
             : t('adherents.members.countMembers', { n: rows.length })}
         </h2>
-        <Button onClick={() => setCreating(true)}>
-          <UserPlus size={18} aria-hidden="true" />{' '}
-          {t('adherents.members.addButton')}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Les échéances de TOUS les adhérents de la saison : l'onglet
+              Encadrement, filtré, ne les porte pas. */}
+          {!roleFilter && (
+            <Button
+              variant="secondary"
+              iconOnly
+              aria-label={t('adherents.deadlines.exportAria')}
+              title={t('adherents.deadlines.exportAria')}
+              onClick={() => setDeadlines(upcomingDeadlines(all, season.id))}
+            >
+              <CalendarClock size={18} aria-hidden="true" />
+            </Button>
+          )}
+          <Button onClick={() => setCreating(true)}>
+            <UserPlus size={18} aria-hidden="true" />{' '}
+            {t('adherents.members.addButton')}
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
@@ -151,6 +249,10 @@ export function MembersScreen({ roleFilter }: { roleFilter?: MemberRole }) {
       {editing && (
         <MemberSheet open member={editing} onClose={() => setEditing(null)} />
       )}
+      <DeadlinesDialog
+        deadlines={deadlines}
+        onClose={() => setDeadlines(null)}
+      />
     </div>
   );
 }

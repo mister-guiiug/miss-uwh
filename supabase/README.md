@@ -77,9 +77,24 @@ offline-first :
   `supabaseRepository.ts` (upsert idempotent — les ids sont des **UUID** générés
   côté client, donc `on conflict (id)` fait insert OU update). Les triggers
   serveur gèrent version, audit et verrou de clôture.
+- **Écritures du journal : concurrence optimiste.** Une création reste un
+  upsert. Toute **modification** d'une écriture existante — édition, pointage,
+  suppression logique, restauration — part en diff vers la RPC
+  `update_entry_checked` (0020, 0021), avec la version que l'appareil a vue.
+  La fonction est `security invoker` : son `update` subit la RLS d'`entries`.
+  Version périmée → `40001`, hors droits → `42501` ; sinon elle rend la
+  nouvelle version, qui devient la version locale. Hors ligne, plusieurs
+  modifications de la même écriture fusionnent en un seul envoi.
+- **Refus** : un conflit ou un refus de droits n'est jamais rejoué tel quel. Il
+  rejoint les opérations refusées (Réglages → État de la base de données), avec
+  sa raison et deux gestes : **Garder la version du serveur** (on relit
+  l'écriture) ou **Réappliquer ma modification** (on relit la version du
+  serveur, on y repose les seuls champs modifiés, puis la RPC repart avec
+  elle).
 - **Statut** : un bandeau (`SupabaseSync.tsx`) signale « synchronisation… » /
   erreur (avec bouton _Réessayer_). Hors ligne, l'app reste utilisable sur le
-  cache local ; la dernière écriture l'emporte.
+  cache local ; pour les entités autres que les écritures, la dernière écriture
+  l'emporte.
 
 > ⚠️ Ce chemin est **correct par construction** (mappers purs testés, types
 > alignés sur le schéma) mais **n'a pas encore été éprouvé contre un projet
@@ -92,8 +107,14 @@ offline-first :
 > privé `justificatifs` + table `attachments`, consultation par URL signée — cf.
 > `src/backend/attachments.ts`).
 >
-> **Limite restante** : résolution de conflits multi-utilisateurs avancée
-> (aujourd'hui dernier-écrivain-gagne via upsert UUID).
+> **Limite restante** : seules les écritures du journal sont protégées par leur
+> version. Saisons, adhérents, récurrences et autres registres restent en
+> dernier-écrivain-gagne (upsert UUID).
+>
+> **Tests pgTAP** (`supabase/tests/`, joués en CI sur une pile jetable par
+> `.github/workflows/supabase-tests.yml`) : `occ-droits.test.sql` (0020 — la
+> RPC sous la RLS), `occ-champs.test.sql` (0021 — les champs couverts) et
+> `suppression-compte.test.sql` (0018).
 
 ### Activer le mode Supabase au build (déploiement GitHub Pages)
 

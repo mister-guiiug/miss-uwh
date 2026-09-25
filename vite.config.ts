@@ -8,6 +8,7 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { readFileSync } from 'node:fs';
 import { versionPlugin } from '@mister-guiiug/dev-pwa-config/vite-version';
 import { NAVIGATE_FALLBACK_DENY_FILES } from '@mister-guiiug/dev-pwa-config/vite-pwa';
+import { AI_PROVIDER_ORIGINS } from './src/shared/lib/aiOrigins.ts';
 
 const analyze = process.env.ANALYZE === '1';
 const { version } = JSON.parse(readFileSync('./package.json', 'utf-8')) as {
@@ -82,6 +83,10 @@ export default defineConfig(({ command }) => {
             // `vendor`, chargé d'emblée : trois kilo-octets payés à chaque
             // ouverture pour un bouton pressé une fois par an.
             if (norm.includes('/dev-pwa-config/pdf')) return 'pdf';
+            // Même raison pour le traitement d'image du socle : seule la
+            // lecture des justificatifs s'en sert, et elle est chargée au
+            // geste. Sans cette ligne, `vendor` — préchargé — le portait.
+            if (norm.includes('/dev-pwa-config/image')) return 'image';
             // Sentry est chargé par un `import()` que `loader` rend analysable.
             // Sans cette ligne il tomberait dans `vendor`, qui est PRÉCHARGÉ :
             // mesuré le 16/09/2026, 381,9 kB préchargés au lieu de 227,2 — pour
@@ -130,7 +135,18 @@ export default defineConfig(({ command }) => {
         // l'accord serait refusée par la politique — et l'échec ne se verrait
         // qu'en console, sur le site déployé, une fois le consentement donné.
         analytics: true,
-        connectSrc: ["'self'", 'https://*.supabase.co', 'wss://*.supabase.co'],
+        // Les fournisseurs d'IA « apportez votre clé » (génération
+        // d'exercices, lecture des justificatifs) sont appelés DEPUIS LE
+        // NAVIGATEUR : sans leurs origines ici, chaque appel était bloqué en
+        // production — la génération d'exercices l'était depuis la pose de
+        // cette CSP (25/07/2026). La liste vit dans `aiOrigins.ts`, que le
+        // client relit pour refuser d'avance un point d'accès hors liste.
+        connectSrc: [
+          "'self'",
+          'https://*.supabase.co',
+          'wss://*.supabase.co',
+          ...AI_PROVIDER_ORIGINS,
+        ],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
         extraDirectives: { 'frame-ancestors': "'none'" },

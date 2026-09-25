@@ -112,6 +112,53 @@ describe('useAppStore', () => {
     expect(e.amount).toBe(14.67);
   });
 
+  it('acknowledgeEntryVersion : la version rendue par le serveur, jamais en arrière', () => {
+    const id = get().addEntry(draft())!;
+    const auditAvant = data().audit.length;
+
+    get().acknowledgeEntryVersion(id, 4);
+    expect(data().entries.find(x => x.id === id)!.version).toBe(4);
+
+    // Un pull a pu apporter plus récent pendant l'envoi : on ne recule pas.
+    get().acknowledgeEntryVersion(id, 2);
+    expect(data().entries.find(x => x.id === id)!.version).toBe(4);
+    // C'est le serveur qui parle : pas de trace d'audit locale.
+    expect(data().audit).toHaveLength(auditAvant);
+  });
+
+  it('hydrateEntry : la relecture serveur remplace l’écriture, garde ses justificatifs, ou la retire', () => {
+    const id = get().addEntry(draft())!;
+    const piece = {
+      id: 'a1',
+      name: 'ticket.jpg',
+      mime: 'image/jpeg',
+      size: 10,
+      uploadedAt: 1,
+    };
+    get().addAttachment(id, piece);
+    const locale = data().entries.find(x => x.id === id)!;
+
+    get().hydrateEntry(id, {
+      ...locale,
+      label: 'Relu du serveur',
+      version: 5,
+      attachments: [],
+    });
+    const relue = data().entries.find(x => x.id === id)!;
+    expect(relue.label).toBe('Relu du serveur');
+    expect(relue.version).toBe(5);
+    expect(relue.attachments).toEqual([piece]);
+
+    get().hydrateEntry(id, null);
+    expect(data().entries.find(x => x.id === id)).toBeUndefined();
+
+    // Absente de l'appareil : la relecture l'y ajoute.
+    get().hydrateEntry(id, { ...relue, attachments: [] });
+    expect(data().entries.find(x => x.id === id)?.label).toBe(
+      'Relu du serveur'
+    );
+  });
+
   it('setBudget enregistre le budget par catégorie', () => {
     get().setBudget(activeId(), 'R1', 5000);
     expect(data().seasons.find(s => s.id === activeId())!.budget?.R1).toBe(

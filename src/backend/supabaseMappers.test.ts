@@ -5,6 +5,7 @@ import {
   attachmentPath,
   clubEventToUpsertRow,
   customCategoryToUpsertRow,
+  entryPatchToRpc,
   entryToRow,
   entryToUpsertRow,
   exerciseToUpsertRow,
@@ -123,6 +124,59 @@ const seasonRow: SeasonRow = {
   reopened_at: null,
   reopen_reason: null,
 };
+
+describe('entryPatchToRpc (p_patch de update_entry_checked)', () => {
+  it('nomme chaque champ comme sa colonne, et rien d’autre ne part', () => {
+    expect(
+      entryPatchToRpc({
+        label: 'L',
+        amount: 12.5,
+        categoryCode: 'D8',
+        date: '2025-10-01',
+        sens: 'debit',
+        method: 'carte',
+        reconciled: true,
+        pieceRef: 'p',
+        invoiceCode: 'i',
+        observation: 'o',
+        eventId: 'ev1',
+        components: { piscine: 12.5 },
+      })
+    ).toEqual({
+      label: 'L',
+      amount: 12.5,
+      category_code: 'D8',
+      date: '2025-10-01',
+      sens: 'debit',
+      method: 'carte',
+      reconciled: true,
+      piece_ref: 'p',
+      invoice_code: 'i',
+      observation: 'o',
+      event_id: 'ev1',
+      components: { piscine: 12.5 },
+    });
+  });
+
+  it('une clé absente reste absente : le serveur laisse la colonne en place', () => {
+    expect(entryPatchToRpc({ label: 'Seul' })).toEqual({ label: 'Seul' });
+    expect(entryPatchToRpc({})).toEqual({});
+  });
+
+  it('une clé à null part à null : le serveur vide la colonne facultative', () => {
+    expect(
+      entryPatchToRpc({ observation: null, eventId: null, components: null })
+    ).toEqual({ observation: null, event_id: null, components: null });
+  });
+
+  it('la date de suppression part en ISO, et la restauration à null', () => {
+    const ts = Date.parse('2025-10-06T10:00:00.000Z');
+    expect(entryPatchToRpc({ deletedAt: ts })).toEqual({
+      deleted_at: '2025-10-06T10:00:00.000Z',
+    });
+    expect(entryPatchToRpc({ deletedAt: null })).toEqual({ deleted_at: null });
+  });
+});
 
 describe('saisons (round-trip)', () => {
   it('rowToSeason convertit montants et dates', () => {

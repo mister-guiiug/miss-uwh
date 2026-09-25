@@ -35,6 +35,8 @@ import {
 import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
 import { Badge } from '../../shared/components/badges.tsx';
 import { validateEntry, hasErrors } from './entryValidation.ts';
+import { ReceiptScanner } from './ReceiptScanner.tsx';
+import type { ReceiptDraft } from './receipt.ts';
 import { createLogger } from '@mister-guiiug/dev-pwa-config/logger';
 
 const log = createLogger('journal');
@@ -95,6 +97,31 @@ export function EntrySheet({ open, entry, onClose }: Props) {
   const cat = categoryByCode(categoryCode);
   const sens = cat?.sens === 'depense' ? 'debit' : 'credit';
   const amountNum = Number(amount.replace(',', '.'));
+
+  /**
+   * La lecture d'un justificatif PRÉ-REMPLIT le formulaire, rien de plus :
+   * c'est « Ajouter » qui enregistre, après relecture. Un champ illisible
+   * garde ce qu'il avait.
+   *
+   * La catégorie suggérée remplace la courante. Faute de suggestion, si le
+   * sens lu contredit la catégorie courante — un ticket de caisse sous
+   * « R1 — Inscriptions », le défaut du formulaire —, la catégorie est VIDÉE :
+   * un choix explicite vaut mieux qu'une dépense enregistrée en recette par
+   * inattention. La validation exige alors une catégorie avant d'enregistrer.
+   */
+  function prefillFromReceipt(draft: ReceiptDraft) {
+    if (draft.date) setDate(draft.date);
+    if (draft.amount !== undefined) setAmount(String(draft.amount));
+    if (draft.label) setLabel(draft.label);
+    if (draft.categoryCode) {
+      setCategoryCode(draft.categoryCode);
+      // Les composantes appartiennent à l'ancienne catégorie.
+      if (draft.categoryCode !== categoryCode) setComponents({});
+    } else if (draft.sens && cat && draft.sens !== sens) {
+      setCategoryCode('');
+      setComponents({});
+    }
+  }
 
   const parsedComponents = useMemo(() => {
     const entries = Object.entries(components)
@@ -243,12 +270,24 @@ export function EntrySheet({ open, entry, onClose }: Props) {
       }
     >
       <div className="flex flex-col gap-4">
+        {!entry && season.status !== 'cloturee' && (
+          <ReceiptScanner onRead={prefillFromReceipt} />
+        )}
+
         <SelectField
           label={t('common.category')}
           value={categoryCode}
           error={err('categoryCode')}
           onChange={e => setCategoryCode(e.target.value)}
         >
+          {/* Seulement après une lecture qui a vidé la catégorie : sans cette
+              option, le sélecteur montrerait la première catégorie alors
+              qu'aucune n'est retenue. */}
+          {categoryCode === '' && (
+            <option value="" disabled>
+              {t('finances.receipt.chooseCategory')}
+            </option>
+          )}
           <optgroup label={t('finances.entry.income')}>
             {RECETTES.map(c => (
               <option key={c.code} value={c.code}>
@@ -269,11 +308,14 @@ export function EntrySheet({ open, entry, onClose }: Props) {
           <span className="text-[var(--uwh-text-soft)]">
             {t('finances.entry.sensLabel')}
           </span>
-          <Badge tone={sens === 'credit' ? 'credit' : 'debit'}>
-            {sens === 'credit'
-              ? t('finances.entry.creditSens')
-              : t('finances.entry.debitSens')}
-          </Badge>
+          {/* Le sens se déduit de la catégorie : sans elle, rien à afficher. */}
+          {cat && (
+            <Badge tone={sens === 'credit' ? 'credit' : 'debit'}>
+              {sens === 'credit'
+                ? t('finances.entry.creditSens')
+                : t('finances.entry.debitSens')}
+            </Badge>
+          )}
           {cat && cat.kind !== 'exploitation' && (
             <Badge tone="warn">
               {t(`enums.categoryKind.${cat.kind}` as TKey)}

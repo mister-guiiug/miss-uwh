@@ -9,6 +9,37 @@ export const createSystemSlice: StoreSlice<SystemActions> = set => ({
 
   hydrate: data => set({ data: commitPlain(data) }),
 
+  acknowledgeEntryVersion: (id, version) =>
+    set(s => {
+      const entry = s.data.entries.find(e => e.id === id);
+      // Jamais en arrière : un pull a pu apporter, pendant l'envoi, une version
+      // plus récente (la modification d'un autre, faite après la nôtre).
+      if (!entry || entry.version >= version) return s;
+      return {
+        data: commitPlain({
+          ...s.data,
+          entries: s.data.entries.map(e =>
+            e.id === id ? { ...e, version } : e
+          ),
+        }),
+      };
+    }),
+
+  hydrateEntry: (id, entry) =>
+    set(s => {
+      const current = s.data.entries.find(e => e.id === id);
+      const entries = !entry
+        ? s.data.entries.filter(e => e.id !== id)
+        : current
+          ? s.data.entries.map(e =>
+              // Les justificatifs vivent dans leur propre table : la ligne
+              // relue n'en porte pas, ceux de l'appareil restent.
+              e.id === id ? { ...entry, attachments: current.attachments } : e
+            )
+          : [...s.data.entries, entry];
+      return { data: commitPlain({ ...s.data, entries }) };
+    }),
+
   logSecurity: (action, summary) =>
     set(s => ({
       data: commitAudited(s.data, {

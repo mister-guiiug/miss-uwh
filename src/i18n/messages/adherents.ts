@@ -20,6 +20,28 @@ export const adherentsFr = {
     listMembers: 'Liste des membres',
     listCoaches: 'Liste des encadrants',
   },
+  deadlines: {
+    exportAria: 'Exporter les rappels d’échéances vers un agenda',
+    dialogTitle: 'Rappels d’échéances dans votre agenda',
+    dialogBody:
+      '{n} échéance(s) à venir — licences et certificats médicaux des adhérents de la saison {season}. Chacune devient un événement d’une journée, avec deux rappels : un mois avant à 9 h, puis la veille à 9 h. Réimporter le fichier met les événements à jour, sans doublon.',
+    dialogApps:
+      'Apple Calendar et Outlook honorent ces rappels. Google Agenda les ignore à l’import et applique ses propres notifications.',
+    dialogInsurance:
+      'Les assurances n’ont pas de date d’échéance dans le registre : elles ne figurent pas dans l’export.',
+    none: 'Aucune échéance à venir pour la saison {season}. Renseignez les dates d’expiration (licence, certificat médical) dans la fiche des membres.',
+    download: 'Télécharger (.ics)',
+    exported: '{n} échéance(s) exportée(s) pour votre agenda.',
+    failed: 'Export des échéances impossible.',
+    whatLicence: 'licence de {name}',
+    whatMedicalCert: 'certificat médical de {name}',
+    summary: 'Échéance : {what}',
+    licenceNumber: 'Licence n° {number}',
+    alarmMonth: 'Dans un mois — échéance : {what}',
+    alarmDay: 'Demain — échéance : {what}',
+    calName: '{club} — échéances {season}',
+    fileSuffix: 'echeances',
+  },
   memberSheet: {
     editTitle: 'Modifier le membre',
     newTitle: 'Nouveau membre',
@@ -130,6 +152,28 @@ export const adherentsEn = {
     emptyHint: 'Add the members for the {season} season.',
     listMembers: 'Members list',
     listCoaches: 'Coaches list',
+  },
+  deadlines: {
+    exportAria: 'Export expiry reminders to a calendar',
+    dialogTitle: 'Expiry reminders in your calendar',
+    dialogBody:
+      '{n} upcoming expiry(ies) — licences and medical certificates of the members of season {season}. Each becomes an all-day event with two reminders: one month before at 9 am, then the day before at 9 am. Importing the file again updates the events, without duplicates.',
+    dialogApps:
+      'Apple Calendar and Outlook honor these reminders. Google Calendar ignores them on import and applies its own notifications.',
+    dialogInsurance:
+      'Insurances have no expiry date in the registry: they are not part of the export.',
+    none: 'No upcoming expiry for season {season}. Enter the expiry dates (licence, medical certificate) in the member records.',
+    download: 'Download (.ics)',
+    exported: '{n} expiry(ies) exported for your calendar.',
+    failed: 'Could not export the expiries.',
+    whatLicence: "{name}'s licence",
+    whatMedicalCert: "{name}'s medical certificate",
+    summary: 'Expiry: {what}',
+    licenceNumber: 'Licence no. {number}',
+    alarmMonth: 'In one month — expiry: {what}',
+    alarmDay: 'Tomorrow — expiry: {what}',
+    calName: '{club} — expiries {season}',
+    fileSuffix: 'expiries',
   },
   memberSheet: {
     editTitle: 'Edit member',
