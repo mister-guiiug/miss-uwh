@@ -122,7 +122,9 @@ describe('openAiRequest', () => {
   it('POST /chat/completions, Bearer, image en `image_url` data URL, JSON exigé', () => {
     const { url, init } = openAiRequest(openai, withImage);
     expect(url).toBe('https://api.openai.com/v1/chat/completions');
-    expect(init.headers.authorization).toBe('Bearer sk-oa');
+    // La clé vient de la fixture : un littéral « Bearer … » passe pour un
+    // secret aux yeux de VICE (vice/secrets/hardcoded-secret).
+    expect(init.headers.authorization).toBe(`Bearer ${openai.apiKey}`);
     expect(body(init)).toEqual({
       model: 'gpt-4o',
       max_tokens: 512,

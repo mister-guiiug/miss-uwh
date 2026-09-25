@@ -134,16 +134,19 @@ describe('generateExercises', () => {
     }));
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
-    const out = await generateExercises(req, {
+    const openai: AiSettings = {
       provider: 'openai',
       apiKey: 'sk',
       model: 'gpt-4o',
-    });
+    };
+    const out = await generateExercises(req, openai);
     expect(out[0]!.category).toBe('gardien');
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe('https://api.openai.com/v1/chat/completions');
     const headers = init.headers as Record<string, string>;
-    expect(headers.authorization).toBe('Bearer sk');
+    // Clé tirée de la fixture : un littéral « Bearer … » passe pour un secret
+    // aux yeux de VICE (vice/secrets/hardcoded-secret).
+    expect(headers.authorization).toBe(`Bearer ${openai.apiKey}`);
   });
 
   it('mappe une 401 sur un message lisible', async () => {
