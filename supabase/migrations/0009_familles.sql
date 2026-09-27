@@ -38,19 +38,19 @@ begin
   if tg_op = 'INSERT' then
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, after)
       values (act, mail, 'guardian.create', 'guardian', new.id::text,
-              format('Tuteur/contact « %s » (%s) ajouté.', new.name, new.relation),
+              'Tuteur/contact « ' || new.name || ' » (' || new.relation || ') ajouté.',
               to_jsonb(new));
     return new;
   elsif tg_op = 'UPDATE' then
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, before, after)
       values (act, mail, 'guardian.update', 'guardian', new.id::text,
-              format('Tuteur/contact « %s » modifié.', new.name),
+              'Tuteur/contact « ' || new.name || ' » modifié.',
               to_jsonb(old), to_jsonb(new));
     return new;
   else
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, before)
       values (act, mail, 'guardian.delete', 'guardian', old.id::text,
-              format('Tuteur/contact « %s » retiré.', old.name),
+              'Tuteur/contact « ' || old.name || ' » retiré.',
               to_jsonb(old));
     return old;
   end if;

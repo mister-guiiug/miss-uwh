@@ -125,17 +125,17 @@ begin
   if tg_op = 'INSERT' then
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, after)
       values (act, mail, kind || '.create', kind, new.id::text,
-              format('« %s » créé.', lbl), to_jsonb(new));
+              '« ' || lbl || ' » créé.', to_jsonb(new));
     return new;
   elsif tg_op = 'UPDATE' then
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, before, after)
       values (act, mail, kind || '.update', kind, new.id::text,
-              format('« %s » modifié.', lbl), to_jsonb(old), to_jsonb(new));
+              '« ' || lbl || ' » modifié.', to_jsonb(old), to_jsonb(new));
     return new;
   else
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, before)
       values (act, mail, kind || '.delete', kind, old.id::text,
-              format('« %s » supprimé.', lbl), to_jsonb(old));
+              '« ' || lbl || ' » supprimé.', to_jsonb(old));
     return old;
   end if;
 end $$;

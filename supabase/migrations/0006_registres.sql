@@ -85,19 +85,19 @@ begin
   if tg_op = 'INSERT' then
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, after)
       values (act, mail, 'adherent.create', 'adherent', new.id::text,
-              format('Adhérent « %s %s » ajouté.', new.first_name, new.last_name),
+              'Adhérent « ' || new.first_name || ' ' || new.last_name || ' » ajouté.',
               to_jsonb(new));
     return new;
   elsif tg_op = 'UPDATE' then
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, before, after)
       values (act, mail, 'adherent.update', 'adherent', new.id::text,
-              format('Adhérent « %s %s » modifié.', new.first_name, new.last_name),
+              'Adhérent « ' || new.first_name || ' ' || new.last_name || ' » modifié.',
               to_jsonb(old), to_jsonb(new));
     return new;
   else
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, before)
       values (act, mail, 'adherent.delete', 'adherent', old.id::text,
-              format('Adhérent « %s %s » retiré.', old.first_name, old.last_name),
+              'Adhérent « ' || old.first_name || ' ' || old.last_name || ' » retiré.',
               to_jsonb(old));
     return old;
   end if;
@@ -119,12 +119,12 @@ begin
   if tg_op = 'INSERT' then
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary)
       values (act, mail, 'category.create', 'category', new.code,
-              format('Catégorie personnalisée « %s » (%s).', new.label, new.code));
+              'Catégorie personnalisée « ' || new.label || ' » (' || new.code || ').');
     return new;
   else
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary)
       values (act, mail, 'category.delete', 'category', old.code,
-              format('Catégorie personnalisée « %s » (%s) retirée.', old.label, old.code));
+              'Catégorie personnalisée « ' || old.label || ' » (' || old.code || ') retirée.');
     return old;
   end if;
 end $$;
