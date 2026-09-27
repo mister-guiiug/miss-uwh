@@ -47,7 +47,7 @@ Votre commune prête un créneau de piscine ou un gymnase gratuitement ? Vous po
 
 ## Comment Miss UWH vous aide
 
-Miss UWH est une application de gestion de club de hockey subaquatique. Son espace Finances applique cette méthode.
+[Miss UWH](https://mister-guiiug.github.io/miss-uwh/) est une application de gestion de club de hockey subaquatique. Son espace Finances applique cette méthode.
 
 - **Un journal** avec le solde recalculé après chaque écriture, une recherche et des filtres (dates, catégorie, mode de règlement, événement, pointage).
 - **Un bilan automatique** : total des recettes, total des dépenses, solde, résultat d'exploitation, trésorerie et résultat par événement. La gratuité du créneau de piscine y a sa propre catégorie compensée, tenue hors du résultat d'exploitation.
