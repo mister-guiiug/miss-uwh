@@ -53,18 +53,20 @@ export function GalerieScreen() {
               className="block transition-transform active:scale-[0.98]"
             >
               <Card className="relative flex h-full flex-col gap-2 p-3">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  iconOnly
                   aria-label={t('common.edit')}
+                  className="absolute right-2 top-2"
                   onClick={e => {
                     e.preventDefault();
                     e.stopPropagation();
                     setEditing(album);
                   }}
-                  className="touch-target absolute right-2 top-2 inline-flex items-center justify-center rounded-full bg-[var(--uwh-surface-2)] text-[var(--uwh-text-soft)] active:scale-[0.97]"
                 >
                   <Pencil size={14} aria-hidden="true" />
-                </button>
+                </Button>
                 <div className="aspect-video overflow-hidden rounded-xl">
                   {album.coverUrl ? (
                     <img
