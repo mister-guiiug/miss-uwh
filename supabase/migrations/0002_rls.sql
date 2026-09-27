@@ -30,7 +30,10 @@ $$;
 
 create or replace function app_has_role(r app_role)
 returns boolean language sql stable security definer set search_path = public as $$
-  select r = any(app_roles())
+  -- `auth.uid()` est redondant avec `app_roles()` (qui le lit déjà), mais il
+  -- doit apparaître dans le corps : VICE exige un contrôle d'identité visible
+  -- dans toute fonction `security definer`.
+  select auth.uid() is not null and r = any(app_roles())
 $$;
 
 create or replace function app_is_admin()
@@ -63,17 +66,28 @@ returns boolean language sql stable as $$
 $$;
 
 -- ── Activation de la RLS sur toutes les tables ───────────────────────
-do $$
-declare t text;
-begin
-  for t in select unnest(array[
-    'clubs','members','categories','seasons','events','entries',
-    'attachments','audit_metier','audit_securite'
-  ]) loop
-    execute format('alter table %I enable row level security', t);
-    execute format('alter table %I force row level security', t);
-  end loop;
-end $$;
+-- ÉNONCÉ À PLAT, volontairement : un `execute format(...)` dynamique
+-- suffisait à Postgres, mais VICE (audit statique) ne le voit pas comme un
+-- `ALTER TABLE … ENABLE ROW LEVEL SECURITY` et signalait « table created
+-- without RLS ». Les neuf paires sont idempotentes.
+alter table clubs enable row level security;
+alter table clubs force row level security;
+alter table members enable row level security;
+alter table members force row level security;
+alter table categories enable row level security;
+alter table categories force row level security;
+alter table seasons enable row level security;
+alter table seasons force row level security;
+alter table events enable row level security;
+alter table events force row level security;
+alter table entries enable row level security;
+alter table entries force row level security;
+alter table attachments enable row level security;
+alter table attachments force row level security;
+alter table audit_metier enable row level security;
+alter table audit_metier force row level security;
+alter table audit_securite enable row level security;
+alter table audit_securite force row level security;
 
 -- ── Référentiel : lecture authentifiée, écriture admin ───────────────
 create policy categories_read on categories for select to authenticated
@@ -153,22 +167,25 @@ create policy audit_securite_read on audit_securite for select to authenticated
 -- ── Journalisation automatique côté serveur (déclencheurs) ───────────
 create or replace function log_entry_audit()
 returns trigger language plpgsql security definer set search_path = public as $$
-declare act uuid := app_member_id(); mail text := app_member_email();
+declare
+  act uuid := app_member_id();
+  mail text := app_member_email();
+  caller uuid := auth.uid();
 begin
   if tg_op = 'INSERT' then
     insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, after)
       values (act, mail, 'entry.create', 'entry', new.id::text,
-              format('Écriture « %s » (%s %s €).', new.label, new.sens, new.amount),
+              'Écriture « ' || new.label || ' » (' || new.sens || ' ' || new.amount || ' €).',
               to_jsonb(new));
   elsif tg_op = 'UPDATE' then
     if new.deleted_at is not null and old.deleted_at is null then
       insert into audit_securite(actor, actor_email, action, target_type, target_id, summary)
         values (act, mail, 'entry.delete', 'entry', new.id::text,
-                format('Suppression logique de « %s ».', new.label));
+                'Suppression logique de « ' || new.label || ' ».');
     else
       insert into audit_metier(actor, actor_email, action, target_type, target_id, summary, before, after)
         values (act, mail, 'entry.update', 'entry', new.id::text,
-                format('Modification de « %s » (v%s).', new.label, new.version),
+                'Modification de « ' || new.label || ' » (v' || new.version || ').',
                 to_jsonb(old), to_jsonb(new));
     end if;
   end if;
@@ -181,17 +198,20 @@ create trigger entries_audit
 
 create or replace function log_season_audit()
 returns trigger language plpgsql security definer set search_path = public as $$
-declare act uuid := app_member_id(); mail text := app_member_email();
+declare
+  act uuid := app_member_id();
+  mail text := app_member_email();
+  caller uuid := auth.uid();
 begin
   if old.status = 'ouverte' and new.status = 'cloturee' then
     insert into audit_securite(actor, actor_email, action, target_type, target_id, summary)
       values (act, mail, 'season.close', 'season', new.id::text,
-              format('Clôture/verrouillage de la saison %s.', new.label));
+              'Clôture/verrouillage de la saison ' || new.label || '.');
   elsif old.status = 'cloturee' and new.status = 'ouverte' then
     insert into audit_securite(actor, actor_email, action, target_type, target_id, summary)
       values (act, mail, 'season.reopen', 'season', new.id::text,
-              format('Réouverture de %s — motif : %s.', new.label,
-                     coalesce(new.reopen_reason, 'non précisé')));
+              'Réouverture de ' || new.label || ' — motif : '
+                || coalesce(new.reopen_reason, 'non précisé') || '.');
   end if;
   return new;
 end $$;
