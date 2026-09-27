@@ -61,7 +61,7 @@ export function GalerieScreen() {
                     e.stopPropagation();
                     setEditing(album);
                   }}
-                  className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--uwh-surface-2)] text-[var(--uwh-text-soft)] active:scale-[0.97]"
+                  className="touch-target absolute right-2 top-2 inline-flex items-center justify-center rounded-full bg-[var(--uwh-surface-2)] text-[var(--uwh-text-soft)] active:scale-[0.97]"
                 >
                   <Pencil size={14} aria-hidden="true" />
                 </button>
