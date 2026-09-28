@@ -248,8 +248,8 @@ nécessite le mode Supabase.
   réduite et débarrassée de ses métadonnées (lieu, appareil) avant l'envoi.
 - **Ce qui sort de l'appareil** :
   - les données du club, dans le projet Supabase du club (mode Supabase) ;
-  - les rapports d'erreur, envoyés à Sentry (région UE) dès le démarrage, sans
-    demande de consentement ;
+  - un signal à chaque ouverture (session) et les rapports d'erreur, envoyés à
+    Sentry (région UE) dès le démarrage, sans demande de consentement ;
   - la mesure d'audience PostHog (nuage européen), seulement après accord dans
     le bandeau ;
   - la demande des polices à Google Fonts ;
