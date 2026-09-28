@@ -5,7 +5,7 @@ saisonnière** d'une association sportive de Hockey Subaquatique (UWH — _Under
 Water Hockey_). Journal comptable, recettes/dépenses par catégorie, résultat par
 événement, clôture de saison verrouillée, justificatifs, audit, exports.
 
-- **Démo / app** : https://mister-guiiug.github.io/miss-uwh/ _(100 % local, hors ligne, installable)_
+- **App du club** : https://mister-guiiug.github.io/miss-uwh/ _(instance privée : connexion par lien e-mail, réservée aux membres créés par le club ; données hébergées sur Supabase ; installable, utilisable hors ligne après une première connexion)_. Pour l'essayer sans compte : `npm run dev`, en mode `local`.
 - **Code** : https://github.com/mister-guiiug/miss-uwh
 - Membre de la famille de PWA `miss-*` / `mister-*` (React 19 + Vite + Tailwind v4).
 
@@ -26,16 +26,20 @@ Donner au **trésorier** d'un petit club un outil aussi souple qu'un tableur mai
 - **suivi par événement** (Tournoi des Arvernes, Buvette, stages, championnat) avec
   résultat net ;
 - **clôture de saison verrouillée** et report du reliquat sur la saison suivante ;
-- **transparence et contrôle** : audit complet, suppression logique réversible,
-  rôles (trésorier, président, contrôleur…) avec sécurité côté serveur ;
-- **migration immédiate depuis l'Excel existant** et, pour l'assemblée générale,
+- **transparence et contrôle** : audit, suppression logique réversible des
+  écritures, rôles (trésorier, président, contrôleur…) avec sécurité côté serveur ;
+- **migration depuis l'Excel existant** (bloquée aujourd'hui par la CSP, voir
+  § 10) et, pour l'assemblée générale,
   des exports **CSV**, **Excel multi-feuilles** et un **bilan PDF** que le
   trésorier partage depuis son téléphone (feuille de partage du système,
   téléchargement à défaut) — l'impression de l'écran reste disponible à côté.
 
-Principe directeur : **local-first** (l'app marche seule, hors ligne, gratuitement
-sur GitHub Pages) avec une **montée en sécurité optionnelle via Supabase**
-(multi-utilisateurs, RBAC serveur, MFA, audit serveur, justificatifs chiffrés).
+Principe directeur : **local-first dans le code** (sans `VITE_BACKEND`, l'app
+tourne seule dans le navigateur, hors ligne, sans compte) et **montée en sécurité
+via Supabase** (multi-utilisateurs, RBAC serveur, MFA, audit serveur,
+justificatifs dans un bucket privé). L'instance publiée est en mode Supabase :
+`.env.production`, versionné, pose `VITE_BACKEND=supabase` pour tout build de
+production.
 
 ---
 
@@ -43,7 +47,7 @@ sur GitHub Pages) avec une **montée en sécurité optionnelle via Supabase**
 
 ```
 ┌──────────────────────────── Frontend (GitHub Pages, statique) ───────────────────────────┐
-│  React 19 + TypeScript strict + Vite 7 + Tailwind v4 + vite-plugin-pwa (offline)          │
+│  React 19 + TypeScript strict + Vite 8 + Tailwind v4 + vite-plugin-pwa (offline)          │
 │                                                                                            │
 │  features/        bilan · journal · categories · seasons · audit · settings · import      │
 │  shared/lib/      engine.ts (moteur comptable PUR & testé) · categories · schema(zod)     │
@@ -61,8 +65,9 @@ sur GitHub Pages) avec une **montée en sécurité optionnelle via Supabase**
 ```
 
 - **Pourquoi local-first ?** GitHub Pages ne sert que du statique : une PWA locale
-  fonctionne immédiatement, gratuitement, hors ligne, sans donnée qui sort de
-  l'appareil. Parfait pour un club mono-trésorier.
+  fonctionne immédiatement, gratuitement, hors ligne, sans donnée du club qui
+  sorte de l'appareil. Parfait pour un club mono-trésorier. L'instance publiée,
+  elle, est en mode Supabase (voir « Ce qui sort de l'appareil », § 6).
 - **Pourquoi Supabase pour la sécurité ?** Les exigences RBAC strict _deny-by-default_,
   MFA, audit séparé, protection des accès horizontaux/verticaux, justificatifs
   sécurisés et verrouillage de clôture **ne peuvent pas être garanties par un
@@ -71,11 +76,14 @@ sur GitHub Pages) avec une **montée en sécurité optionnelle via Supabase**
   La clé `anon` publiée dans le bundle est inoffensive car chaque table est
   protégée par RLS, jamais par le client.
 - **Moteur comptable pur** (`src/shared/lib/engine.ts`) : aucune dépendance UI ni
-  réseau, 100 % testé — la logique métier est identique en local et en serveur.
+  réseau, testé (planchers de couverture sur le cœur pur) ; la logique métier est
+  identique en local et en serveur.
 
-**Stack** : React 19, TypeScript ~6 strict (ES2025), Vite 7, Tailwind v4
-(`@tailwindcss/vite`), Vitest 3, vite-plugin-pwa, Zustand, Zod, lucide-react,
-`@supabase/supabase-js`. Conventions partagées via `@mister-guiiug/dev-pwa-config`.
+**Stack** : React 19, TypeScript ~6 strict (ES2025), Vite 8, Tailwind v4
+(`@tailwindcss/vite`), Vitest 5, vite-plugin-pwa, React Router 7 (HashRouter),
+Zustand, Zod 4, lucide-react, `@supabase/supabase-js`, `@sentry/react` (rapports
+d'erreur), `posthog-js` (mesure d'audience, après accord). Conventions partagées
+via `@mister-guiiug/dev-pwa-config`.
 
 ---
 
@@ -111,16 +119,18 @@ Types : [`src/shared/types/domain.ts`](src/shared/types/domain.ts) · Validation
 
 ## 4. Cas d'usage par rôle
 
-| Rôle                          | Parcours principal                                                                                                      |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Trésorier**                 | Saisir/modifier des écritures, rapprocher avec le relevé, joindre les pièces, clôturer la saison, exporter le bilan AG. |
-| **Trésorier adjoint**         | Mêmes droits comptables que le trésorier (suppléance), sans clôture/validation.                                         |
-| **Président**                 | Consulter, **valider/clôturer** la saison, autoriser une réouverture exceptionnelle.                                    |
-| **Responsable événement**     | Saisir les écritures rattachées à « son » événement (buvette, TDA) et suivre son résultat net.                          |
-| **Responsable matériel**      | Saisir achats (D4) et ventes (R7) de matériel.                                                                          |
-| **Contrôleur / vérificateur** | **Lecture seule de tout**, y compris l'audit sécurité ; vérifie sans pouvoir modifier.                                  |
-| **Membre**                    | Consultation transparente du bilan et du journal.                                                                       |
-| **Admin technique**           | Gestion des membres/rôles, paramétrage, réouverture de saison, accès à tous les logs.                                   |
+| Rôle                          | Parcours principal                                                                                                             |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Trésorier**                 | Saisir/modifier des écritures, rapprocher avec le relevé, joindre les pièces, clôturer la saison, exporter le bilan AG.        |
+| **Trésorier adjoint**         | Mêmes droits comptables que le trésorier (suppléance), sans clôture/validation.                                                |
+| **Président**                 | Consulter, **valider/clôturer** la saison, autoriser une réouverture exceptionnelle.                                           |
+| **Responsable événement**     | Espace Vie du club ; la RLS l'autorise à saisir les écritures rattachées à un événement, mais l'app ne lui ouvre pas Finances. |
+| **Responsable matériel**      | Aucun espace dans l'app pour l'instant ; la RLS lui ouvre la lecture et l'écriture en D4 et R7.                                |
+| **Contrôleur / vérificateur** | Espace Finances et écran Audit, audit sécurité compris, en lecture seule.                                                      |
+| **Membre**                    | Aucun espace pour l'instant (l'accueil indique « Aucun espace accessible »).                                                   |
+| **Secrétaire**                | Espace Adhérents ; la RLS ne lui accorde encore aucune écriture.                                                               |
+| **Entraîneur**                | Espace Entraînements (séances, exercices, stratégies, arbitres).                                                               |
+| **Admin technique**           | Gestion des membres/rôles, paramétrage, réouverture de saison, accès à tous les logs.                                          |
 
 ---
 
@@ -128,7 +138,7 @@ Types : [`src/shared/types/domain.ts`](src/shared/types/domain.ts) · Validation
 
 Modèle **deny-by-default**, appliqué **côté serveur** par les politiques RLS
 ([`0002_rls.sql`](supabase/migrations/0002_rls.sql)). Aucune ligne n'est lisible ou
-écrivable sans politique explicite (`force row level security` sur chaque table).
+écrivable sans politique explicite (`force row level security` sur chaque table métier).
 
 | Rôle                | Lire compta | Écrire compta                  | Clôture / validation | Audit sécurité | Gérer membres |
 | ------------------- | :---------: | ------------------------------ | :------------------: | :------------: | :-----------: |
@@ -141,16 +151,30 @@ Modèle **deny-by-default**, appliqué **côté serveur** par les politiques RLS
 | `controleur`        |      ✔      | —                              |          —           |       ✔        |       —       |
 | `membre`            |      ✔      | —                              |          —           |       —        |       —       |
 
+La colonne « Clôture / validation » vaut pour les RPC `close_season` et
+`reopen_season`, seules à la vérifier. La politique `seasons_update` laisse encore
+la trésorerie et les valideurs modifier directement une saison, statut et
+reliquat compris. `secretaire` et `entraineur` lisent la comptabilité comme
+`membre` ; `entraineur` écrit aussi séances, exercices, stratégies, arbitres et la
+configuration IA commune.
+
 Protections :
 
-- **Accès vertical** (élévation de privilège) : chaque opération vérifie le rôle via
-  des fonctions `SECURITY DEFINER` (`app_roles()`, `app_can_write_accounting()`…).
-- **Accès horizontal** : périmètre limité au club ; `resp_evenement`/`resp_materiel`
-  ne peuvent écrire que dans leur domaine (event lié / catégories D4-R7).
-- **Suppression** : aucune politique `DELETE` accordée → **suppression uniquement
-  logique** (`deleted_at`), réversible et tracée.
-- **Verrou de clôture** : trigger `enforce_season_lock` refuse toute écriture sur une
-  saison clôturée, en plus des politiques.
+- **Accès vertical** (élévation de privilège) : chaque politique vérifie le rôle
+  par `app_roles()` (`SECURITY DEFINER`) et les prédicats qui s'en servent, comme
+  `app_can_write_accounting()`.
+- **Accès horizontal** : les politiques ne filtrent pas par club, un projet
+  Supabase ne doit héberger qu'un club. `resp_evenement` n'écrit que des écritures
+  rattachées à un événement (quel qu'il soit), mais peut joindre ou retirer une
+  pièce sur toute écriture ; `resp_materiel` n'écrit que les catégories D4 et R7.
+- **Suppression** : aucune politique `DELETE` sur `entries` : une écriture n'est
+  supprimée que logiquement (`deleted_at`), de façon réversible et tracée. Les
+  autres tables admettent la suppression physique par leurs rédacteurs, tracée
+  dans `audit_metier` sauf pour les événements, les pièces et les récurrences.
+- **Verrou de clôture** : le déclencheur `enforce_season_lock` refuse d'insérer ou
+  de modifier une écriture dont la saison d'arrivée est clôturée. Il ne voit pas
+  une écriture déplacée hors d'une saison clôturée : la RPC `update_entry_checked`
+  n'ouvre pas ce chemin, un `PATCH` direct sur `entries` si.
 
 En mode **local**, l'app applique les mêmes garde-fous fonctionnels (verrou de
 clôture, suppression logique, audit) côté client — la vraie sécurité multi-acteurs
@@ -160,12 +184,20 @@ nécessite le mode Supabase.
 
 ## 6. Sécurité, audit & conformité
 
-- **Authentification** : Supabase Auth (email + mot de passe), **MFA TOTP** activable
-  et imposée pour les rôles sensibles (`mfa_required`, AAL2).
-- **Audit complet & séparé** : deux tables _append-only_ alimentées par triggers
-  `SECURITY DEFINER` — `audit_metier` (créations/modifications d'écritures, reports de
-  reliquat) et `audit_securite` (connexions, suppressions, clôtures/réouvertures,
-  exports). Seuls `admin_technique` et `controleur` lisent l'audit sécurité.
+- **Authentification** : Supabase Auth, par lien à usage unique envoyé par e-mail
+  (mot de passe en option), réservée aux comptes créés par le club. **MFA TOTP
+  facultative** : chacun l'active dans les Réglages, et le code est alors exigé à
+  chaque connexion (AAL2). Elle n'est pas imposée par rôle : la colonne
+  `mfa_required` existe, mais ni l'app ni la RLS ne la lisent.
+- **Audit séparé** : deux tables _append-only_ alimentées par triggers
+  `SECURITY DEFINER`. `audit_metier` trace créations, modifications et
+  suppressions d'écritures, d'adhérents, de tuteurs, de catégories
+  personnalisées, de la vie du club et des entraînements (avant/après).
+  `audit_securite` trace les suppressions logiques et les clôtures/réouvertures,
+  chaînées par hash. Ne sont pas audités côté serveur : connexions (audit local
+  seulement), reports de reliquat, exports, événements, pièces, récurrences,
+  changements de rôle. Seuls `admin_technique` et `controleur` lisent l'audit
+  sécurité.
 - **Historisation** : `version` incrémentée à chaque modification + diff `before/after`
   conservé dans l'audit.
 - **Clôture / réouverture** : verrouillage au gel du solde ; **réouverture
@@ -189,9 +221,12 @@ nécessite le mode Supabase.
   restent actifs est refusé — sinon plus personne ne pourrait attribuer un rôle.
   Preuve : [`supabase/tests/suppression-compte.test.sql`](supabase/tests/suppression-compte.test.sql),
   jouée en CI sur une pile jetable.
-- **Validation défensive** : front ET back rejouent les mêmes règles
-  ([`entryValidation.ts`](src/features/journal/entryValidation.ts) + contraintes SQL
-  `check (amount > 0)`, FK catégories, triggers). Jamais de confiance au client.
+- **Validation défensive** : le serveur rejoue les règles qui protègent les
+  comptes : montant strictement positif (`check (amount > 0)`), catégorie
+  existante (FK), sens cohérent (`entries_sens_guard`), saison non clôturée
+  (`enforce_season_lock`). Libellé obligatoire, date dans la saison et somme des
+  composantes ne sont vérifiés que par le formulaire
+  ([`entryValidation.ts`](src/features/journal/entryValidation.ts)).
 - **Concurrence optimiste des écritures** : toute modification d'une écriture
   existante passe par la RPC `update_entry_checked`, avec la version que
   l'appareil a vue. La fonction est `security invoker` depuis
@@ -201,14 +236,27 @@ nécessite le mode Supabase.
   formulaire modifie. Version périmée : refus `40001`, rien n'est écrasé.
   Preuves : [`occ-droits.test.sql`](supabase/tests/occ-droits.test.sql) et
   [`occ-champs.test.sql`](supabase/tests/occ-champs.test.sql).
-- **IA « apportez votre clé »** : la clé reste sur l'appareil, l'appel part
-  directement du navigateur chez le fournisseur. La CSP (`connect-src`) ne
-  laisse joindre que les origines listées dans
-  [`aiOrigins.ts`](src/shared/lib/aiOrigins.ts) (Anthropic, OpenAI, OpenRouter,
-  Mistral, Groq), et le client refuse d'avance un autre point d'accès. Avant la
-  lecture d'un justificatif, l'app dit où part l'image et attend l'accord ; la
-  photo est réduite et débarrassée de ses métadonnées (lieu, appareil) avant
-  l'envoi.
+- **IA « apportez votre clé »** : la clé est gardée sur l'appareil (en clair dans
+  le `localStorage`, donc aussi dans la sauvegarde JSON : ne pas partager ce
+  fichier tel quel), et l'appel part directement du navigateur chez le
+  fournisseur. La CSP (`connect-src`) ne laisse joindre que les origines listées
+  dans [`aiOrigins.ts`](src/shared/lib/aiOrigins.ts) (Anthropic, OpenAI,
+  OpenRouter, Mistral, Groq), et le client refuse d'avance un autre point
+  d'accès. À la première lecture d'un justificatif vers un fournisseur donné,
+  l'app dit où part l'image et attend l'accord ; il est ensuite retenu sur cet
+  appareil, et redemandé si le fournisseur ou l'adresse change. La photo est
+  réduite et débarrassée de ses métadonnées (lieu, appareil) avant l'envoi.
+- **Ce qui sort de l'appareil** :
+  - les données du club, dans le projet Supabase du club (mode Supabase) ;
+  - les rapports d'erreur, envoyés à Sentry (région UE) dès le démarrage, sans
+    demande de consentement ;
+  - la mesure d'audience PostHog (nuage européen), seulement après accord dans
+    le bandeau ;
+  - la demande des polices à Google Fonts ;
+  - sur demande, le justificatif ou la consigne, chez le fournisseur d'IA choisi.
+
+  Un build sans `VITE_SENTRY_DSN` ni `VITE_POSTHOG_KEY` n'envoie ni rapport ni
+  mesure.
 
 Détails et mise en place : [`supabase/README.md`](supabase/README.md).
 
@@ -247,8 +295,10 @@ l'en-tête / les réglages). Le registre des espaces est déclaré une seule foi
 agenda (`.ics`).
 
 **Espace Vie du club** — **agenda d'événements** (avec **import Google Agenda** iCal),
-tournois, annonces, **galerie** (liens Google Photos). _(Espace Entraînements —
-séances, exercices, stratégie, arbitrage — en cours.)_
+tournois, annonces, **galerie** (liens Google Photos).
+
+**Espace Entraînements** : séances (présences, plan d'exercices), bibliothèque
+d'exercices avec génération par l'IA configurée, stratégies, arbitres.
 
 **Écrans transverses**
 
@@ -261,7 +311,7 @@ séances, exercices, stratégie, arbitrage — en cours.)_
   droits — propose « Garder la version du serveur » ou « Réappliquer ma
   modification »), exports (Journal/Bilan CSV,
   sauvegarde JSON, **bilan PDF**, **Excel multi-feuilles**), impression de l'écran,
-  **import Excel**, restauration,
+  **import Excel** (bloqué aujourd'hui par la CSP, voir § 10), restauration,
   réinitialisation, et **intégrations** (HelloAsso, Google Agenda).
 
 ```
@@ -295,10 +345,11 @@ séances, exercices, stratégie, arbitrage — en cours.)_
 - [x] Multi-saisons : création, clôture/verrouillage, réouverture, report du reliquat.
 - [x] Audit local (métier/sécurité), corbeille restaurable, historisation (version).
 - [x] **Migration Excel** (feuille `Compte`) + jeu d'exemples réaliste 2025-2026.
+      Import bloqué aujourd'hui par la CSP (§ 10).
 - [x] Exports CSV (journal & bilan), sauvegarde JSON, **bilan PDF** (fichier
       généré par le module `pdf` du socle, partagé via `navigator.share` ou
       téléchargé) — l'impression de l'écran (`@media print`) reste offerte.
-- [x] PWA installable / hors ligne, FR, accessible (focus, aria, tactile ≥ 44px).
+- [x] PWA installable / hors ligne, FR et EN, accessible (focus, aria, tactile ≥ 44px).
 - [x] Backend Supabase : schéma, **RLS RBAC**, audit serveur, storage, triggers.
 
 **V2 (en cours)**
@@ -322,8 +373,9 @@ séances, exercices, stratégie, arbitrage — en cours.)_
       local la carte n'est pas rendue : il n'y a pas de compte. Tests pgTAP en
       CI sur une pile jetable (`.github/workflows/supabase-tests.yml`).
 
-> Les briques Supabase (sync, MFA, admin) sont **correctes par construction** et
-> typées, mais **à éprouver sur un projet Supabase réel** (cf. `supabase/README.md`).
+> Les briques Supabase tournent en production sur le projet du club. Les
+> migrations y sont appliquées à chaque fusion sur `main` qui les touche, et
+> rejouées depuis zéro en CI avec les tests pgTAP (cf. `supabase/README.md`).
 
 **Améliorations (juin 2026)**
 
@@ -346,7 +398,8 @@ séances, exercices, stratégie, arbitrage — en cours.)_
       (testé) + pointage auto ; **pointage manuel** par écriture.
 - [x] **Filtres journal avancés** (dates, catégorie, mode, événement, pointage).
 - [x] **Écritures récurrentes** (modèles + génération) ; **budget prév./réalisé**
-      par catégorie avec écart.
+      par catégorie avec écart (mode `local` seulement : en mode Supabase, le
+      budget n'est pas synchronisé et s'efface à la synchronisation suivante).
 - [x] **Catégories personnalisées** (registre mutable, codes C1…) ; **registre des
       adhérents** (effectifs, cotisations, payé/impayé).
 - [x] **Durcissement serveur (0005)** : RPC clôture/réouverture (solde calculé
@@ -354,8 +407,8 @@ séances, exercices, stratégie, arbitrage — en cours.)_
       cohérence sens↔catégorie, **Realtime** (réconciliation en direct).
 - [x] **Dette technique** : ESLint 0 warning, tables a11y sous les graphiques,
       dédup de la file de sync, script `supabase:types`.
-- [x] **Tests** : store, composants, robustesse monétaire ; **planchers de
-      couverture** sur le cœur pur (82 tests).
+- [x] **Tests** : moteur, store, composants, synchro, robustesse monétaire (51
+      fichiers Vitest) ; **planchers de couverture** sur le cœur pur.
 - [—] **Montants en centimes entiers** : _évalué, non retenu_ — `numeric(12,2)` +
   `round2` est testé et exact à l'échelle d'un club (cf. `money.test.ts`) ;
   refactor transverse = risque > bénéfice. Option documentée si l'échelle change.
@@ -438,11 +491,11 @@ L'API est l'API REST **PostgREST** auto-générée par Supabase, **arbitrée par
 le JWT de session ; les droits sont appliqués côté serveur.
 
 ```ts
-// Authentification (+ MFA TOTP pour les rôles sensibles)
+// Authentification (+ MFA TOTP si l'utilisateur a enrôlé un facteur)
 await supabase.auth.signInWithPassword({ email, password });
 await supabase.auth.mfa.challengeAndVerify({ factorId, code });
 
-// Lire le journal d'une saison (RLS : seuls les membres du club voient les lignes)
+// Lire le journal d'une saison (RLS : seuls les membres qui ont un rôle voient les lignes)
 const { data } = await supabase
   .from('entries')
   .select('id,date,label,sens,amount,category_code,event_id')
@@ -476,15 +529,11 @@ await supabase
   .update({ deleted_at: new Date().toISOString() })
   .eq('id', id);
 
-// Clôturer une saison (UPDATE status ; trigger journalise en audit_securite)
-await supabase
-  .from('seasons')
-  .update({
-    status: 'cloturee',
-    closing_balance: 9390.46,
-    locked_at: new Date().toISOString(),
-  })
-  .eq('id', seasonId);
+// Clôturer une saison : RPC, le serveur vérifie le rôle et calcule le solde
+await supabase.rpc('close_season', { p_season: seasonId });
+
+// Rouvrir une saison : motif obligatoire, tracé en audit_securite
+await supabase.rpc('reopen_season', { p_season: seasonId, p_reason: motif });
 
 // Justificatif → bucket privé
 await supabase.storage
@@ -497,7 +546,7 @@ await supabase.storage
 ```http
 GET  /rest/v1/entries?season_id=eq.<id>&deleted_at=is.null&select=*
 POST /rest/v1/entries           Authorization: Bearer <jwt>   {...}
-PATCH /rest/v1/seasons?id=eq.<id>   { "status": "cloturee" }
+POST /rest/v1/rpc/close_season   { "p_season": "<id>" }
 ```
 
 ---
@@ -505,8 +554,10 @@ PATCH /rest/v1/seasons?id=eq.<id>   { "status": "cloturee" }
 ## 10. Stratégie de migration depuis l'Excel
 
 Mapping **pur et testé** : [`compteMapping.ts`](src/features/import/compteMapping.ts)
-(+ [tests](src/features/import/compteMapping.test.ts)). Lecture du `.xlsx` via SheetJS
-chargé **à la demande depuis le CDN** (pas embarqué dans le bundle).
+(+ [tests](src/features/import/compteMapping.test.ts)). Lecture du `.xlsx` par SheetJS,
+chargé **à la demande depuis `cdn.sheetjs.com`** (pas embarqué dans le bundle).
+**Bloquée à ce jour** : la CSP n'autorise pas cette origine dans `script-src`.
+L'export Excel, lui, n'en dépend pas (module `xlsx` du socle).
 
 1. On lit la feuille **`Compte`** (le journal) — colonnes `ORDRE · DATE · LIBELLE ·
 CODE FACTURE · MODE RGLT · N° PIECE · DEBITS · CREDIT · SOLDE · OBS`.
@@ -533,20 +584,25 @@ CODE FACTURE · MODE RGLT · N° PIECE · DEBITS · CREDIT · SOLDE · OBS`.
 export NODE_AUTH_TOKEN="$(gh auth token)"
 
 npm install
-npm run dev            # http://localhost:5196
+npm run dev            # http://localhost:5173 (port par défaut de Vite)
 npm test               # Vitest (moteur, validation, mapping)
 npm run lint           # ESLint (flat config famille)
 npm run format         # Prettier (CI exige --check)
-npm run build          # tsc -b + vite build + PWA
+npm run build          # tsc -b, vite build (PWA), puis budget de bundle (pwa-bundle-budget)
 npm run icons          # régénère les icônes PWA depuis public/icons/icon.svg
 ```
 
-Backend optionnel : copier `.env.example` → `.env`, renseigner `VITE_BACKEND=supabase`
-
-- URL/clé, puis `npm run supabase:push` (voir [`supabase/README.md`](supabase/README.md)).
+`npm run dev` tourne en mode `local`, sauf si `.env` (copié de `.env.example`)
+pose `VITE_BACKEND=supabase` avec l'URL et la clé. Attention : `.env.production`,
+versionné, met tout build de production en mode Supabase sur le projet du club.
+Pour un autre projet : `npm run supabase:link`, puis `npm run supabase:push`
+(voir [`supabase/README.md`](supabase/README.md)).
 
 Déploiement : push sur `main` → workflows famille `pwa-ci` + `pwa-deploy` → GitHub Pages
-(`base = /miss-uwh/`, HashRouter).
+(`base = /miss-uwh/`, HashRouter). Le build lit `.env.production` (mode Supabase)
+et reçoit `VITE_POSTHOG_KEY` et `VITE_SENTRY_DSN` des variables du dépôt. Une
+fusion qui touche `supabase/migrations/` applique aussi les migrations en
+production (`supabase-migrations.yml`).
 
 ---
 
