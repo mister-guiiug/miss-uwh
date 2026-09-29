@@ -225,6 +225,9 @@ const fr = {
     sendLink: 'Recevoir un lien de connexion',
     linkIntro:
       'Un lien à usage unique arrive dans votre boîte : aucun mot de passe à retenir, ni à voler.',
+    /** Sous la carte de connexion : qui ouvre les comptes, et le guide public. */
+    accountsByClub: 'Les comptes sont ouverts par le bureau du club.',
+    guideLink: 'Découvrir Miss UWH : le guide du bilan comptable de saison',
     linkSentTitle: 'Lien envoyé',
     linkSent:
       'Un lien vient d’être envoyé à {email}. Ouvrez-le depuis cet appareil : il vous ramènera ici, connecté·e. Il n’est valable qu’une fois.',
@@ -781,6 +784,8 @@ const en = {
     sendLink: 'Email me a sign-in link',
     linkIntro:
       'A one-time link lands in your inbox: no password to remember, none to steal.',
+    accountsByClub: 'Accounts are opened by the club board.',
+    guideLink: 'Discover Miss UWH: the season accounts guide',
     linkSentTitle: 'Link sent',
     linkSent:
       'A link was just sent to {email}. Open it from this device: it brings you back here, signed in. It only works once.',
