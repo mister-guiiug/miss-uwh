@@ -369,6 +369,7 @@ const fr = {
       data: 'Données',
       integrations: 'Intégrations',
       security: 'Sécurité',
+      privacy: 'Confidentialité',
       advanced: 'Avancé',
       apps: 'Nos apps',
     },
@@ -381,6 +382,8 @@ const fr = {
         'integrations helloasso google agenda ical ia generation exercices openai claude cotisations',
       security:
         'securite mfa audit roles membres deconnexion rls authentification compte',
+      privacy:
+        'confidentialite vie privee mesure audience statistiques consentement retirer refuser posthog rgpd',
       advanced:
         'avance application version mise a jour reinitialiser zone sensible cache supprimer mon compte effacement rgpd',
       apps: 'nos autres applications famille apps decouvrir gratuites miss mister',
@@ -925,6 +928,7 @@ const en = {
       data: 'Data',
       integrations: 'Integrations',
       security: 'Security',
+      privacy: 'Privacy',
       advanced: 'Advanced',
       apps: 'Our apps',
     },
@@ -937,6 +941,8 @@ const en = {
         'integrations helloasso google calendar ical ai generation drills openai claude dues',
       security:
         'security mfa audit roles members sign out rls authentication account',
+      privacy:
+        'privacy audience measurement analytics statistics consent withdraw decline posthog gdpr',
       advanced:
         'advanced application version update reset danger zone cache delete my account erasure gdpr',
       apps: 'our other apps family apps discover free miss mister',
