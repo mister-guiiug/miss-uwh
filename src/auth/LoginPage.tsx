@@ -147,6 +147,17 @@ export function LoginPage() {
           </form>
         )}
       </Card>
+      {/* Hors de la carte : ce que Google et Bing indexent de cet écran (ils
+          ne se connectent pas) — qui ouvre les comptes, et le guide public. */}
+      <p className="text-center text-xs text-[var(--uwh-text-soft)]">
+        {t('auth.accountsByClub')}{' '}
+        <a
+          className="font-semibold text-primary underline-offset-2 hover:underline"
+          href={`${import.meta.env.BASE_URL}bilan-comptable-association-sportive.html`}
+        >
+          {t('auth.guideLink')}
+        </a>
+      </p>
     </div>
   );
 }
