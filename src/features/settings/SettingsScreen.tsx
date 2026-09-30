@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Database,
   Download,
+  EyeOff,
   FileSpreadsheet,
   LayoutGrid,
   LogOut,
@@ -58,6 +59,8 @@ import {
 } from '@mister-guiiug/dev-pwa-config/react/field';
 import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
 import { FamilyApps } from '@mister-guiiug/dev-pwa-config/react';
+import { ConsentSection } from '@mister-guiiug/dev-pwa-config/react/consent-section';
+import { parsePosthogKey } from '@mister-guiiug/dev-pwa-config/analytics';
 import { cn } from '../../shared/lib/cn.ts';
 import { useI18n } from '../../i18n/index.ts';
 import { AppFooter } from '@mister-guiiug/dev-pwa-config/react/app-footer';
@@ -538,6 +541,33 @@ export function SettingsScreen() {
         </>
       ),
     },
+    // Sans identifiant de mesure, `ConsentSection` ne rend rien : la section
+    // s'efface avec elle, plutôt qu'un titre et une puce de navigation posés
+    // sur du vide (développement local, tests).
+    ...(parsePosthogKey(import.meta.env.VITE_POSTHOG_KEY)
+      ? [
+          {
+            id: 'confidentialite',
+            label: t('settings.sections.privacy'),
+            Icon: EyeOff,
+            keywords: t('settings.keywords.privacy'),
+            node: (
+              <Card>
+                {/* Revenir sur son choix de mesure d’audience : le retrait se
+                    fait ici, en un clic (RGPD, art. 7.3). Mêmes clé et
+                    chargeur que le bandeau. */}
+                <ConsentSection
+                  posthogKey={import.meta.env.VITE_POSTHOG_KEY}
+                  loader={() => import('posthog-js/dist/module.slim.js')}
+                  headingLevel={3}
+                  titleClassName="font-display font-bold"
+                  actionClassName="rounded-full"
+                />
+              </Card>
+            ),
+          },
+        ]
+      : []),
     {
       id: 'avance',
       label: t('settings.sections.advanced'),
