@@ -145,7 +145,7 @@ export function applyEntryPatch(
  * L'opération à mettre en file pour une modification locale, ou `null` si rien
  * de ce que le serveur connaît n'a changé (un pointage local seul, un
  * enregistrement sans modification). `expectedVersion` est la version VUE avant
- * la modification : la RPC refusera (40001) si le serveur a bougé depuis.
+ * la modification : la RPC refusera (PT409) si le serveur a bougé depuis.
  */
 export function entryUpdateOp(
   before: JournalEntry,
@@ -165,21 +165,28 @@ export function entryUpdateOp(
 // ── Les deux refus que la récupération sait traiter ──────────────────
 
 /**
- * `conflict` : l'écriture a changé sur le serveur depuis la version vue (40001).
+ * `conflict` : l'écriture a changé sur le serveur depuis la version vue (PT409).
  * `forbidden` : elle est invisible, ou hors des droits de l'appelant (42501).
  */
 export type EntryRejection = 'conflict' | 'forbidden';
 
 const SQLSTATE: Record<EntryRejection, string> = {
-  conflict: '40001',
+  conflict: 'PT409',
   forbidden: '42501',
 };
+
+/**
+ * L'ancien code du conflit, jusqu'à la migration 0023. PostgREST le rejouait
+ * sans fin au lieu de le rendre (voir `supabase/README.md`) ; il reste lu,
+ * pour une lettre morte qui le porterait encore.
+ */
+const LEGACY_CONFLICT = '40001';
 
 /** La raison d'un refus d'après le SQLSTATE rendu par PostgREST. */
 export function entryRejectionFromCode(
   code: string | undefined
 ): EntryRejection | null {
-  if (code === SQLSTATE.conflict) return 'conflict';
+  if (code === SQLSTATE.conflict || code === LEGACY_CONFLICT) return 'conflict';
   if (code === SQLSTATE.forbidden) return 'forbidden';
   return null;
 }
@@ -205,6 +212,7 @@ export class EntryWriteRejected extends Error {
 export function entryRejectionOf(
   lastError: string | undefined
 ): EntryRejection | null {
-  const match = /^\[(\d{5})\]/.exec(lastError ?? '');
+  // Cinq caractères, chiffres OU majuscules : `PT409` n'est pas numérique.
+  const match = /^\[([0-9A-Z]{5})\]/.exec(lastError ?? '');
   return entryRejectionFromCode(match?.[1]);
 }

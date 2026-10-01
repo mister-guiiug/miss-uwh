@@ -526,7 +526,7 @@ describe('modifications d’écritures (OCC)', () => {
       expect(morte?.payload).toEqual(
         update('e1', 1, { label: 'A', amount: 9, observation: null })
       );
-      expect(morte?.lastError).toContain('[40001]');
+      expect(morte?.lastError).toContain('[PT409]');
     });
 
     it('garde la plus ancienne des versions attendues', () => {
@@ -539,7 +539,7 @@ describe('modifications d’écritures (OCC)', () => {
         payload,
         attempts: 1,
         enqueuedAt: '2026-09-25T00:00:00.000Z',
-        lastError: '[40001] Conflit',
+        lastError: '[PT409] Conflit',
       }));
       localStorage.setItem('miss-uwh:syncdead', JSON.stringify(mortes));
 

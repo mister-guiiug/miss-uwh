@@ -233,7 +233,7 @@ nécessite le mode Supabase.
   [`0020`](supabase/migrations/0020_occ_droits.sql) — son `update` subit la RLS
   d'`entries`, un simple membre ne modifie rien — et couvre depuis
   [`0021`](supabase/migrations/0021_occ_champs.sql) tous les champs que le
-  formulaire modifie. Version périmée : refus `40001`, rien n'est écrasé.
+  formulaire modifie. Version périmée : refus `PT409`, rien n'est écrasé.
   Preuves : [`occ-droits.test.sql`](supabase/tests/occ-droits.test.sql) et
   [`occ-champs.test.sql`](supabase/tests/occ-champs.test.sql).
 - **IA « apportez votre clé »** : la clé est gardée sur l'appareil (en clair dans
@@ -447,7 +447,7 @@ d'exercices avec génération par l'IA configurée, stratégies, arbitres.
       `update_entry_checked`, avec la version vue ; les créations restent des
       upserts. Hors ligne, les modifications d'une même écriture fusionnent en
       un seul envoi ; après un succès, la version rendue par le serveur devient
-      la version locale. Conflit (`40001`) ou refus de droits (`42501`) :
+      la version locale. Conflit (`PT409`) ou refus de droits (`42501`) :
       l'opération rejoint les refusées des Réglages, avec sa raison et ses
       gestes (cf. [`entryPatch.ts`](src/backend/entryPatch.ts),
       [`sync.occ.test.ts`](src/backend/sync.occ.test.ts)).
@@ -514,7 +514,7 @@ await supabase.from('entries').insert({
   method: 'helloasso',
 });
 
-// Modifier une écriture à VERSION ATTENDUE (ce que fait l'app) : 40001 si
+// Modifier une écriture à VERSION ATTENDUE (ce que fait l'app) : PT409 si
 // quelqu'un l'a modifiée entre-temps, 42501 hors droits ; sinon la nouvelle
 // version. Une clé absente du patch laisse la colonne en place.
 const { data: version } = await supabase.rpc('update_entry_checked', {

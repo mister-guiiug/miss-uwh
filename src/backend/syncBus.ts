@@ -34,7 +34,7 @@ export type RemoteOp =
   | { kind: 'entry.bulkUpsert'; entries: JournalEntry[] }
   /**
    * MODIFICATION d'une écriture existante : un diff, et la version que le
-   * client a vue — la RPC `update_entry_checked` refuse (40001) si le serveur
+   * client a vue — la RPC `update_entry_checked` refuse (PT409) si le serveur
    * a bougé depuis. `label` ne sert qu'à nommer l'écriture à l'utilisateur.
    */
   | {
