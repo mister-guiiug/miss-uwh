@@ -272,7 +272,7 @@ describe('entryUpdateOp', () => {
 describe('refus : EntryWriteRejected, et sa relecture après rechargement', () => {
   it('le SQLSTATE entre en tête du message, seule trace persistée', () => {
     const conflict = new EntryWriteRejected('conflict', 'Conflit de version');
-    expect(conflict.message).toBe('[40001] Conflit de version');
+    expect(conflict.message).toBe('[PT409] Conflit de version');
     expect(conflict.reason).toBe('conflict');
     expect(conflict.name).toBe('EntryWriteRejected');
     expect(conflict).toBeInstanceOf(Error);
@@ -282,6 +282,8 @@ describe('refus : EntryWriteRejected, et sa relecture après rechargement', () =
   });
 
   it('se relit depuis le lastError d’une lettre morte', () => {
+    expect(entryRejectionOf('[PT409] Conflit de version')).toBe('conflict');
+    // Une lettre morte d'avant 0023 porte l'ancien code : toujours un conflit.
     expect(entryRejectionOf('[40001] Conflit de version')).toBe('conflict');
     expect(entryRejectionOf('[42501] Droits insuffisants')).toBe('forbidden');
     expect(entryRejectionOf('permission denied (RLS)')).toBeNull();
@@ -290,6 +292,7 @@ describe('refus : EntryWriteRejected, et sa relecture après rechargement', () =
   });
 
   it('se lit depuis le code d’erreur PostgREST', () => {
+    expect(entryRejectionFromCode('PT409')).toBe('conflict');
     expect(entryRejectionFromCode('40001')).toBe('conflict');
     expect(entryRejectionFromCode('42501')).toBe('forbidden');
     expect(entryRejectionFromCode('23505')).toBeNull();

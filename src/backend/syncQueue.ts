@@ -433,7 +433,7 @@ export function takeEntryUpdates(entryId: string): EntryUpdateOp[] {
   return [...refused, ...waiting].map(item => item.payload);
 }
 
-/** Une lettre morte est-elle un conflit de version (40001) ? */
+/** Une lettre morte est-elle un conflit de version (PT409) ? */
 function isConflict(item: QueueItem): boolean {
   return (
     item.payload.kind === 'entry.update' &&

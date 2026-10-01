@@ -288,7 +288,7 @@ select set_config('uwh.res', uwh_t_champs($$
 $$), true);
 reset role;
 
-select is(current_setting('uwh.res'), '40001',
+select is(current_setting('uwh.res'), 'PT409',
   'une version périmée reste un CONFLIT, quel que soit le champ visé');
 select is(
   (select method || ' / v' || version::text

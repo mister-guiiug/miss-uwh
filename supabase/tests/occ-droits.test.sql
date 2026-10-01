@@ -131,8 +131,8 @@ select set_config('uwh.res', uwh_t_occ($$
 $$), true);
 reset role;
 
-select is(current_setting('uwh.res'), '40001',
-  'une version attendue périmée est un CONFLIT (40001), pas un refus');
+select is(current_setting('uwh.res'), 'PT409',
+  'une version attendue périmée est un CONFLIT (PT409), pas un refus');
 
 -- ── 4. Alice, sur la bonne version : l'écriture passe et la version monte ──
 

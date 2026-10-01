@@ -543,7 +543,7 @@ export async function deleteCustomCategory(code: string): Promise<void> {
  * compare à la version que le client a vue, puis applique le patch sous la RLS
  * d'`entries` (0020). Rend la NOUVELLE version.
  *
- * Un conflit (40001) ou un refus (42501) lève `EntryWriteRejected` : la file ne
+ * Un conflit (PT409) ou un refus (42501) lève `EntryWriteRejected` : la file ne
  * les rejoue pas, et la récupération des Réglages sait les distinguer. Toute
  * autre erreur garde sa classification ordinaire (réseau → rejeu).
  */

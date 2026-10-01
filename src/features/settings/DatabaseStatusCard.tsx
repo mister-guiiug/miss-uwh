@@ -107,7 +107,7 @@ const REAPPLY_MESSAGE: Record<Exclude<EntryRecovery, 'done'>, TKey> = {
 
 /**
  * Une opération refusée. Pour la MODIFICATION d'une écriture refusée par la
- * concurrence optimiste — conflit (40001) ou refus de droits (42501) —, la
+ * concurrence optimiste — conflit (PT409) ou refus de droits (42501) —, la
  * raison est dite en clair et les deux mêmes gestes sont proposés sur place :
  * garder la version du serveur, ou réappliquer ma modification sur elle.
  * Après un refus de droits, « Réappliquer » sert quand un rôle a changé : il

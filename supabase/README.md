@@ -80,9 +80,10 @@ offline-first :
 - **Écritures du journal : concurrence optimiste.** Une création reste un
   upsert. Toute **modification** d'une écriture existante — édition, pointage,
   suppression logique, restauration — part en diff vers la RPC
-  `update_entry_checked` (0020, 0021), avec la version que l'appareil a vue.
+  `update_entry_checked` (0020, 0021, 0023), avec la version que l'appareil a
+  vue.
   La fonction est `security invoker` : son `update` subit la RLS d'`entries`.
-  Version périmée → `40001`, hors droits → `42501` ; sinon elle rend la
+  Version périmée → `PT409`, hors droits → `42501` ; sinon elle rend la
   nouvelle version, qui devient la version locale. Hors ligne, plusieurs
   modifications de la même écriture fusionnent en un seul envoi.
 - **Refus** : un conflit ou un refus de droits n'est jamais rejoué tel quel. Il
@@ -95,6 +96,19 @@ offline-first :
   erreur (avec bouton _Réessayer_). Hors ligne, l'app reste utilisable sur le
   cache local ; pour les entités autres que les écritures, la dernière écriture
   l'emporte.
+
+> **Jamais `40001` dans une fonction qu'atteint PostgREST.** Il prend ce code
+> pour un échec de sérialisation passager et rejoue la transaction **sans
+> fin** : la requête ne répond jamais, et le backend tourne à plein jusqu'à ce
+> qu'on le tue ([fiche Supabase](https://supabase.com/docs/guides/troubleshooting/high-cpu-and-infinite-transaction-retries-when-using-custom-error-codes-in-rpc-functions-77326b) ;
+> PostgREST 14, corrigé en 16). `update_entry_checked` le levait pour une
+> version périmée jusqu'à `0023` : chaque conflit lançait une boucle, qui
+> reprenait à chaque tour le verrou `for update` de l'écriture. Un conflit
+> métier se signale par `PT409` (HTTP 409), et
+> `tests/structure-securite.test.sql` y veille. Pour arrêter une boucle déjà
+> lancée, redémarrer le projet, ou appeler `pg_terminate_backend` sur les
+> lignes de `pg_stat_activity` dont `usename` vaut `authenticator`. Corriger
+> la fonction ne l'arrête pas.
 
 > ⚠️ Ce chemin est **correct par construction** (mappers purs testés, types
 > alignés sur le schéma) mais **n'a pas encore été éprouvé contre un projet

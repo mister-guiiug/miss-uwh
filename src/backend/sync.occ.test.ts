@@ -4,7 +4,7 @@
  * Supabase), le bus, la file du socle, le transport, le repository et ses
  * mappers. Le faux client tient une table `entries` et une RPC
  * `update_entry_checked` qui rend ce que rend la vraie (0020 + 0021) :
- * 42501 pour une ligne hors droits, 40001 pour une version périmée, la
+ * 42501 pour une ligne hors droits, PT409 pour une version périmée, la
  * nouvelle version sinon, avec les deux sémantiques de colonnes de 0021.
  *
  * Ce que la RPC fait VRAIMENT est tenu côté base par les pgTAP
@@ -119,7 +119,7 @@ vi.mock('../lib/supabase.ts', () => {
         return {
           data: null,
           error: {
-            code: '40001',
+            code: 'PT409',
             message: `Conflit de version sur l'écriture ${args.p_id} (rechargez).`,
           },
         };
@@ -423,7 +423,7 @@ describe('une modification part par update_entry_checked, avec la version vue', 
   });
 });
 
-describe('conflit (40001) : rien n’est écrasé', () => {
+describe('conflit (PT409) : rien n’est écrasé', () => {
   async function conflit() {
     seed();
     someoneElseWrites('e1', { amount: 700, observation: 'Corrigé par Bob' });

@@ -101,7 +101,7 @@ describe('État de la base de données — opérations refusées', () => {
       morte(
         'q1',
         modification('e1', 'Cotisations'),
-        "[40001] Conflit de version sur l'écriture e1 (rechargez)."
+        "[PT409] Conflit de version sur l'écriture e1 (rechargez)."
       ),
     ]);
 
@@ -169,7 +169,7 @@ describe('État de la base de données — opérations refusées', () => {
       morte(
         'q1',
         modification('e1', 'Cotisations'),
-        '[40001] Conflit de version'
+        '[PT409] Conflit de version'
       ),
     ]);
 
@@ -187,7 +187,7 @@ describe('État de la base de données — opérations refusées', () => {
 
   it('un nouveau conflit pendant la réapplication est dit comme tel', async () => {
     reapplyMyChange.mockResolvedValue('conflict');
-    mount([morte('q1', modification('e1', 'Cotisations'), '[40001] Conflit')]);
+    mount([morte('q1', modification('e1', 'Cotisations'), '[PT409] Conflit')]);
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Réappliquer ma modification' })
@@ -202,7 +202,7 @@ describe('État de la base de données — opérations refusées', () => {
 
   it('« Garder la version du serveur » hors ligne : rien n’a changé, et c’est dit', async () => {
     keepServerVersion.mockRejectedValue(new Error('Failed to fetch'));
-    mount([morte('q1', modification('e1', 'Cotisations'), '[40001] Conflit')]);
+    mount([morte('q1', modification('e1', 'Cotisations'), '[PT409] Conflit')]);
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Garder la version du serveur' })
@@ -218,7 +218,7 @@ describe('État de la base de données — opérations refusées', () => {
 
   it('« Garder la version du serveur » réussi nomme l’écriture', async () => {
     keepServerVersion.mockResolvedValue('done');
-    mount([morte('q1', modification('e1', 'Cotisations'), '[40001] Conflit')]);
+    mount([morte('q1', modification('e1', 'Cotisations'), '[PT409] Conflit')]);
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Garder la version du serveur' })
