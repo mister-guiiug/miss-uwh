@@ -42,7 +42,7 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
@@ -61,13 +61,13 @@
     "vitest": "^5.0.3"
   },
   "dependencies": {
-    "@sentry/react": "^11.9.0",
+    "@sentry/react": "^11.10.0",
     "@supabase/supabase-js": "^2.118.0",
-    "lucide-react": "^1.61.0",
-    "posthog-js": "^1.438.21",
+    "lucide-react": "^1.63.0",
+    "posthog-js": "^1.441.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-router-dom": "^7.18.4",
+    "react-router-dom": "^7.18.5",
     "tailwindcss": "^4.3.3",
     "zod": "^4.6.7",
     "zustand": "^5.0.16"
