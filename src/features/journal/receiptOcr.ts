@@ -230,7 +230,7 @@ function parseConfidence(value: unknown): number | undefined {
     typeof value === 'number'
       ? value
       : typeof value === 'string'
-        ? Number(value.replace('%', '').replace(',', '.').trim())
+        ? Number(value.replaceAll('%', '').replace(',', '.').trim())
         : Number.NaN;
   if (!Number.isFinite(n) || n < 0) return undefined;
   return Math.min(1, n > 1 ? n / 100 : n);
