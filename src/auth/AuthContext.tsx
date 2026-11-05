@@ -131,7 +131,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          * de rafraîchissement a été révoqué.
          */
         void (async () => {
-          const stockee = storedSupabaseSession() as Session | null;
+          // AVEC LE CLIENT : la session de CE projet. Toute la famille partage
+          // une origine, donc un `localStorage` ; sans lui, le socle rend la
+          // première case `sb-*` venue, qui peut être celle d'une autre app.
+          const stockee = storedSupabaseSession(sb) as Session | null;
 
           if (navigateurHorsLigne() && stockee) {
             if (!disposed) await hydrate(stockee, true);
@@ -173,9 +176,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
            * toujours dans le stockage.
            *
            * Une déconnexion demandée sans réseau reste donc honorée : le
-           * stockage est vidé d'abord, la garde ne se déclenche pas.
+           * stockage est vidé d'abord, la garde ne se déclenche pas. La
+           * session de CE projet : celle d'une autre app de la même origine
+           * ferait passer une vraie déconnexion pour un réseau muet.
            */
-          if (!s && navigateurHorsLigne() && storedSupabaseSession()) return;
+          if (!s && navigateurHorsLigne() && storedSupabaseSession(sb)) return;
 
           void hydrate(s, navigateurHorsLigne());
           if (event === 'SIGNED_IN' && s?.user?.email)
