@@ -32,7 +32,8 @@ vi.mock('./supabaseRepository.ts', () => ({
 
 import * as repo from './supabaseRepository.ts';
 import { MAX_TRANSIENT_ATTEMPTS, getSyncQueue } from './syncQueue.ts';
-import { drain, pullAll, retryDeadOps } from './sync.ts';
+import { drain, initialSync, pullAll, retryDeadOps } from './sync.ts';
+import { createEmptyData } from '../shared/lib/seed.ts';
 import { useAppStore } from '../store/useAppStore.ts';
 
 const FETCHES = [
@@ -205,5 +206,65 @@ describe('pullAll', () => {
     expect(status.state).toBe('error');
     expect(status.error).toContain('refusée');
     expect(status.lastSyncAt).toBeTruthy();
+  });
+});
+
+/**
+ * LE PULL NE REMPLACE PAS CE QUI N'EST PAS ENCORE PARTI.
+ *
+ * `pullAll` remplace le magasin entier par l'état du serveur. Tant qu'une
+ * écriture attend dans la file, le serveur ne la connaît pas : tirer à ce
+ * moment-là l'efface de l'écran — et l'écriture suivante sur la même entité,
+ * construite sur l'état du serveur, REMPLACE dans la file celle qui attendait
+ * (même clé d'entité). Les chemins de reconnexion, de « Réessayer » et du
+ * Realtime avaient déjà leur garde ; le démarrage, relancé à chaque
+ * changement de session, ne l'avait pas.
+ */
+describe('le pull attend que la file soit vide', () => {
+  const SERVEUR = { id: 'club-1', name: 'Club du serveur' };
+
+  beforeEach(() => {
+    useAppStore.getState().hydrate(createEmptyData('Club de l’appareil'));
+    vi.mocked(repo.fetchClub).mockResolvedValue(SERVEUR as never);
+  });
+
+  it('démarrage : une écriture qui ne part pas → pas de pull, le magasin reste', async () => {
+    vi.mocked(repo.deleteEvent).mockRejectedValue(new Error('network down'));
+    queue().enqueue({ kind: 'event.delete', id: 'ev1' });
+
+    await initialSync();
+
+    expect(queue().pending()).toBe(1);
+    expect(repo.fetchClub).not.toHaveBeenCalled();
+    expect(useAppStore.getState().data.club.name).toBe('Club de l’appareil');
+  });
+
+  it('démarrage : la file part d’abord, puis le pull réconcilie', async () => {
+    vi.mocked(repo.deleteEvent).mockResolvedValue(undefined);
+    queue().enqueue({ kind: 'event.delete', id: 'ev1' });
+
+    await initialSync();
+
+    expect(repo.deleteEvent).toHaveBeenCalledWith('ev1');
+    expect(useAppStore.getState().data.club.name).toBe('Club du serveur');
+  });
+
+  it('une écriture enfilée PENDANT la lecture → le magasin n’est pas remplacé', async () => {
+    let repondre!: (club: unknown) => void;
+    vi.mocked(repo.fetchClub).mockReturnValue(
+      new Promise(resolve => {
+        repondre = resolve;
+      }) as never
+    );
+
+    const tirage = pullAll();
+    // L'utilisateur modifie pendant que le serveur répond : l'opération est
+    // en file (son envoi n'a pas encore abouti).
+    queue().enqueue({ kind: 'event.delete', id: 'ev1' });
+    repondre(SERVEUR);
+    await tirage;
+
+    expect(useAppStore.getState().data.club.name).toBe('Club de l’appareil');
+    expect(queue().pending()).toBe(1);
   });
 });

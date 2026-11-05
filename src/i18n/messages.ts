@@ -274,6 +274,12 @@ const fr = {
       '{what} : refusée, vos droits ne permettent pas de modifier cette écriture. Choisissez quoi garder dans Réglages → État de la base de données.',
     queueFull:
       'File de synchronisation saturée : {what} n’a pas pu être mis en attente. Réessayez une fois la connexion rétablie.',
+    signOutPendingTitle: 'Modifications non envoyées',
+    signOutPending:
+      '{n} modification(s) ne sont pas encore parties au serveur. Elles vivent sur CET appareil, pas dans votre compte : se déconnecter les supprime définitivement. Reconnectez-vous au réseau pour les envoyer d’abord.',
+    signOutAnyway: 'Se déconnecter et les perdre',
+    signedOutLost:
+      'Session fermée : {n} modification(s) non envoyée(s) ont été supprimées de cet appareil.',
     op: {
       entry: 'Écriture « {label} »',
       entryUpdate: 'Modification de l’écriture « {label} »',
@@ -834,6 +840,12 @@ const en = {
       '{what}: rejected, your rights do not allow changing this entry. Choose what to keep in Settings → Database status.',
     queueFull:
       'Sync queue full: {what} could not be queued. Try again once the connection is back.',
+    signOutPendingTitle: 'Unsent changes',
+    signOutPending:
+      '{n} change(s) have not reached the server yet. They live on THIS device, not in your account: signing out deletes them for good. Reconnect to send them first.',
+    signOutAnyway: 'Sign out and lose them',
+    signedOutLost:
+      'Session closed: {n} unsent change(s) were deleted from this device.',
     op: {
       entry: 'Entry "{label}"',
       entryUpdate: 'Change to entry "{label}"',
