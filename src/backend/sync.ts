@@ -123,6 +123,17 @@ export async function pullAll(): Promise<void> {
 
     if (club) setCurrentClubId(club.id);
 
+    // UNE ÉCRITURE EST ARRIVÉE PENDANT LA LECTURE : la réponse la précède, et
+    // la poser effacerait de l'écran une modification que le serveur ne
+    // connaît pas encore — l'écriture suivante sur la même entité, construite
+    // sur cet état, remplacerait alors dans la file celle qui attend (même clé
+    // d'entité). On garde le magasin : la file part, et le Realtime, la
+    // reconnexion ou « Réessayer » réconcilieront une fois qu'elle sera vide.
+    if (getSyncQueue().pending() > 0) {
+      reportQueueStatus();
+      return;
+    }
+
     // Rattache les justificatifs (table séparée) à leurs écritures.
     const byEntry = new Map<string, typeof attachments>();
     for (const a of attachments) {
@@ -439,10 +450,16 @@ export function stopSync(): void {
   unsubscribeRealtime();
 }
 
-/** Démarrage : on pousse d'abord les écritures en attente, puis on réconcilie. */
+/**
+ * Démarrage : on pousse d'abord les écritures en attente, et on ne réconcilie
+ * que si la file est VIDE — la garde de la reconnexion, de « Réessayer » et du
+ * Realtime. Sans elle, une écriture restée en file (hors ligne, serveur qui
+ * tousse, ou drain déjà en cours : `flush` ne fait alors rien) disparaissait
+ * de l'écran sous l'état du serveur. Et ce chemin est relancé à CHAQUE
+ * changement de session (`SupabaseSync`), renouvellement de jeton compris.
+ */
 export async function initialSync(): Promise<void> {
-  await drain();
-  await pullAll();
+  await retrySync();
 }
 
 /** Bouton « Réessayer » : rejoue la file puis réconcilie si vide. */

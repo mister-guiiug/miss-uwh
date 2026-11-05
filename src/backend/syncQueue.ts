@@ -277,6 +277,16 @@ export function clearAll(): void {
   getSyncQueue().clear();
 }
 
+/**
+ * Ce que perdrait la purge si elle avait lieu maintenant : les écritures en
+ * attente ET les refusées, qui restent rejouables depuis les Réglages. Lu à la
+ * déconnexion, le seul geste qui les jette (le compte de mister-doc).
+ */
+export function unsentOps(): number {
+  const q = getSyncQueue();
+  return q.pending() + q.deadLetters().length;
+}
+
 // ── Modifications d'écritures (concurrence optimiste) ────────────────
 //
 // ÉCRITURE DIRECTE DANS LE MAGASIN DE LA FILE — et pourquoi elle est sûre. Le

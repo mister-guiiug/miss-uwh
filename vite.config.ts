@@ -174,6 +174,39 @@ export default defineConfig(({ command }) => {
            * est sans conséquence : rapporter une erreur demande le réseau.
            */
           globIgnores: ['**/sentry.js', '**/sentry-*.js'],
+          /*
+           * LES POLICES GOOGLE, HORS LIGNE AUSSI. `index.html` les charge à
+           * l'exécution : sans cache, l'app rouverte hors ligne retombait sur
+           * les polices système (audit hors ligne du 05/11/2026). La feuille
+           * (`fonts.googleapis.com`) change quand Google la révise : servie du
+           * cache, revalidée derrière. Les fichiers (`fonts.gstatic.com`) ont
+           * une URL versionnée qui ne change jamais : cache d'abord, un an.
+           * Le statut 0 couvre les réponses opaques (feuille chargée sans
+           * `crossorigin`). La CSP autorise déjà ces deux origines (`styleSrc`,
+           * `fontSrc` plus haut) : rien à y changer.
+           */
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'google-fonts-stylesheets',
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-webfonts',
+                expiration: {
+                  maxEntries: 30,
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+          ],
           navigateFallback: 'index.html',
           cleanupOutdatedCaches: true,
           maximumFileSizeToCacheInBytes: 4_000_000,

@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
 import { IS_SUPABASE } from '../backend/config.ts';
+import { clearAll as clearSyncQueue, unsentOps } from '../backend/syncQueue.ts';
+import { translate, useI18n } from '../i18n/index.ts';
 import { getSupabase } from '../lib/supabase.ts';
+import { notifyError } from '../shared/lib/toasts.ts';
 import { setCurrentActor, useAppStore } from '../store/useAppStore.ts';
 import {
   assuranceLevelFromSession,
@@ -36,6 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [hasTotp, setHasTotp] = useState(false);
   const logSecurity = useAppStore(s => s.logSecurity);
   const wipeLocal = useAppStore(s => s.wipeLocal);
+  const { t } = useI18n();
+  // La question posée avant de jeter la file (cf. `signOut`) : le nombre
+  // d'écritures perdues, et la réponse qu'on attend.
+  const [perteADecider, setPerteADecider] = useState<{
+    n: number;
+    repondre: (accord: boolean) => void;
+  } | null>(null);
 
   const refreshMfa = useCallback(async () => {
     if (!IS_SUPABASE) return;
@@ -172,11 +183,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Déconnexion : on purge les données locales (appareil potentiellement
           // partagé) — aucune écriture ne doit subsister pour le membre suivant.
           if (event === 'SIGNED_OUT') {
+            // Compté AVANT la purge. Une déconnexion demandée a déjà vidé la
+            // file avec l'accord de la personne (`signOut`) : il ne reste
+            // rien. Ce qui reste ici, c'est une déconnexion SUBIE — jeton
+            // révoqué, session fermée depuis un autre onglet — à laquelle
+            // personne n'a pu répondre : on purge quand même, mais on le dit.
+            const perdues = unsentOps();
             wipeLocal();
             // L'appareil peut être partagé — un vestiaire, un poste de club :
             // les rôles du membre qui part n'ont rien à faire dans la session
             // du suivant.
             oublierRoles();
+            if (perdues > 0)
+              notifyError(translate('sync.signedOutLost', { n: perdues }));
           }
         });
         unsubscribe = () => sub.subscription.unsubscribe();
@@ -220,9 +239,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message };
   }
 
+  /**
+   * LA FILE D'ÉCRITURES NE SURVIT PAS À LA DÉCONNEXION. Elle vit dans le
+   * `localStorage` de l'APPAREIL, pas dans le compte : sur le poste du club,
+   * les écritures laissées par le membre qui part repartiraient sous la
+   * session du suivant — à son nom dans le journal, et sous SES droits.
+   *
+   * Les jeter est donc obligatoire, mais jamais en silence : ce sont des
+   * gestes que la personne croit enregistrés. On les compte et on demande —
+   * le geste de mister-doc. Avec l'accord, la file est vidée ICI, avant la
+   * déconnexion : `SIGNED_OUT` n'y trouve plus rien, et ne prévient donc pas
+   * une seconde fois de ce qui vient d'être accepté.
+   */
   async function signOut() {
+    const enAttente = unsentOps();
+    if (
+      enAttente > 0 &&
+      !(await new Promise<boolean>(repondre =>
+        setPerteADecider({ n: enAttente, repondre })
+      ))
+    )
+      return;
+    if (enAttente > 0) clearSyncQueue();
     const sb = await getSupabase();
     await sb.auth.signOut();
+  }
+
+  function repondrePerte(accord: boolean) {
+    perteADecider?.repondre(accord);
+    setPerteADecider(null);
   }
 
   async function enrollTotp(): Promise<TotpEnrollment | { error: string }> {
@@ -287,6 +332,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      <ConfirmDialog
+        open={perteADecider !== null}
+        destructive
+        title={t('sync.signOutPendingTitle')}
+        confirmLabel={t('sync.signOutAnyway')}
+        onCancel={() => repondrePerte(false)}
+        onConfirm={() => repondrePerte(true)}
+      >
+        {t('sync.signOutPending', { n: perteADecider?.n ?? 0 })}
+      </ConfirmDialog>
     </AuthContext.Provider>
   );
 }
