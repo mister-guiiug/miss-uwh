@@ -60,6 +60,7 @@ import {
 import { ConfirmDialog } from '@mister-guiiug/dev-pwa-config/react/confirm-dialog';
 import { FamilyApps } from '@mister-guiiug/dev-pwa-config/react';
 import { ConsentSection } from '@mister-guiiug/dev-pwa-config/react/consent-section';
+import { PrivacyNotice } from '@mister-guiiug/dev-pwa-config/react/privacy-notice';
 import { parsePosthogKey } from '@mister-guiiug/dev-pwa-config/analytics';
 import { cn } from '../../shared/lib/cn.ts';
 import { useI18n } from '../../i18n/index.ts';
@@ -553,6 +554,11 @@ export function SettingsScreen() {
             keywords: t('settings.keywords.privacy'),
             node: (
               <Card>
+                <PrivacyNotice
+                  env={import.meta.env}
+                  headingLevel={3}
+                  titleClassName="font-display font-bold"
+                />
                 {/* Revenir sur son choix de mesure d’audience : le retrait se
                     fait ici, en un clic (RGPD, art. 7.3). Mêmes clé et
                     chargeur que le bandeau. */}
