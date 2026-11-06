@@ -12,9 +12,10 @@ import {
   mfaChallengeNeeded,
 } from '@mister-guiiug/dev-pwa-config/auth/mfa';
 import {
+  ignoreOfflineSignOut,
   navigateurHorsLigne,
-  storedSupabaseSession,
 } from '@mister-guiiug/dev-pwa-config/auth/stored-session';
+import { readSupabaseSession } from '@mister-guiiug/dev-pwa-config/auth/supabase';
 import { AuthContext, type Role, type TotpEnrollment } from './useAuth.ts';
 import { oublierRoles, retenirRoles, rolesEnCache } from './rolesCache.ts';
 
@@ -28,9 +29,6 @@ import { oublierRoles, retenirRoles, rolesEnCache } from './rolesCache.ts';
  * il est vrai derrière un portail captif comme sur un Wi-Fi qui ne route rien.
  */
 const ATTENTE_MAX_MS = 5_000;
-
-/** Marqueur d'attente dépassée, distinct de `null` (« pas de session »). */
-const TROP_LONG = Symbol('attente dépassée');
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -131,29 +129,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
          * de rafraîchissement a été révoqué.
          */
         void (async () => {
-          // AVEC LE CLIENT : la session de CE projet. Toute la famille partage
-          // une origine, donc un `localStorage` ; sans lui, le socle rend la
-          // première case `sb-*` venue, qui peut être celle d'une autre app.
-          const stockee = storedSupabaseSession(sb) as Session | null;
-
-          if (navigateurHorsLigne() && stockee) {
-            if (!disposed) await hydrate(stockee, true);
-            return;
-          }
-
-          let minuteur: ReturnType<typeof setTimeout> | undefined;
-          const issue = await Promise.race([
-            sb.auth.getSession().then(({ data }) => data.session),
-            new Promise<typeof TROP_LONG>(resoudre => {
-              minuteur = setTimeout(() => resoudre(TROP_LONG), ATTENTE_MAX_MS);
-            }),
-          ]);
-          clearTimeout(minuteur);
+          // Les trois chemins — hors ligne le stockage, en ligne
+          // `getSession()` borné, puis le stockage — et la session de CE
+          // projet : le socle (`readSupabaseSession`, 6.32.0, promu d'ici).
+          const { session, fromStorage } = await readSupabaseSession(sb, {
+            timeoutMs: ATTENTE_MAX_MS,
+          });
           if (disposed) return;
-          await hydrate(
-            issue === TROP_LONG ? stockee : issue,
-            issue === TROP_LONG
-          );
+          await hydrate(session as Session | null, fromStorage);
         })();
         const { data: sub } = sb.auth.onAuthStateChange((event, s) => {
           /**
@@ -176,11 +159,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
            * toujours dans le stockage.
            *
            * Une déconnexion demandée sans réseau reste donc honorée : le
-           * stockage est vidé d'abord, la garde ne se déclenche pas. La
-           * session de CE projet : celle d'une autre app de la même origine
-           * ferait passer une vraie déconnexion pour un réseau muet.
+           * stockage est vidé d'abord, la garde ne se déclenche pas. Le
+           * socle la tient (`ignoreOfflineSignOut`, 6.32.0, promue d'ici),
+           * avec la session de CE projet.
            */
-          if (!s && navigateurHorsLigne() && storedSupabaseSession(sb)) return;
+          if (ignoreOfflineSignOut(s, sb)) return;
 
           void hydrate(s, navigateurHorsLigne());
           if (event === 'SIGNED_IN' && s?.user?.email)
