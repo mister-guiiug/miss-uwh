@@ -7,7 +7,13 @@ import { cspPlugin } from '@mister-guiiug/dev-pwa-config/vite-csp';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { readFileSync } from 'node:fs';
 import { versionPlugin } from '@mister-guiiug/dev-pwa-config/vite-version';
-import { NAVIGATE_FALLBACK_DENY_FILES } from '@mister-guiiug/dev-pwa-config/vite-pwa';
+import {
+  googleFontsCaching,
+  NAVIGATE_FALLBACK_DENY_FILES,
+  SENTRY_CHUNK,
+  sentryChunkFileNames,
+  sentryGlobIgnores,
+} from '@mister-guiiug/dev-pwa-config/vite-pwa';
 import { AI_PROVIDER_ORIGINS } from './src/shared/lib/aiOrigins.ts';
 
 const analyze = process.env.ANALYZE === '1';
@@ -42,29 +48,8 @@ export default defineConfig(({ command }) => {
       chunkSizeWarningLimit: 900,
       rollupOptions: {
         output: {
-          /*
-           * LE MORCEAU SENTRY GARDE SON NOM, SANS EMPREINTE — parce qu'il est
-           * exclu du précache (`globIgnores` plus bas) et qu'une URL empreintée
-           * y meurt à chaque déploiement.
-           *
-           * Le service worker sert la coquille précachée jusqu'à ce que
-           * l'utilisateur accepte la mise à jour ; cette coquille demande
-           * l'ANCIENNE empreinte, que le déploiement suivant a supprimée de
-           * `assets/`. Mesuré en production sur mister-qowa le 22/09/2026 :
-           * HTTP 404, « Échec du chargement pour le module » dans la console.
-           * `initSentry` avale l'échec (son `try/catch`), donc l'application ne
-           * casse pas — elle rapporte ses erreurs à personne, sans le dire.
-           *
-           * Rien n'est perdu au cache : GitHub Pages répond
-           * `Cache-Control: max-age=600` sur TOUS les fichiers, empreinte ou pas.
-           *
-           * `pwa-doctor` tient l'invariant depuis le socle 6.8.0
-           * (règle `chunk-hors-precache`).
-           */
-          chunkFileNames: chunk =>
-            chunk.name === 'sentry'
-              ? 'assets/sentry.js'
-              : 'assets/[name]-[hash].js',
+          // Le morceau Sentry, nom sans empreinte : socle (`vite-pwa`, 6.32.0).
+          chunkFileNames: sentryChunkFileNames,
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
             const norm = id.replace(/\\/g, '/');
@@ -92,7 +77,7 @@ export default defineConfig(({ command }) => {
             // mesuré le 16/09/2026, 381,9 kB préchargés au lieu de 227,2 — pour
             // un total gzip identique à 0,1 kB près. Le total ne voit pas la
             // différence, `bundleBudget.preloadGzipKb` si.
-            if (norm.includes('/@sentry/')) return 'sentry';
+            if (norm.includes('/@sentry/')) return SENTRY_CHUNK;
             // ET POSTHOG POUR LA MÊME RAISON, EN PLUS GRAVE. Sentry préchargé
             // coûtait du poids ; PostHog préchargé casse une PROMESSE : l'ADR
             // 0012 dit que rien n'est chargé avant l'accord, et le socle ne
@@ -141,12 +126,7 @@ export default defineConfig(({ command }) => {
         // production — la génération d'exercices l'était depuis la pose de
         // cette CSP (25/07/2026). La liste vit dans `aiOrigins.ts`, que le
         // client relit pour refuser d'avance un point d'accès hors liste.
-        connectSrc: [
-          "'self'",
-          'https://*.supabase.co',
-          'wss://*.supabase.co',
-          ...AI_PROVIDER_ORIGINS,
-        ],
+        connectSrc: ["'self'", ...AI_PROVIDER_ORIGINS],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
         extraDirectives: { 'frame-ancestors': "'none'" },
@@ -162,18 +142,8 @@ export default defineConfig(({ command }) => {
           // Un fichier (sitemap.xml, llms.txt…) va au réseau, pas à index.html.
           navigateFallbackDenylist: [NAVIGATE_FALLBACK_DENY_FILES],
           globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2,webmanifest}'],
-          /*
-           * LE MORCEAU SENTRY HORS DU PRÉCACHE, sans quoi tout le découpage
-           * ci-dessus ne servirait à rien. `globPatterns` ramasse TOUT le JS
-           * émis, `import()` ou pas : mesuré le 16/09/2026, le précache passait
-           * de 1 264 à 1 728 KiB à la seule installation du paquet, soit 464 KiB
-           * bruts téléchargés par chaque visiteur — DSN posé ou non.
-           *
-           * Hors précache, il est cherché sur le réseau à la première erreur, et
-           * jamais si l'observabilité reste éteinte. Ne pas l'avoir hors ligne
-           * est sans conséquence : rapporter une erreur demande le réseau.
-           */
-          globIgnores: ['**/sentry.js', '**/sentry-*.js'],
+          // Le morceau Sentry hors du précache : socle (`vite-pwa`, 6.32.0).
+          globIgnores: sentryGlobIgnores(),
           /*
            * LES POLICES GOOGLE, HORS LIGNE AUSSI. `index.html` les charge à
            * l'exécution : sans cache, l'app rouverte hors ligne retombait sur
@@ -185,28 +155,7 @@ export default defineConfig(({ command }) => {
            * `crossorigin`). La CSP autorise déjà ces deux origines (`styleSrc`,
            * `fontSrc` plus haut) : rien à y changer.
            */
-          runtimeCaching: [
-            {
-              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'google-fonts-stylesheets',
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-            {
-              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'google-fonts-webfonts',
-                expiration: {
-                  maxEntries: 30,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: { statuses: [0, 200] },
-              },
-            },
-          ],
+          runtimeCaching: [...googleFontsCaching()],
           navigateFallback: 'index.html',
           cleanupOutdatedCaches: true,
           maximumFileSizeToCacheInBytes: 4_000_000,
