@@ -87,6 +87,11 @@ export default defineConfig(({ command }) => {
             // préchargés au lieu de 227,2. C'est `preloadGzipKb` qui l'a vu,
             // pas le total.
             if (norm.includes('/posthog-js/')) return 'posthog';
+            // LE MODULE DES ERREURS POSTHOG DU SOCLE (6.38.0) reste hors de
+            // `vendor` : il n'est importé qu'à la demande, si l'app fournit
+            // `errorTrackingLoader`. Rangé dans `vendor`, il serait PRÉCHARGÉ
+            // chez tous les visiteurs, option activée ou non (1,8 kB gzip).
+            if (norm.includes('/dev-pwa-config/analytics-erreurs')) return;
             if (norm.includes('/zustand/')) return 'zustand';
             if (norm.includes('/zod/')) return 'zod';
             return 'vendor';
