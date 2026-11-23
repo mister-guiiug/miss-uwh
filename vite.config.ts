@@ -11,6 +11,7 @@ import {
   googleFontsCaching,
   NAVIGATE_FALLBACK_DENY_FILES,
   SENTRY_CHUNK,
+  isOnDemandSocleModule,
   sentryChunkFileNames,
   sentryGlobIgnores,
 } from '@mister-guiiug/dev-pwa-config/vite-pwa';
@@ -52,6 +53,10 @@ export default defineConfig(({ command }) => {
           chunkFileNames: sentryChunkFileNames,
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
+            // Les modules du socle chargés à la demande (analytics-erreurs,
+            // analytics-url…) restent hors de `vendor`, qui est PRÉCHARGÉ :
+            // le socle en tient la liste (`isOnDemandSocleModule`, 6.39.0).
+            if (isOnDemandSocleModule(id)) return;
             const norm = id.replace(/\\/g, '/');
             if (norm.includes('/@supabase/')) return 'supabase';
             if (norm.includes('/lucide-react/')) return 'icons';
@@ -87,11 +92,6 @@ export default defineConfig(({ command }) => {
             // préchargés au lieu de 227,2. C'est `preloadGzipKb` qui l'a vu,
             // pas le total.
             if (norm.includes('/posthog-js/')) return 'posthog';
-            // LE MODULE DES ERREURS POSTHOG DU SOCLE (6.38.0) reste hors de
-            // `vendor` : il n'est importé qu'à la demande, si l'app fournit
-            // `errorTrackingLoader`. Rangé dans `vendor`, il serait PRÉCHARGÉ
-            // chez tous les visiteurs, option activée ou non (1,8 kB gzip).
-            if (norm.includes('/dev-pwa-config/analytics-erreurs')) return;
             if (norm.includes('/zustand/')) return 'zustand';
             if (norm.includes('/zod/')) return 'zod';
             return 'vendor';
