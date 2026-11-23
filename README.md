@@ -15,6 +15,11 @@ Water Hockey_). Journal comptable, recettes/dépenses par catégorie, résultat 
 
 ---
 
+## Guides
+
+- [Bilan comptable d'une association sportive](https://mister-guiiug.github.io/miss-uwh/bilan-comptable-association-sportive.html)
+- [Cotisations d'un club sportif](https://mister-guiiug.github.io/miss-uwh/cotisations-club-sportif.html)
+
 ## 1. Vision produit
 
 Donner au **trésorier** d'un petit club un outil aussi souple qu'un tableur mais
